@@ -18,6 +18,9 @@ const ITEMS = [
 
 export function Nav() {
   const path = usePathname();
+  // Geen navigatie op het inlogscherm — zie Masthead.tsx.
+  if (path === "/inloggen") return null;
+
   return (
     <nav className="nav" aria-label="Hoofdnavigatie">
       <div className="nav__inner">

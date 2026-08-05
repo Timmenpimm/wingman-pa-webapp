@@ -130,34 +130,45 @@ zodra hij wordt geïmplementeerd, niet als API-route in deze app.
 ## Zoals het nu draait (5 augustus 2026)
 
 - **Repo → Vercel is gekoppeld.** Productie-branch is `main`; een push deployt
-  automatisch. Geverifieerd met een lege commit.
+  automatisch.
 - **Database:** Supabase `eu-west-1` (Ierland), Vercel-regio `dub1` — zelfde
   regio, dus geen zeeoverschrijding per query. Migratiehistorie staat in
   `prisma/migrations/`.
-- **Afgeschermd met een gedeeld wachtwoord** (`ACCESS_PASSWORD`, zie
-  `src/middleware.ts`), niet met Vercel Authentication.
+- **Afgeschermd met echte inlog**: e-mailadres + wachtwoord (bcrypt, kosten 12),
+  sessie via Auth.js v5 met JWT-cookie. Zie `auth.ts` en `src/middleware.ts`.
 
-### Waarom niet met Vercel Authentication
+### Hoe de poort werkt
 
-Op het huidige plan dekt Vercel Authentication alleen deployment-URL's. Het
-productiedomein (`wingman-pa-webapp.vercel.app`) bleef publiek — nagemeten:
-`/api/v1/briefing/today` gaf agendagegevens terug aan een anonieme request.
-De API weigert `deploymentType: "all"` met
-`"Vercel Authentication is not available on your plan for production
-deployments"`.
+`src/middleware.ts` is de enige toegangspoort en weigert standaard:
 
-Vandaar het slot in de app zelf. Dat werkt op elk plan en dekt ook de API.
+- geen sessie + pagina → redirect naar `/inloggen`
+- geen sessie + `/api/v1/*` → `401` JSON, geen redirect (een `fetch` kan geen
+  redirect naar een HTML-inlogscherm volgen)
+- vrij: `/inloggen`, `/api/auth/*` en statische assets
 
-### Wat dit slot níét is
+Tweede laag: `currentUserId()` gooit een fout zonder sessie. Er is geen stille
+terugval op een demo-gebruiker — dat zou hetzelfde lek zijn, één laag dieper.
 
-Geen gebruikersauthenticatie. Er is één gedeeld wachtwoord, geen accounts, geen
-sessies, geen wachtwoordopslag. Het datamodel is wél per gebruiker gescheiden
-(`user_id` op elke tabel), dus echte accounts zijn een toevoeging, geen
-verbouwing. Wat daarvoor nog moet:
+Vercel Authentication wordt **niet** meer gebruikt: die dekt op dit plan alleen
+deployment-URL's, niet het productiedomein. Het oude gedeelde wachtwoord
+(`ACCESS_PASSWORD`) is vervallen.
 
-1. NextAuth (of vergelijkbaar) met e-mail-inlog
-2. `currentUserId()` uit de sessie halen in plaats van uit een vast e-mailadres
-3. Row-level security aanzetten in Supabase, per `user_id`
-4. Registratie + het koppelen van connectors aan de ingelogde gebruiker
+### Verplichte env-vars in productie
 
-Zolang dat er niet is, hoort deze deploy niet publiek te staan.
+| Variabele | Waarvoor |
+|---|---|
+| `DATABASE_URL` | runtime, transaction pooler (6543) |
+| `DIRECT_URL` | migraties, session pooler (5432) |
+| `AUTH_SECRET` | ondertekent de sessiecookie — zonder dit werkt inloggen niet |
+
+Optioneel: `AUTH_EMAIL_SERVER` + `AUTH_EMAIL_FROM` voor de inloglink. Zonder die
+twee blijft de knop staan maar meldt hij eerlijk dat mailen nog niet is
+ingesteld. `SEED_PASSWORD` gebruikt de seed om het demo-account een wachtwoord
+te geven; laat je hem leeg, dan genereert de seed er één en print die eenmalig.
+
+### Wat er nog niet is
+
+Geen registratie: accounts ontstaan alleen via de seed. En de scheiding tussen
+gebruikers zit nu in de queries (`user_id` op elke tabel), nog niet in de
+database zelf. Zet row-level security in Supabase aan per `user_id` voordat er
+een tweede echte gebruiker bij komt — dan is een fout in de code geen lek.

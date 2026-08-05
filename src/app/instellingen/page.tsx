@@ -4,6 +4,7 @@ import { PERMISSION_LABELS } from "@/lib/types";
 import Link from "next/link";
 import { formatDayShort, formatTime } from "@/lib/text";
 import { SUGGESTED_QUERIES } from "@/lib/graphify/query";
+import { signOut } from "../../../auth";
 
 export const dynamic = "force-dynamic";
 
@@ -164,6 +165,11 @@ export default async function InstellingenPage() {
           <a className="btn btn--quiet" href="/api/v1/export" download="wingman-export.json">
             Alles exporteren
           </a>
+          <form action={logout}>
+            <button className="btn btn--quiet" type="submit">
+              Uitloggen
+            </button>
+          </form>
         </div>
         {/* Geen knop voor verwijderen zolang die niets doet: een dode knop die
             "account verwijderen" belooft is erger dan geen knop. */}
@@ -179,4 +185,9 @@ export default async function InstellingenPage() {
 async function setPermissionFromForm(id: string, data: FormData) {
   "use server";
   await setConnectorPermission(id, String(data.get("permission") ?? "propose"));
+}
+
+async function logout() {
+  "use server";
+  await signOut({ redirectTo: "/inloggen" });
 }

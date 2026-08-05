@@ -1,26 +1,17 @@
-import { PrismaClient } from "@prisma/client";
+import { auth } from "../../../auth";
 
-const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
-
-export const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
-    log: process.env.NODE_ENV === "development" ? ["warn", "error"] : ["error"],
-  });
-
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+export { prisma } from "./prisma";
 
 /**
- * Dev draait single-user op seed-data. In productie komt dit uit de sessie
- * (NextAuth) en staat er row-level security op elke tabel.
+ * Dev draaide tot en met de auth-branch single-user op een vast e-mailadres.
+ * Nu komt de gebruiker uit de sessie (NextAuth, zie ../../../auth.ts). Geen
+ * sessie is geen stille terugval op een demo-gebruiker — dat zou precies het
+ * lek zijn dat middleware.ts moet voorkomen, alleen dan één laag dieper.
  */
-export const DEMO_USER_EMAIL = "nora@voorbeeld.nl";
-
 export async function currentUserId(): Promise<string> {
-  const user = await prisma.user.findUnique({
-    where: { email: DEMO_USER_EMAIL },
-    select: { id: true },
-  });
-  if (!user) throw new Error("Geen gebruiker gevonden — draai `npm run db:reset`.");
-  return user.id;
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error("Geen sessie — currentUserId() mag nooit terugvallen op een vaste gebruiker.");
+  }
+  return session.user.id;
 }
