@@ -133,6 +133,22 @@ export function deriveSteps(input: {
   });
 }
 
+/**
+ * Is deze gebruiker de onboarding ooit begonnen?
+ *
+ * Eén gekoppelde bron is genoeg, en een bewust overgeslagen stap ook: allebei
+ * betekenen dat er een keuze gemaakt is. Alleen wie nog nérgens iets van vindt,
+ * hoort de wizard voor zijn neus te krijgen in plaats van zes lege schermen —
+ * zie src/lib/onboarding/gate.ts.
+ *
+ * Bewust niet "is de onboarding áf": iemand die de bank overslaat en verder
+ * werkt, mag niet elke keer teruggeduwd worden naar een stap die hij al met
+ * opzet heeft laten liggen.
+ */
+export function hasStartedOnboarding(steps: StepState[], finishedAt: Date | null): boolean {
+  return finishedAt !== null || steps.some((s) => s.done);
+}
+
 /** De eerste stap die nog aandacht vraagt, of null als alles langs is geweest. */
 export function firstOpenStep(steps: StepState[]): StepId | null {
   return steps.find((s) => !s.done)?.id ?? null;

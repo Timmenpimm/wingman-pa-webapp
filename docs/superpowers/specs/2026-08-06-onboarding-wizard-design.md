@@ -82,10 +82,31 @@ vraag wordt één keer gesteld en geldt voor beide; het scherm zegt dat dan ook
 **voorzichtigste** van de bestaande waarden: wie op Volgende drukt zonder te
 kiezen, hoort niets weg te geven dat hij nog niet had gegeven.
 
+## De poort
+
+Wie nog nooit een bron heeft gekoppeld of overgeslagen, landde na het inloggen
+op Vandaag: een lege briefing met zes navigatie-ingangen naar schermen die
+allemaal niets te melden hebben. Nu is het andersom — zolang er niets besloten
+is, ís de wizard het scherm.
+
+De poort staat in het layout van route-groep `(app)`, niet in elke pagina
+apart: een nieuw scherm is daarmee automatisch gedekt in plaats van dat iemand
+eraan moet denken. Buiten de groep staan `/inloggen` (je moet erin kunnen),
+`/onboarding` (anders stuurt de poort zichzelf in een kringetje) en `/api` (die
+geeft JSON, geen redirect naar een scherm). Middleware kan dit niet doen: die
+draait in de Edge-runtime en komt niet bij Prisma.
+
+Hij gaat open zodra er íéts besloten is, ook als dat "overslaan" was — niet pas
+als de onboarding helemaal af is. Iemand die de bank bewust laat liggen mag
+daar niet bij elk scherm opnieuw naartoe geduwd worden. Wie de reeks niet
+uitliep ziet op Vandaag één regel ("Onaf — afmaken"), en die verdwijnt zodra je
+op "Naar vandaag" hebt gedrukt.
+
+De navigatie blijft zichtbaar tijdens de wizard. Verbergen zou hem netter maken,
+maar sluit ook iemand op die er vrijwillig heen liep en er weer uit wil.
+
 ## Wat er niet in zit
 
-- **Geen poort.** Een nieuwe gebruiker wordt nog niet naar de wizard gedwongen;
-  Vandaag linkt er alleen naar op een lege dag. Dat is een aparte stap.
 - **Geen eerste import.** De payoff wacht op de sync die er nog niet is.
 - **Geen Telegram, geen CalDAV/IMAP-koppelscherm.** Beide bestaan nog niet als
   werkende flow, dus staan ze niet als stap in de wizard.
@@ -101,3 +122,5 @@ kiezen, hoort niets weg te geven dat hij nog niet had gegeven.
 | `src/app/onboarding/klaar/page.tsx` | het slot: wanneer je het eerste resultaat ziet |
 | `src/app/onboarding/Trail.tsx` | het spoor bovenaan |
 | `src/lib/actions.ts` | `connectGoogle`, `continueOnboarding`, `finishOnboarding` |
+| `src/lib/onboarding/gate.ts` | de poort |
+| `src/app/(app)/layout.tsx` | de route-groep waar de poort voor geldt |
