@@ -51,6 +51,19 @@ export const CONNECTOR_CATALOG: Array<{
  * In dev is er geen echte OAuth. Nango (of Paragon) doet in productie het
  * tokenbeheer; deze functie levert de redirect-URL waar /api/v1/connect/[provider]
  * naartoe stuurt.
+ *
+ * Uitzondering: "google" en "gmail" lopen niet meer via Nango. Sinds de
+ * Google-provider in auth.ts staat, gebeurt de OAuth-autorisatie voor agenda
+ * én gmail in één stap via "Inloggen met Google" op /inloggen (met
+ * access_type=offline + prompt=consent, zodat er ook een refresh_token
+ * terugkomt) — die stap schrijft de Connector-rijen direct weg
+ * (src/lib/auth/google-connectors.ts). Deze functie blijft voor die twee
+ * providers `null` teruggeven (net als zonder NANGO_HOST): er is voor hen
+ * geen aparte Nango-tokenroute meer, dus /api/v1/connect/google zou anders
+ * een kapotte belofte doen. Een gebruiker die al is ingelogd (met wachtwoord
+ * of inloglink) koppelt Google alsnog door naar /inloggen te gaan en daar op
+ * "Inloggen met Google" te klikken — de signIn-callback koppelt aan de
+ * bestaande User via het e-mailadres, er komt geen tweede User bij.
  */
 export function authUrlFor(provider: Provider): string | null {
   const base = process.env.NANGO_HOST;

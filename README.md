@@ -118,10 +118,14 @@ POST /api/v1/webhooks/ponto-transactions
 1. `prisma/schema.prisma`: `provider = "postgresql"`, `DATABASE_URL` naar
    Supabase/Neon in een **EU-regio** (PII, GDPR art. 9).
 2. Row-level security per gebruiker aanzetten.
-3. Nango koppelen (`NANGO_HOST`, `NANGO_PUBLIC_KEY`) voor OAuth-tokens.
+3. Nango koppelen (`NANGO_HOST`, `NANGO_PUBLIC_KEY`) voor OAuth-tokens van de
+   overige connectors (Ponto, CalDAV, IMAP). Google/Gmail lopen niet via
+   Nango — dat is `AUTH_GOOGLE_ID`/`AUTH_GOOGLE_SECRET` (zie DEPLOY.md §2b):
+   "Inloggen met Google" op /inloggen doet login én connector-autorisatie in
+   één stap.
 4. `ANTHROPIC_API_KEY` en de Inngest-worker aanzetten.
 5. Google restricted scope: CASA-assessment vóór productie; tot die tijd max
-   100 testgebruikers.
+   100 testgebruikers (zie DEPLOY.md §2b).
 6. Deploy naar Vercel (EU-zone) of Fly.io.
 
 ## Wat er bewust niet in zit

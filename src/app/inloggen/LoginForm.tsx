@@ -10,6 +10,7 @@ const GENERIC_LOGIN_ERROR = "Inloggen lukte niet — probeer het nog eens.";
 const EMAIL_NOT_CONFIGURED_HINT = "Mailen is nog niet ingesteld — log in met je wachtwoord.";
 const MISSING_EMAIL_HINT = "Vul eerst je e-mailadres in.";
 const LINK_SEND_FAILED_HINT = "Verzenden lukte niet — probeer het later opnieuw.";
+const GOOGLE_LOGIN_ERROR = "Inloggen met Google lukte niet — probeer het nog eens.";
 
 /**
  * Client component voor het inlogscherm (§ opgave): toon/verberg-schakelaar
@@ -21,9 +22,11 @@ const LINK_SEND_FAILED_HINT = "Verzenden lukte niet — probeer het later opnieu
  */
 export function LoginForm({
   emailConfigured,
+  googleConfigured,
   callbackUrl,
 }: {
   emailConfigured: boolean;
+  googleConfigured: boolean;
   callbackUrl: string;
 }) {
   const router = useRouter();
@@ -37,6 +40,9 @@ export function LoginForm({
   const [linkSent, setLinkSent] = useState(false);
   const [linkSending, setLinkSending] = useState(false);
   const [linkHint, setLinkHint] = useState<string | null>(null);
+
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleError, setGoogleError] = useState<string | null>(null);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -98,8 +104,57 @@ export function LoginForm({
     }
   }
 
+  async function handleGoogleLogin() {
+    setGoogleError(null);
+    setGoogleLoading(true);
+    try {
+      // redirect: true (default) — de browser gaat meteen naar Google, dus
+      // hierna volgt geen router.push meer. De catch vangt alleen een fout
+      // vóórdat die redirect start (bv. een netwerkstoring).
+      await signIn("google", { callbackUrl });
+    } catch {
+      setGoogleError(GOOGLE_LOGIN_ERROR);
+      setGoogleLoading(false);
+    }
+  }
+
   return (
     <>
+      {googleConfigured && (
+        <>
+          <button
+            type="button"
+            className="btn btn--quiet login__submit"
+            onClick={handleGoogleLogin}
+            disabled={googleLoading}
+          >
+            {googleLoading ? "Even doorsturen naar Google…" : "Inloggen met Google"}
+          </button>
+          {googleError && (
+            <p className="login__error" role="alert">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                aria-hidden="true"
+              >
+                <path d="M12 8v5" />
+                <circle cx="12" cy="16.5" r="0.6" fill="currentColor" />
+                <circle cx="12" cy="12" r="9" />
+              </svg>
+              <span>{googleError}</span>
+            </p>
+          )}
+          <div className="login__divider" role="presentation">
+            of
+          </div>
+        </>
+      )}
+
       <form className="login__form" onSubmit={handleSubmit} noValidate>
         <label className="login__label">
           <span className="eyebrow">E-mail</span>

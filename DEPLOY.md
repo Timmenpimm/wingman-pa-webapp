@@ -43,6 +43,8 @@ Zie `.env.example` voor de volledige lijst met uitleg per regel. Overzicht:
 | `NANGO_SECRET_KEY` | Optioneel | `/api/v1/connect/callback` antwoordt 501 i.p.v. tokens te accepteren |
 | `GOOGLE_WEBHOOK_TOKEN` | Optioneel | Google-calendar-webhook antwoordt 501 |
 | `PONTO_WEBHOOK_SECRET` | Optioneel | Ponto-transactie-webhook antwoordt 501 |
+| `AUTH_GOOGLE_ID` | Optioneel | "Inloggen met Google" staat niet in de providerlijst; wachtwoord/inloglink blijven werken |
+| `AUTH_GOOGLE_SECRET` | Optioneel | Zelfde als hierboven |
 
 Alleen `DATABASE_URL` is dus een harde eis. De rest is functionaliteit die de
 app zelf gracefully uitschakelt zonder key (geen crash, zie ook README §"Van
@@ -55,6 +57,46 @@ worden gelezen (`NEXT_PUBLIC_APP_URL`, `ANTHROPIC_API_KEY`, `GRAPHIFY_API_KEY`,
 horen bij functionaliteit die er nog niet is (zie §4 en README): pas
 toevoegen zodra de bijbehorende code er ook is, anders staat er ruis in de
 Vercel-project-settings.
+
+## 2b. Google OAuth ("Inloggen met Google" + connectors)
+
+`AUTH_GOOGLE_ID`/`AUTH_GOOGLE_SECRET` staan zonder key als optioneel in de
+tabel hierboven, maar zijn in de praktijk nodig zodra iemand met Google wil
+inloggen of z'n agenda/gmail wil koppelen — dat is één en dezelfde stap (zie
+`auth.ts`). Zo zet je 'm op:
+
+1. **Google Cloud Console** → project aanmaken (of een bestaand project
+   gebruiken) → **APIs & Services → OAuth consent screen**.
+   - User type: **External**.
+   - Publishing status mag op **Testing** blijven tot de CASA-stap hieronder —
+     dat staat al zo beschreven in `src/connectors/google-calendar.ts` (max.
+     **100 testgebruikers**, met expliciet toegevoegde test-e-mailadressen).
+   - Scopes: voeg `.../auth/calendar.readonly`, `.../auth/gmail.readonly` en
+     `.../auth/gmail.compose` toe (naast de standaard `openid`/`email`/
+     `profile`) — zonder ze hier te registreren keurt Google het consentscherm
+     niet goed.
+2. **APIs & Services → Credentials → Create Credentials → OAuth client ID**,
+   type **Web application**. Zet bij **Authorized redirect URIs** exact:
+   - `http://localhost:3111/api/auth/callback/google` (dev — let op poort
+     3111, zie `package.json`, niet Next.js' default 3000)
+   - `https://<jouw-productie-domein>/api/auth/callback/google` (Vercel-URL of
+     custom domain; bij preview-deploys is dat per-deploy-URL onpraktisch, dus
+     login/connectors testen op preview-omgevingen werkt pas betrouwbaar zodra
+     er een vast productie-domein is)
+3. Kopieer **Client ID** en **Client secret** naar `AUTH_GOOGLE_ID` en
+   `AUTH_GOOGLE_SECRET` (lokaal `.env`, in Vercel als project-env-var). Auth.js
+   pikt ze automatisch op via die namen — er hoeft nergens in code naar
+   verwezen te worden (zie `.env.example`).
+4. **Vóór een echte productie-launch** (niet vóór deze deploy-checklist, maar
+   wél voordat er niet-test-gebruikers bij mogen): `calendar.readonly` en
+   `gmail.readonly`/`gmail.compose` zijn *restricted scopes* onder Google's
+   [API Services User Data Policy](https://developers.google.com/terms/api-services-user-data-policy).
+   Dat vereist een **CASA-assessment** (Comprehensive Assessment and
+   Certification Application — een security-beoordeling door een door Google
+   erkende auditor) vóór het consent-scherm van "Testing" naar "In production"
+   mag, en vóór er meer dan 100 testgebruikers bij mogen. Tot die tijd blijft
+   dit dus letterlijk beperkt tot handmatig toegevoegde test-e-mailadressen in
+   het consent-scherm.
 
 ## 3. Deployment protection aanzetten
 
