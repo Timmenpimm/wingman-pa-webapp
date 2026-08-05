@@ -5,6 +5,8 @@ import { getOpenCommitments } from "@/lib/commitments";
 import { answerConfirmation, setFrogStatus, togglePriority } from "@/lib/actions";
 import { formatDayLong, formatTime } from "@/lib/text";
 import { CaptureField } from "@/components/CaptureField";
+import { onboardingStatus } from "@/lib/onboarding/status";
+import { firstOpenStep, stepPath } from "@/lib/onboarding/steps";
 import type { BriefingToday } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +31,8 @@ export default async function VandaagPage({
   const raw = await getBriefingToday(userId);
   const looseEnds = await getOpenCommitments(userId);
   const briefing = applyPreview(raw, searchParams.state);
+  const onboarding = await onboardingStatus(userId);
+  const openStap = onboarding.finishedAt ? null : firstOpenStep(onboarding.steps);
 
   return (
     <>
@@ -37,6 +41,22 @@ export default async function VandaagPage({
       {/* De frog-titel is de grootste tekst, maar niet de paginatitel: op een
           dag zonder frog zou de pagina dan helemaal geen h1 hebben. */}
       <h1 className="sr-only">Vandaag</h1>
+
+      {/* Wie de poort voorbij is maar de reeks niet uitliep, ziet hier één
+          regel — geen tweede onboarding, alleen de weg terug. Hij verdwijnt
+          zodra je op "Naar vandaag" hebt gedrukt, ook als je stappen oversloeg:
+          overslaan is een antwoord, geen uitstel. */}
+      {openStap && (
+        <div className="notice" style={{ marginTop: "var(--s-4)" }}>
+          <span className="notice__mark">Onaf</span>
+          <span>
+            Je bent de bronnen nog niet langsgelopen.{" "}
+            <Link href={stepPath(openStap)} className="btn--text">
+              Afmaken
+            </Link>
+          </span>
+        </div>
+      )}
 
       {briefing.state === "empty" ? (
         <EmptyDay />

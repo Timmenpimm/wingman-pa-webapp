@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   deriveSteps,
   firstOpenStep,
+  hasStartedOnboarding,
   marksFromSettings,
   markKey,
   mostRestrictive,
@@ -93,6 +94,31 @@ describe("de volgorde van de stappen", () => {
 
   it("nummert de stappen vanaf 1", () => {
     expect(deriveSteps(geen).map((s) => s.number)).toEqual([1, 2, 3, 4]);
+  });
+});
+
+describe("de poort voor de eerste keer", () => {
+  it("gaat dicht als er nog niets besloten is", () => {
+    expect(hasStartedOnboarding(deriveSteps(geen), null)).toBe(false);
+  });
+
+  it("gaat open bij één gekoppelde bron", () => {
+    const steps = deriveSteps({
+      connectors: [{ provider: "google", status: "active" }],
+      marks: {},
+    });
+    expect(hasStartedOnboarding(steps, null)).toBe(true);
+  });
+
+  it("gaat ook open als je alleen maar iets oversloeg", () => {
+    // Overslaan is een antwoord. Wie de agenda bewust laat liggen, hoort niet
+    // bij elk scherm teruggeduwd te worden naar dezelfde vraag.
+    const steps = deriveSteps({ connectors: [], marks: { agenda: "skipped" } });
+    expect(hasStartedOnboarding(steps, null)).toBe(true);
+  });
+
+  it("blijft open zodra de onboarding uitgelopen is", () => {
+    expect(hasStartedOnboarding(deriveSteps(geen), new Date())).toBe(true);
   });
 });
 
