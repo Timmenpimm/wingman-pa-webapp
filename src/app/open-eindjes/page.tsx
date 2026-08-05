@@ -66,8 +66,12 @@ export default async function OpenEindjesPage() {
           </p>
         </div>
       ) : (
-        <p className="lede" style={{ marginTop: "var(--s-3)" }}>
-          {total} draden. De oudste hangt {durationPhrase(oldest!)}.
+        // Bij één kaart tegelijk zegt de teller "1 van 6" hetzelfde als deze
+        // regel, en de kaart zelf toont de leeftijd. Twee keer hetzelfde kost
+        // hier de ruimte die de drie actieknoppen nodig hebben om zonder
+        // scrollen in beeld te staan — dat is het scherm belangrijker.
+        <p className="meta" style={{ marginTop: "var(--s-2)" }}>
+          De oudste hangt {durationPhrase(oldest!)}.
         </p>
       )}
 

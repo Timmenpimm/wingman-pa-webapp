@@ -143,6 +143,10 @@ button {
 /* Navigatie ------------------------------------------------------------- */
 
 .nav {
+  /* Hoogte als variabele: elementen die boven de navigatie moeten dokken
+     (zie .loose-actions) hebben deze waarde nodig, en twee losse getallen
+     lopen bij de eerste wijziging uit elkaar. */
+  --nav-h: calc(2.625rem + env(safe-area-inset-bottom));
   border-top: 1px solid var(--rule);
   background: var(--paper);
   position: sticky;
@@ -998,7 +1002,54 @@ textarea.input {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: var(--s-5);
+  margin-top: var(--s-4);
+}
+
+/* Op een korte telefoon (390x844 met browserbalken) viel de laatste knop
+   achter de navigatie. Bij één kaart tegelijk is dat fataal: de drie acties
+   zijn het hele scherm. Daarom krimpt het verticale ritme mee zodra er weinig
+   hoogte is, in plaats van te vertrouwen op scrollen. */
+@media (max-height: 900px) {
+  .loose-progress {
+    margin-bottom: var(--s-4);
+  }
+
+  .loose-head {
+    margin-bottom: var(--s-4);
+  }
+
+  .loose-head__title {
+    font-size: var(--t-lg);
+  }
+
+  .loose-card {
+    padding: var(--s-5) var(--s-4);
+  }
+
+  .loose-card__avatar {
+    width: 44px;
+    height: 44px;
+    font-size: var(--t-md);
+    margin-bottom: var(--s-3);
+  }
+
+  .loose-card__what {
+    margin-bottom: var(--s-3);
+  }
+
+  .loose-card__story {
+    margin-top: var(--s-3);
+  }
+
+  /* De degraded-melding staat hierboven en kan vier regels lang zijn; die
+     ruimte moet ergens vandaan komen. */
+  .loose-stack {
+    margin-top: var(--s-3);
+  }
+
+  .loose-card {
+    padding: var(--s-4);
+  }
 }
 
 .loose-progress {
@@ -1091,8 +1142,12 @@ textarea.input {
   font-size: var(--t-sm);
 }
 
+/* "28 dagen open" is het signaal — de duur zelf. Kleur erbij zou urgentie
+   coderen in kleur, en dat staat op de anti-lijst (§7): het maakt een lijst
+   die toch al zwaar voelt ook nog alarmerend. Wel iets zwaarder gezet, want
+   het is de belangrijkste regel op de kaart. */
 .loose-card__meta--age {
-  color: var(--signal);
+  color: var(--ink-body);
   font-weight: var(--w-medium);
 }
 
@@ -1107,20 +1162,36 @@ textarea.input {
   color: var(--ink-body);
 }
 
+/* De drie acties zijn het hele scherm — met één kaart tegelijk is er niets
+   anders te doen. Ze mogen dus nooit onder de vouw verdwijnen, ook niet als
+   een naam lang is, het verhaal vier regels beslaat of er een melding boven
+   staat. Vandaar vastgeplakt boven de navigatie in plaats van meeschuiven:
+   dat is stabiel bij elke inhoud, waar afmeten op één dataset dat niet is. */
 .loose-actions {
+  position: sticky;
+  /* Boven de navigatiebalk, niet erachter. */
+  bottom: calc(2.625rem + env(safe-area-inset-bottom));
+  z-index: 5;
   display: flex;
   justify-content: center;
   align-items: center;
   gap: var(--s-3);
-  margin-top: var(--s-6);
+  margin-top: var(--s-5);
+  padding: var(--s-3) 0 var(--s-4);
+  width: 100%;
   flex-wrap: wrap;
+  background: linear-gradient(
+    to top,
+    var(--paper) 65%,
+    color-mix(in srgb, var(--paper) 0%, transparent)
+  );
 }
 
 .loose-counter {
-  margin-top: var(--s-5);
-  font-size: var(--t-sm);
+  margin: calc(-1 * var(--s-3)) 0 var(--s-4);
+  align-self: flex-start;
+  font-size: var(--t-xs);
   color: var(--ink-muted);
-  text-align: center;
 }
 
 @media (min-width: 700px) {

@@ -115,6 +115,8 @@ export function Stapel({ items }: { items: LooseEnd[] }) {
 
   return (
     <div className="loose-stack">
+      {/* Balkje en teller horen bij elkaar en staan bovenaan: onderaan viel de
+          teller onder de vouw, en dan is de voortgang alleen nog kleur. */}
       <div className="loose-progress" aria-hidden="true">
         {items.map((it, i) => (
           <span
@@ -124,6 +126,10 @@ export function Stapel({ items }: { items: LooseEnd[] }) {
           />
         ))}
       </div>
+
+      <p className="loose-counter">
+        {Math.min(idx + 1, total)} van {total}
+      </p>
 
       <div className="loose-head">
         <h2 className="loose-head__title">{heading}</h2>
@@ -181,9 +187,6 @@ export function Stapel({ items }: { items: LooseEnd[] }) {
         </button>
       </div>
 
-      <p className="loose-counter">
-        {Math.min(idx + 1, total)} van {total}
-      </p>
     </div>
   );
 }
