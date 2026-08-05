@@ -1,18 +1,24 @@
 // Wingman PA — datamodel
 //
-// Dev draait op SQLite (nul setup, seed-data). Productie is Postgres:
-// zet `provider = "postgresql"` en DATABASE_URL naar Neon/Supabase (EU-zone).
-// Verschil is bewust klein gehouden: geen String[]-kolommen, arrays gaan als
-// JSON-string het veld in (zie src/lib/db/json.ts). Zo migreert het schema
-// 1-op-1 mee zonder herschrijven van queries.
+// Postgres (Supabase, eu-west-1). Twee verbindingen, met opzet:
+//   url       — transaction pooler op 6543. Serverless opent en sluit veel
+//               verbindingen; de pooler vangt dat op. Geen prepared statements,
+//               vandaar ?pgbouncer=true in de string.
+//   directUrl — session pooler op 5432. Migraties hebben een verbinding nodig
+//               die openblijft; over de transaction pooler mislukken ze.
+//
+// Arrays gaan als JSON-string het veld in in plaats van als String[]. Dat is
+// een bewuste beperking uit de tijd dat dev op SQLite draaide: het houdt het
+// schema draagbaar en de queries identiek op beide.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL") // transaction pooler (6543) — runtime
+  directUrl = env("DIRECT_URL") // session pooler (5432) — migraties
 }
 
 model User {

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma, currentUserId } from "@/lib/db/client";
-import { startOfDay } from "@/brain/briefing-engine";
+import { localDayStart } from "@/lib/day";
 import { clamp } from "@/lib/text";
 
 /**
@@ -14,8 +14,14 @@ import { clamp } from "@/lib/text";
 
 async function briefingToday() {
   const userId = await currentUserId();
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { timezone: true },
+  });
+  // Zelfde dagbepaling als het scherm: anders vinkt een knop een briefing af
+  // die niet degene is die je voor je ziet.
   const briefing = await prisma.dailyBriefing.findFirst({
-    where: { user_id: userId, date: startOfDay(new Date()) },
+    where: { user_id: userId, date: localDayStart(user?.timezone ?? "Europe/Amsterdam") },
   });
   return { userId, briefing };
 }

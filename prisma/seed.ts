@@ -18,17 +18,18 @@
  */
 
 import { PrismaClient } from "@prisma/client";
+import { localDayStart, localDayRange } from "../src/lib/day";
 
 const prisma = new PrismaClient();
 
-const today = new Date();
-today.setHours(0, 0, 0, 0);
+// De demodag is de lokale dag van het persona, niet die van de machine waarop
+// de seed toevallig draait. Anders staat de briefing op de verkeerde datum
+// zodra je hem tegen een server in UTC aanzet.
+const TZ = "Europe/Amsterdam";
+const today = localDayStart(TZ); // kalenderdatum als middernacht UTC
+const dayStart = localDayRange(TZ).start; // echt begin van de lokale dag
 
-const at = (h: number, m = 0) => {
-  const d = new Date(today);
-  d.setHours(h, m, 0, 0);
-  return d;
-};
+const at = (h: number, m = 0) => new Date(dayStart.getTime() + (h * 60 + m) * 60_000);
 const daysAgo = (n: number) => new Date(today.getTime() - n * 86_400_000);
 const daysAhead = (n: number) => new Date(today.getTime() + n * 86_400_000);
 

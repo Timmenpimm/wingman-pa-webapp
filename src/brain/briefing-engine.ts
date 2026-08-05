@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db/client";
+import { localDateKey, dateKeyToUtc, localDayRange } from "@/lib/day";
 import { clamp } from "@/lib/text";
 import type { BriefingToday } from "@/lib/types";
 
@@ -22,13 +23,24 @@ export async function getBriefingToday(
   userId: string,
   opts: { date?: Date; forceState?: BriefingToday["state"] } = {},
 ): Promise<BriefingToday> {
-  const date = startOfDay(opts.date ?? new Date());
-  const dateKey = toDateKey(date);
+  // De dag wordt bepaald in de tijdzone van de gebruiker, niet die van de
+  // server. Anders krijgt iemand in Amsterdam tussen middernacht en 02:00 de
+  // briefing van gisteren te zien — de server staat immers op UTC.
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { timezone: true },
+  });
+  const timezone = user?.timezone ?? "Europe/Amsterdam";
+  const now = opts.date ?? new Date();
+
+  const dateKey = localDateKey(timezone, now);
+  const date = dateKeyToUtc(dateKey);
+  const day = localDayRange(timezone, now);
 
   const [briefing, events, connectors] = await Promise.all([
     prisma.dailyBriefing.findFirst({ where: { user_id: userId, date } }),
     prisma.event.findMany({
-      where: { user_id: userId, start_at: { gte: date, lt: addDays(date, 1) } },
+      where: { user_id: userId, start_at: { gte: day.start, lt: day.end } },
       orderBy: { start_at: "asc" },
     }),
     prisma.connector.findMany({ where: { user_id: userId } }),
