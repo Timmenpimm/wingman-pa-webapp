@@ -123,3 +123,41 @@ zodra hij wordt geïmplementeerd, niet als API-route in deze app.
       deploy-config regelt)
 - [ ] Geen enkele `.env`/secret in git — alleen `.env.example` met placeholders
       is gecommit
+
+
+---
+
+## Zoals het nu draait (5 augustus 2026)
+
+- **Repo → Vercel is gekoppeld.** Productie-branch is `main`; een push deployt
+  automatisch. Geverifieerd met een lege commit.
+- **Database:** Supabase `eu-west-1` (Ierland), Vercel-regio `dub1` — zelfde
+  regio, dus geen zeeoverschrijding per query. Migratiehistorie staat in
+  `prisma/migrations/`.
+- **Afgeschermd met een gedeeld wachtwoord** (`ACCESS_PASSWORD`, zie
+  `src/middleware.ts`), niet met Vercel Authentication.
+
+### Waarom niet met Vercel Authentication
+
+Op het huidige plan dekt Vercel Authentication alleen deployment-URL's. Het
+productiedomein (`wingman-pa-webapp.vercel.app`) bleef publiek — nagemeten:
+`/api/v1/briefing/today` gaf agendagegevens terug aan een anonieme request.
+De API weigert `deploymentType: "all"` met
+`"Vercel Authentication is not available on your plan for production
+deployments"`.
+
+Vandaar het slot in de app zelf. Dat werkt op elk plan en dekt ook de API.
+
+### Wat dit slot níét is
+
+Geen gebruikersauthenticatie. Er is één gedeeld wachtwoord, geen accounts, geen
+sessies, geen wachtwoordopslag. Het datamodel is wél per gebruiker gescheiden
+(`user_id` op elke tabel), dus echte accounts zijn een toevoeging, geen
+verbouwing. Wat daarvoor nog moet:
+
+1. NextAuth (of vergelijkbaar) met e-mail-inlog
+2. `currentUserId()` uit de sessie halen in plaats van uit een vast e-mailadres
+3. Row-level security aanzetten in Supabase, per `user_id`
+4. Registratie + het koppelen van connectors aan de ingelogde gebruiker
+
+Zolang dat er niet is, hoort deze deploy niet publiek te staan.
