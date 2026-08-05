@@ -17,9 +17,13 @@
 import { createInterface } from "node:readline";
 import { chmodSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { randomBytes } from "node:crypto";
+import { fileURLToPath } from "node:url";
 import { controleer, huidigeWaarde, zet } from "./env-bestand.mjs";
 
-const BESTAND = process.env.ENV_BESTAND ?? ".env";
+// Relatief aan dit script, niet aan je huidige map: anders schrijft
+// `npm --prefix ~/…/wingman-pa-webapp run google:sleutels` een .env aan in de
+// map waar je toevallig stond, en zoek je je scheel waarom de app 'm niet ziet.
+const BESTAND = process.env.ENV_BESTAND ?? fileURLToPath(new URL("../.env", import.meta.url));
 
 // Zonder toetsenbord heeft dit script geen betekenis: bij gepipete invoer sluit
 // readline op EOF en blijft elke vraag onbeantwoord hangen — het script zou dan
@@ -49,7 +53,14 @@ function vraagStil(tekst) {
   return new Promise((res) => {
     const schrijf = rl._writeToOutput;
     process.stdout.write(tekst);
-    rl._writeToOutput = () => {};
+    // Sterretjes in plaats van niets. Volledig onzichtbare invoer (zoals sudo)
+    // is veiliger op papier, maar wie plakt en niets ziet gebeuren, concludeert
+    // dat het script hangt — en drukt ctrl-C. Eén teken per aanslag laat zien
+    // dat er iets binnenkomt zonder de waarde te tonen.
+    rl._writeToOutput = (s) => {
+      if (s.includes("\n") || s.includes("\r")) return schrijf.call(rl, s);
+      return schrijf.call(rl, "*".repeat(s.length));
+    };
     rl.question("", (a) => {
       rl._writeToOutput = schrijf;
       process.stdout.write("\n");
@@ -65,7 +76,8 @@ async function bevestig(tekst) {
 
 async function main() {
   console.log(`\nGoogle OAuth-sleutels → ${BESTAND}`);
-  console.log("Haal ze op bij console.cloud.google.com/apis/credentials (zie DEPLOY.md §2b).\n");
+  console.log("Haal ze op bij console.cloud.google.com/apis/credentials (zie DEPLOY.md §2b).");
+  console.log("Plakken en Enter. De secret verschijnt als sterretjes, dat hoort zo.\n");
 
   let inhoud = existsSync(BESTAND) ? readFileSync(BESTAND, "utf8") : "";
 
