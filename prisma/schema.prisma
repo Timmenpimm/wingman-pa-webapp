@@ -41,6 +41,7 @@ model User {
   inbox        InboxItem[]
   styleCards   StyleCard[]
   settings     UserSetting[]
+  toolCalls    ToolCall[]
 }
 
 model Connector {
@@ -63,6 +64,40 @@ model Connector {
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@unique([user_id, provider, account_id])
+}
+
+/// Elke poging tot een actie bij een externe bron — voorgesteld, uitgevoerd of
+/// geweigerd. Eén tabel voor twee dingen die anders uit elkaar lopen: de
+/// wachtrij met acties die nog een "ja" nodig hebben, en het logboek van wat er
+/// werkelijk gebeurd is. Een rij wordt geschreven vóór de aanroep, niet erna:
+/// een call die halverwege crasht mag geen gat in het logboek achterlaten.
+///
+/// `summary` is de Nederlandse zin die de gebruiker te zien krijgt bij de
+/// goedkeuringsvraag ("Concept-antwoord aan Stijn over de flyers"). Die maakt
+/// de tool zelf uit zijn parameters — niet de UI, want alleen de tool weet wat
+/// er echt gaat gebeuren. Gevoelige details horen er niet in: dit veld kan in
+/// een notificatie belanden (§6.7).
+model ToolCall {
+  id            String    @id @default(cuid())
+  user_id       String
+  connector_id  String
+  tool          String // "gmail.draft_reply"
+  effect        String // read | draft | write
+  params        String    @default("{}") // JSON
+  summary       String // NL, max 120 tekens (zie src/lib/text.ts)
+  status        String    @default("pending") // pending | done | failed | rejected
+  notify        Boolean   @default(false) // "doen en melden" wel, "stil doen" niet
+  result        String? // JSON, zonder tokens
+  error_code    String? // ConnectorOffline | Authentication | Permission | ...
+  error_message String?
+  duration_ms   Int?
+  created_at    DateTime  @default(now())
+  decided_at    DateTime?
+  finished_at   DateTime?
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, status, created_at])
 }
 
 model Event {

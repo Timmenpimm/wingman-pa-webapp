@@ -1,8 +1,9 @@
 import { currentUserId, withUser } from "@/lib/db/client";
-import { setConnectorPermission } from "@/lib/actions";
+import { decideTool, setConnectorPermission } from "@/lib/actions";
 import { PERMISSION_LABELS } from "@/lib/types";
 import Link from "next/link";
-import { formatDayShort, formatTime } from "@/lib/text";
+import { durationPhrase, formatDayShort, formatTime } from "@/lib/text";
+import { pendingToolCalls, recentToolCalls } from "@/lib/tools/execute";
 import { SUGGESTED_QUERIES } from "@/lib/graphify/query";
 import { signOut } from "../../../auth";
 
@@ -13,6 +14,19 @@ const STATUS_TEXT: Record<string, string> = {
   error: "was niet bereikbaar",
   reauth_required: "vraagt opnieuw toestemming",
   not_connected: "niet gekoppeld",
+};
+
+/** Toolnamen zijn voor de machine; hier staat wat het voor jou betekent. */
+const TOOL_TEXT: Record<string, string> = {
+  "gmail.draft_reply": "concept in Gmail",
+  "calendar.create_event": "afspraak in je agenda",
+  "calendar.list_day": "agenda lezen",
+};
+
+const OUTCOME_TEXT: Record<string, string> = {
+  done: "gedaan",
+  failed: "ging mis",
+  rejected: "liet je vallen",
 };
 
 /**
@@ -31,6 +45,10 @@ export default async function InstellingenPage() {
       tx.userSetting.findMany({ where: { user_id: userId } }),
     ]),
   );
+  const [pending, recent] = await Promise.all([
+    pendingToolCalls(userId),
+    recentToolCalls(userId),
+  ]);
 
   const setting = (key: string) => settings.find((s) => s.key === key)?.value;
 
@@ -88,6 +106,68 @@ export default async function InstellingenPage() {
           ))}
         </ul>
       </section>
+
+      {pending.length > 0 && (
+        <section className="section">
+          <div className="section__head">
+            <h2>Wil je dit?</h2>
+            <span className="section__note">wacht op jou, er is nog niets gebeurd</span>
+          </div>
+          <ul className="list">
+            {pending.map((call) => (
+              <li key={call.id}>
+                <div className="row">
+                  <div className="row__body">
+                    <span className="row__title">{call.summary}</span>
+                    <span className="row__sub">
+                      {TOOL_TEXT[call.tool] ?? call.tool} · {durationPhrase(call.created_at)} open
+                    </span>
+                  </div>
+                  {/* Nee is even makkelijk als ja (regel 4): geen bevestiging,
+                      geen waarschuwing, dezelfde plek. */}
+                  <div className="btn-row">
+                    <form action={decideFromForm.bind(null, call.id, "approve")}>
+                      <button className="btn btn--text" type="submit">
+                        Doen
+                      </button>
+                    </form>
+                    <form action={decideFromForm.bind(null, call.id, "reject")}>
+                      <button className="btn btn--text" type="submit">
+                        Niet doen
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {recent.length > 0 && (
+        <section className="section">
+          <div className="section__head">
+            <h2>Wat ik deed</h2>
+            <span className="section__note">laatste acties bij je bronnen</span>
+          </div>
+          <ul className="list">
+            {recent.slice(0, 5).map((call) => (
+              <li key={call.id}>
+                <div className="row">
+                  <div className="row__body">
+                    <span className="row__title">{call.summary}</span>
+                    <span className="row__sub">
+                      {OUTCOME_TEXT[call.status] ?? call.status}
+                      {call.finished_at ? ` · ${formatDayShort(call.finished_at)}` : ""}
+                      {call.error_message ? ` · ${call.error_message}` : ""}
+                    </span>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="section">
         <div className="section__head">
@@ -187,6 +267,11 @@ export default async function InstellingenPage() {
 async function setPermissionFromForm(id: string, data: FormData) {
   "use server";
   await setConnectorPermission(id, String(data.get("permission") ?? "propose"));
+}
+
+async function decideFromForm(id: string, decision: "approve" | "reject") {
+  "use server";
+  await decideTool(id, decision);
 }
 
 async function logout() {

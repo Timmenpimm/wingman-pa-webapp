@@ -5,6 +5,7 @@ import { currentUserId } from "@/lib/db/client";
 import { withUser, type Tx } from "@/lib/db/with-user";
 import { localDayStart } from "@/lib/day";
 import { clamp } from "@/lib/text";
+import { decideToolCall, requestTool } from "@/lib/tools/execute";
 
 /**
  * Alle mutaties op één plek. De REST-routes onder /api/v1 roepen dezelfde
@@ -215,6 +216,27 @@ export async function setConnectorPermission(id: string, permission: string) {
     }),
   );
   revalidatePath("/instellingen");
+}
+
+/**
+ * Een tool aanroepen. Of het ook echt gebeurt, beslist de permissiepoort in
+ * src/lib/tools/permission.ts — deze functie is alleen de ingang die de UI, de
+ * REST-laag en straks de nachtelijke run delen.
+ */
+export async function runTool(name: string, params: unknown) {
+  const userId = await currentUserId();
+  const outcome = await requestTool(userId, name, params);
+  revalidatePath("/instellingen");
+  return outcome;
+}
+
+/** Het antwoord op een openstaande vraag. Beide knoppen even makkelijk (regel 4). */
+export async function decideTool(id: string, decision: "approve" | "reject") {
+  const userId = await currentUserId();
+  const outcome = await decideToolCall(userId, id, decision);
+  revalidatePath("/instellingen");
+  revalidatePath("/");
+  return outcome;
 }
 
 export async function updateStyleCard(
