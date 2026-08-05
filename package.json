@@ -9,7 +9,14 @@
     "lint": "next lint",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
-    "db:reset": "prisma db push && tsx prisma/seed.ts"
+    "db:reset": "prisma migrate deploy && tsx prisma/seed.ts",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:nuke": "docker compose down -v && docker compose up -d && sleep 3 && prisma migrate deploy && tsx prisma/seed.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "smoke": "node scripts/smoke.mjs",
+    "build:check": "next build --no-lint"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -32,6 +39,8 @@
     "@types/react-dom": "18.3.0",
     "prisma": "5.22.0",
     "tsx": "4.19.2",
-    "typescript": "5.5.4"
+    "typescript": "5.5.4",
+    "vitest": "^2.1.9",
+    "wait-on": "^9.1.0"
   }
 }

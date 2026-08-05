@@ -9,13 +9,39 @@ Gebouwd op `webapp-designbriefing.md` (§1–§11 + Appendix A/B).
 
 ```bash
 npm install
-npm run db:reset   # schema + seed-data
-npm run dev        # http://localhost:3111
+cp .env.example .env   # de standaardwaarden werken lokaal
+npm run db:up          # Postgres in Docker (poort 5433)
+npm run db:reset       # migraties + seed-data
+npm run dev            # http://localhost:3111
 ```
 
+Inloggen met `nora@voorbeeld.nl` en het wachtwoord uit `SEED_PASSWORD`.
+
+**De ontwikkeldatabase draait lokaal in Docker en is wegwerpbaar.** De
+productiedatabase hoort niet in je `.env`: die staat alleen in Vercel. Wie
+lokaal tegen productie ontwikkelt, wist vroeg of laat echte gegevens met een
+seed. `npm run db:nuke` gooit de lokale database weg en bouwt hem opnieuw op.
+
 Er zijn geen API-keys nodig. De app draait volledig op seed-data uit
-`prisma/seed.ts` — één realistische dag, inclusief een connector die stuk is,
+`prisma/seed.ts` — één verzonnen dag, inclusief een connector die stuk is,
 want dat is de normale toestand van een PSD2-koppeling.
+
+## Testen
+
+```bash
+npm test     # eenheidstests: tijdzones, karakterbudgetten, doorsturen
+npm run smoke   # tegen een draaiende app: komt niemand zonder sessie bij data?
+```
+
+De rooktest is de belangrijkste: hij loopt alle negen pagina's en alle
+API-routes langs zonder sessie, controleert dat er geen byte data uit komt, en
+test daarna de inlog. Draait ook tegen een deploy:
+
+```bash
+BASIS=https://… WACHTWOORD=… npm run smoke
+```
+
+Beide draaien automatisch op elke pull request (`.github/workflows/ci.yml`).
 
 ## Wat er werkt
 

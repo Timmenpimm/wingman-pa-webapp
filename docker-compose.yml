@@ -1,0 +1,29 @@
+# Lokale ontwikkeldatabase.
+#
+# Reden dat dit bestand bestaat: zonder eigen database ontwikkel je tegen
+# productie. Dan is een `db:seed` tijdens het bouwen genoeg om echte gegevens
+# te wissen, en zie je fouten pas als een gebruiker ze meemaakt.
+#
+# Zelfde majorversie als Supabase (Postgres 15), zodat gedrag en migraties
+# hier hetzelfde uitpakken als live.
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: wingman-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: wingman
+      POSTGRES_PASSWORD: wingman
+      POSTGRES_DB: wingman
+    ports:
+      - "5433:5432" # 5433 om een eventuele lokale Postgres op 5432 niet in de weg te zitten
+    volumes:
+      - wingman-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wingman -d wingman"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  wingman-db-data:
