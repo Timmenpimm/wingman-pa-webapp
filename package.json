@@ -17,7 +17,8 @@
     "test:watch": "vitest",
     "smoke": "node scripts/smoke.mjs",
     "build:check": "next build --no-lint",
-    "rls:bewijs": "node --env-file=.env scripts/rls-bewijs.mjs"
+    "rls:bewijs": "node --env-file=.env scripts/rls-bewijs.mjs",
+    "google:sleutels": "node scripts/google-sleutels.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
