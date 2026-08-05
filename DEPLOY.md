@@ -198,6 +198,16 @@ ALTER ROLE app_user WITH PASSWORD '<genereer iets langs>';
 
 Zet daarna `DATABASE_URL` naar `app_user` en `DIRECT_URL` naar de eigenaarsrol.
 
+**Val niet in deze val op Supabase:** de pooler (Supavisor) leidt de tenant af
+uit de gebruikersnaam. De gebruiker moet dus `app_user.<project-ref>` heten in
+de connectiestring, niet `app_user`. Zonder die suffix krijg je
+`FATAL: (ENOIDENTIFIER) no tenant identifier provided` — een fout die er
+uitziet als "database onbereikbaar", terwijl de database prima draait.
+
+```
+postgresql://app_user.<project-ref>:<wachtwoord>@<regio>.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1
+```
+
 ### Wat er nog niet is
 
 Geen registratie: accounts ontstaan alleen via de seed.
