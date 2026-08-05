@@ -155,7 +155,7 @@ function Group({
                         type="submit"
                         aria-label={`Herinner me over 3 dagen: ${item.party} — ${item.what}`}
                       >
-                        Herinner me over 3 dagen
+                        Over 3 dagen
                       </button>
                     </form>
                     <form action={resolveCommitment.bind(null, item.id, "dismissed", 0)}>

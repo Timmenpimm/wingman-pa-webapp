@@ -30,7 +30,7 @@ h2,
 h3 {
   font-family: var(--font-serif);
   color: var(--ink);
-  font-weight: var(--w-normal);
+  font-weight: var(--w-medium);
   line-height: var(--lh-tight);
   margin: 0;
 }
@@ -51,7 +51,7 @@ button {
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
-  border-radius: var(--r-sm);
+  border-radius: var(--r-2xs);
 }
 
 /* ---------- Layout ---------------------------------------------------- */
@@ -98,16 +98,18 @@ button {
 
 .wordmark {
   font-family: var(--font-serif);
-  font-size: var(--t-md);
-  letter-spacing: 0.01em;
+  font-weight: var(--w-medium);
+  font-size: var(--t-lg);
+  letter-spacing: -0.01em;
   color: var(--ink);
   text-decoration: none;
 }
 
 .wordmark span {
+  font-family: var(--font-sans);
   color: var(--ink-faint);
   font-size: var(--t-xs);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   margin-left: var(--s-2);
 }
@@ -130,6 +132,12 @@ button {
   font-size: var(--t-xs);
   color: var(--ink-muted);
   text-decoration: none;
+  transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+
+.masthead__search:hover {
+  color: var(--ink);
+  border-color: var(--rule-strong);
 }
 
 /* Navigatie ------------------------------------------------------------- */
@@ -158,6 +166,8 @@ button {
   flex: 1 0 auto;
   text-align: center;
   padding: var(--s-3) var(--s-3) calc(var(--s-3) + env(safe-area-inset-bottom));
+  font-family: var(--font-sans);
+  font-weight: var(--w-medium);
   font-size: var(--t-xs);
   letter-spacing: 0.02em;
   color: var(--ink-muted);
@@ -165,10 +175,15 @@ button {
   white-space: nowrap;
   border-top: 2px solid transparent;
   margin-top: -1px;
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+
+.nav a:hover {
+  color: var(--ink);
 }
 
 .nav a[aria-current="page"] {
-  color: var(--ink);
+  color: var(--accent);
   border-top-color: var(--accent);
 }
 
@@ -176,14 +191,14 @@ button {
 
 .eyebrow {
   font-size: var(--t-xs);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ink-faint);
   margin: 0 0 var(--s-2);
 }
 
 .section {
-  margin-top: var(--s-7);
+  margin-top: var(--s-6);
 }
 
 .section__head {
@@ -195,7 +210,10 @@ button {
 }
 
 .section__head h2 {
-  font-size: var(--t-lg);
+  font-family: var(--font-sans);
+  font-weight: var(--w-semi);
+  font-size: var(--t-md);
+  letter-spacing: normal;
 }
 
 .section__note {
@@ -218,11 +236,13 @@ button {
   color: var(--ink-muted);
 }
 
-/* ---------- Frog ------------------------------------------------------- */
+/* ---------- Frog --------------------------------------------------------
+   Groen-getint kaartoppervlak (bron: #111a13 op #101312), altijd aan — de
+   "afgehandeld"-status verdiept de tint, niet andersom (§9.4/regel 8). */
 
 .frog {
-  background: var(--paper-raised);
-  border: 1px solid var(--rule);
+  background: color-mix(in srgb, var(--accent) 8%, var(--paper-raised));
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--rule));
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-frog);
   padding: var(--s-6) var(--s-5);
@@ -237,7 +257,7 @@ button {
 
 .frog__label {
   font-size: var(--t-xs);
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--accent);
   margin: 0 0 var(--s-4);
@@ -245,6 +265,7 @@ button {
 
 .frog__title {
   font-family: var(--font-serif);
+  font-weight: var(--w-medium);
   font-size: var(--t-xl);
   line-height: var(--lh-tight);
   color: var(--ink);
@@ -283,13 +304,13 @@ button {
 }
 
 .frog--done {
-  border-color: color-mix(in srgb, var(--accent) 35%, var(--rule));
-  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--rule));
+  background: color-mix(in srgb, var(--accent) 14%, var(--paper-raised));
 }
 
 .frog--done .frog__title {
   text-decoration: line-through;
-  text-decoration-color: var(--ink-faint);
+  text-decoration-color: color-mix(in srgb, var(--accent) 55%, transparent);
   text-decoration-thickness: 1px;
 }
 
@@ -304,7 +325,7 @@ button {
   border: 1px solid transparent;
   padding: var(--s-3) var(--s-5);
   font-size: var(--t-sm);
-  font-weight: var(--w-medium);
+  font-weight: var(--w-semi);
   line-height: 1;
   text-decoration: none;
   transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease),
@@ -312,18 +333,16 @@ button {
 }
 
 .btn--primary {
-  background: var(--accent);
-  color: #fff;
+  background: var(--accent-strong);
+  color: var(--accent-on-strong);
 }
 
 .btn--primary:hover {
-  background: var(--accent-ink);
+  background: var(--accent-strong-hover);
 }
 
-@media (prefers-color-scheme: dark) {
-  .btn--primary {
-    color: #10201d;
-  }
+.btn--primary:active {
+  background: var(--accent-strong-active);
 }
 
 .btn--quiet {
@@ -336,6 +355,7 @@ button {
 .btn--quiet:hover {
   color: var(--ink-body);
   border-color: var(--ink-faint);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
 }
 
 .btn--text {
@@ -344,13 +364,11 @@ button {
   padding: var(--s-1) 0;
   color: var(--ink-muted);
   font-size: var(--t-sm);
-  text-decoration: underline;
-  text-decoration-color: var(--rule-strong);
-  text-underline-offset: 3px;
+  font-weight: var(--w-medium);
 }
 
 .btn--text:hover {
-  color: var(--ink-body);
+  color: var(--ink);
 }
 
 .btn[disabled] {
@@ -364,37 +382,51 @@ button {
   gap: var(--s-2);
 }
 
-/* ---------- Coachregel ------------------------------------------------- */
+/* ---------- Coachregel --------------------------------------------------
+   In het ontwerp een gevulde "warme kaart" met icoon, geen blockquote — de
+   markup hier heeft geen icoonslot, dus alleen de kaartbehandeling. */
 
 .coach {
   margin-top: var(--s-6);
-  font-family: var(--font-serif);
-  font-size: var(--t-md);
-  line-height: var(--lh-snug);
+  font-family: var(--font-sans);
+  font-size: var(--t-base);
+  line-height: var(--lh-body);
   color: var(--ink-body);
   max-width: var(--measure);
-  border-left: 2px solid var(--accent);
-  padding-left: var(--s-4);
+  background: var(--paper-sunk);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-md);
+  padding: var(--s-4) var(--s-5);
 }
 
-/* ---------- Lijsten ---------------------------------------------------- */
+/* ---------- Lijsten ------------------------------------------------------
+   Eén kaart met interne scheidingslijnen — zo staan de prios- en
+   recente-vragen-lijsten in het ontwerp (#101312, rand, radius, overflow
+   verborgen). */
 
 .list {
   list-style: none;
   margin: 0;
   padding: 0;
-  border-top: 1px solid var(--rule);
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-md);
+  overflow: hidden;
 }
 
 .list > li {
   border-bottom: 1px solid var(--rule);
 }
 
+.list > li:last-child {
+  border-bottom: none;
+}
+
 .row {
   display: flex;
   gap: var(--s-3);
   align-items: flex-start;
-  padding: var(--s-4) 0;
+  padding: var(--s-4);
 }
 
 .row__body {
@@ -404,6 +436,7 @@ button {
 
 .row__title {
   color: var(--ink);
+  font-weight: var(--w-medium);
   font-size: var(--t-base);
   line-height: var(--lh-snug);
 }
@@ -411,24 +444,40 @@ button {
 .row__title--done {
   color: var(--ink-faint);
   text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--accent) 40%, transparent);
   text-decoration-thickness: 1px;
 }
 
 .row__sub {
   margin-top: var(--s-1);
-  font-size: var(--t-sm);
+  font-size: var(--t-xs);
   color: var(--ink-muted);
   overflow-wrap: anywhere;
 }
 
 .row__actions {
   display: flex;
-  gap: var(--s-3);
+  gap: var(--s-2);
   margin-top: var(--s-3);
   flex-wrap: wrap;
+  /* Pillen en tekstknoppen hebben een verschillende hoogte; zonder dit staat
+     "laat vallen" scheef onder de rand van de pil ernaast. */
+  align-items: center;
 }
 
-/* Checkbox — geen icoon-only, altijd met label */
+/* Acties binnen een rij zijn secundair aan de tekst erboven: iets kleiner dan
+   een losse knop, zodat drie stuks op 390px niet de helft van de kaart vullen. */
+.row__actions .btn--quiet {
+  padding: var(--s-2) var(--s-3);
+  font-size: var(--t-xs);
+}
+
+.row__actions .btn--text {
+  font-size: var(--t-xs);
+}
+
+/* Checkbox — zachte accentwas met accentrand, geschreven als bevestiging
+   (§7: groen alleen op de primaire actie en op bevestiging). */
 .check {
   appearance: none;
   flex: 0 0 auto;
@@ -436,7 +485,7 @@ button {
   height: 20px;
   margin-top: 2px;
   border: 1.5px solid var(--rule-strong);
-  border-radius: var(--r-sm);
+  border-radius: var(--r-2xs);
   background: var(--paper-raised);
   display: grid;
   place-content: center;
@@ -452,8 +501,8 @@ button {
   content: "";
   width: 10px;
   height: 5px;
-  border-left: 2px solid var(--paper-raised);
-  border-bottom: 2px solid var(--paper-raised);
+  border-left: 2px solid var(--accent-on-strong);
+  border-bottom: 2px solid var(--accent-on-strong);
   transform: rotate(-45deg) translateY(-1px);
 }
 
@@ -483,6 +532,7 @@ button {
 
 .timeline__title {
   color: var(--ink);
+  font-weight: var(--w-medium);
 }
 
 .timeline__conflict {
@@ -515,6 +565,7 @@ button {
 
 .card__title {
   font-family: var(--font-serif);
+  font-weight: var(--w-medium);
   font-size: var(--t-md);
   color: var(--ink);
 }
@@ -528,7 +579,7 @@ button {
 /* ---------- Notities / staten ------------------------------------------ */
 
 .notice {
-  border: 1px solid var(--rule-strong);
+  border: 1px solid var(--rule);
   background: var(--paper-sunk);
   border-radius: var(--r-md);
   padding: var(--s-4);
@@ -547,14 +598,15 @@ button {
 .notice__mark {
   color: var(--signal);
   font-size: var(--t-xs);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   flex: 0 0 auto;
   padding-top: 2px;
 }
 
 .empty {
-  border: 1px dashed var(--rule-strong);
+  border: 1px solid var(--rule);
+  background: var(--paper-raised);
   border-radius: var(--r-md);
   padding: var(--s-6) var(--s-5);
   text-align: left;
@@ -566,8 +618,8 @@ button {
 .empty strong {
   display: block;
   font-family: var(--font-serif);
+  font-weight: var(--w-medium);
   font-size: var(--t-md);
-  font-weight: var(--w-normal);
   color: var(--ink);
   margin-bottom: var(--s-2);
 }
@@ -576,20 +628,20 @@ button {
 .rest {
   margin-top: var(--s-6);
   padding: var(--s-7) var(--s-5);
-  border: 1px solid var(--rule);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--rule));
   border-radius: var(--r-lg);
   background: var(--accent-soft);
   text-align: center;
 }
 
 .rest h2 {
-  font-size: var(--t-lg);
+  font-size: var(--t-xl);
 }
 
 .rest p {
   margin-top: var(--s-3);
   color: var(--ink-muted);
-  font-size: var(--t-sm);
+  font-size: var(--t-base);
 }
 
 /* ---------- Formulier -------------------------------------------------- */
@@ -604,12 +656,18 @@ button {
   flex: 1;
   min-width: 0;
   font: inherit;
-  font-size: var(--t-base);
+  font-size: var(--t-md);
   color: var(--ink-body);
   background: var(--paper-raised);
   border: 1px solid var(--rule-strong);
   border-radius: var(--r-md);
   padding: var(--s-3) var(--s-4);
+  transition: border-color var(--dur) var(--ease);
+}
+
+.input:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
 }
 
 .input::placeholder {
@@ -657,24 +715,26 @@ button {
   color: var(--accent);
 }
 
-/* ---------- Graaf ------------------------------------------------------ */
+/* ---------- Graaf ------------------------------------------------------- */
 
 .graph-result {
   border: 1px solid var(--rule);
   border-radius: var(--r-md);
-  padding: var(--s-3) var(--s-4);
+  padding: var(--s-4);
   background: var(--paper-raised);
 }
 
 .graph-result__type {
+  font-weight: var(--w-semi);
   font-size: var(--t-xs);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--ink-faint);
+  color: var(--accent);
 }
 
 .graph-result__label {
   font-family: var(--font-serif);
+  font-weight: var(--w-medium);
   font-size: var(--t-base);
   color: var(--ink);
   margin-top: 2px;
@@ -682,8 +742,9 @@ button {
 
 .graph-edges {
   list-style: none;
-  margin: var(--s-2) 0 0;
-  padding: 0;
+  margin: var(--s-3) 0 0;
+  padding-top: var(--s-2);
+  border-top: 1px solid var(--rule);
   display: flex;
   flex-direction: column;
   gap: var(--s-1);
@@ -699,7 +760,7 @@ button {
   font-size: 0.7rem;
   color: var(--accent-ink);
   background: var(--accent-soft);
-  border-radius: var(--r-sm);
+  border-radius: var(--r-2xs);
   padding: 1px 5px;
 }
 
@@ -736,15 +797,9 @@ button {
 
 .steps > li[data-done="true"]::before {
   content: "✓";
-  color: #fff;
+  color: var(--accent-on-strong);
   background: var(--accent);
   border-color: var(--accent);
-}
-
-@media (prefers-color-scheme: dark) {
-  .steps > li[data-done="true"]::before {
-    color: #10201d;
-  }
 }
 
 .step__title {
@@ -755,6 +810,7 @@ button {
 .step__payoff {
   margin-top: var(--s-2);
   font-family: var(--font-serif);
+  font-weight: var(--w-medium);
   font-size: var(--t-base);
   color: var(--ink-body);
   background: var(--paper-sunk);
@@ -776,6 +832,7 @@ button {
 
 .conn__name {
   color: var(--ink);
+  font-weight: var(--w-medium);
   flex: 1 1 12rem;
   min-width: 0;
 }
@@ -798,6 +855,12 @@ button {
   border: 1px solid var(--rule-strong);
   border-radius: var(--r-md);
   padding: var(--s-2) var(--s-3);
+  transition: border-color var(--dur) var(--ease);
+}
+
+.select:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
 }
 
 /* ---------- Diversen ---------------------------------------------------- */
@@ -855,7 +918,7 @@ button {
 @keyframes vanish {
   to {
     opacity: 0;
-    transform: translateY(-4px);
+    transform: translateY(-8px) scale(0.98);
   }
 }
 
@@ -886,7 +949,7 @@ button {
   width: 100%;
   background: none;
   border: none;
-  padding: var(--s-4) 0;
+  padding: var(--s-4);
   text-align: left;
   color: inherit;
   font: inherit;
@@ -913,8 +976,8 @@ button {
   margin: auto;
   width: 10px;
   height: 5px;
-  border-left: 2px solid var(--paper-raised);
-  border-bottom: 2px solid var(--paper-raised);
+  border-left: 2px solid var(--accent-on-strong);
+  border-bottom: 2px solid var(--accent-on-strong);
   transform: rotate(-45deg) translateY(-1px);
 }
 

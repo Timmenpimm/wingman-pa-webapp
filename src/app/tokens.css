@@ -1,54 +1,62 @@
 /* Wingman — design tokens
  *
- * Richting uit §7 van de briefing: editoriaal, typografisch, warme papier-
- * achtergrond, één accentkleur spaarzaam. Geen AI-gradient, geen glow, geen
- * urgentie-kleurcodering over de UI. Urgentie zit in de tekst.
+ * Bron: design-reference/Wingman-v2.dc.html. Donker is het hoofdthema:
+ * grond #080a09, tekst #eceae6, één accentgroen (#8ed081, hover #b3e0a8),
+ * amber als enige tweede signaalkleur — nooit rood-alarm over de UI.
+ * Newsreader (serif, koppen) + Archivo (sans, interface), basis 15px/1.55.
+ *
+ * --font-serif en --font-sans komen van next/font/google (zie layout.tsx) —
+ * hier bewust niet opnieuw gedeclareerd, anders wint de volgorde in de
+ * cascade in plaats van de bedoelde waarde.
  */
 
 :root {
-  /* --- Kleur: papier & inkt ------------------------------------------- */
-  --paper: #f7f4ee; /* achtergrond, warm papier */
-  --paper-raised: #fffdf9; /* kaarten */
-  --paper-sunk: #f0ece3; /* velden, rustige blokken */
-  --ink: #1c1a17; /* koptekst */
-  --ink-body: #35312b; /* lopende tekst */
-  --ink-muted: #6f6a61; /* meta, bron, datum */
-  --ink-faint: #a09a90; /* placeholders, dividers-tekst */
-  --rule: #e2dcd1; /* lijnen */
-  --rule-strong: #cfc7b8;
+  /* --- Kleur: grond & inkt (donker, hoofdthema) ------------------------ */
+  --paper: #080a09; /* grond */
+  --paper-raised: #101312; /* kaarten, rijen, velden */
+  --paper-sunk: #141a17; /* warme kaart: notice, coach */
+  --ink: #eceae6;
+  --ink-body: rgba(236, 234, 230, 0.85);
+  --ink-muted: rgba(236, 234, 230, 0.6);
+  --ink-faint: rgba(236, 234, 230, 0.45);
+  --rule: rgba(236, 234, 230, 0.09);
+  --rule-strong: rgba(236, 234, 230, 0.16);
 
-  /* Eén accent. Inktblauw-groen: rustig, niet-alarmerend, leesbaar op papier. */
-  --accent: #1f5f56;
-  --accent-soft: #e4efec;
-  --accent-ink: #143f39;
+  /* Eén accent. Groen alleen op de primaire actie en op bevestiging. */
+  --accent: #8ed081; /* label, link, checkmark, focus */
+  --accent-hover: #b3e0a8;
+  --accent-ink: #b3e0a8; /* tekst op een zachte accent-vlak */
+  --accent-strong: #8ab377; /* vulling primaire knop */
+  --accent-strong-hover: #9cc389;
+  --accent-strong-active: #78a066;
+  --accent-on-strong: #0b0d0c; /* tekst op de gevulde primaire knop */
+  --accent-soft: rgba(142, 208, 129, 0.14);
 
-  /* Signaal — bewust bijna-neutraal. Nooit rood alarm (§3). */
-  --signal: #8a6a2f; /* "dit vraagt aandacht", zand/oker */
-  --signal-soft: #f3ece0;
+  /* Signaal — amber, bewust niet rood. "Dit vraagt aandacht", nooit alarm. */
+  --signal: #d9a441;
+  --signal-soft: rgba(217, 164, 65, 0.12);
 
   /* --- Typografie ------------------------------------------------------ */
-  --font-serif: ui-serif, "Iowan Old Style", "Palatino Linotype", Palatino,
-    "Source Serif 4", Georgia, serif;
-  --font-sans: ui-sans-serif, -apple-system, "Inter", "Segoe UI", Helvetica, Arial,
-    sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
 
-  /* Schaal 1.25 (major third), basis 16px */
-  --t-xs: 0.75rem; /* 12 — meta, bron */
-  --t-sm: 0.875rem; /* 14 — labels, secundair */
-  --t-base: 1rem; /* 16 — lopende tekst */
-  --t-md: 1.125rem; /* 18 — coachregel */
+  /* Basis 15px/1.55 (bron-anker). Archivo voor interface, Newsreader voor
+     koppen — welke van de twee is per klasse bepaald, niet hier. */
+  --t-xs: 0.75rem; /* 12 — meta, labels, bron/datum */
+  --t-sm: 0.875rem; /* 14 — secundaire knoppen, subtekst */
+  --t-base: 0.9375rem; /* 15 — lopende tekst */
+  --t-md: 1rem; /* 16 — invoer, intro-tekst, coach */
   --t-lg: 1.375rem; /* 22 — sectiekop */
   --t-xl: 1.75rem; /* 28 — frog mobiel */
-  --t-2xl: 2.25rem; /* 36 — frog desktop */
+  --t-2xl: 2.125rem; /* 34 — frog desktop */
 
-  --lh-tight: 1.2;
+  --lh-tight: 1.15;
   --lh-snug: 1.35;
   --lh-body: 1.55;
 
   --w-normal: 400;
   --w-medium: 500;
   --w-semi: 600;
+  --w-bold: 700;
 
   /* --- Ruimte (4px-grid) ----------------------------------------------- */
   --s-1: 0.25rem;
@@ -60,43 +68,56 @@
   --s-7: 3rem;
   --s-8: 4rem;
 
-  /* --- Vorm ------------------------------------------------------------- */
-  --r-sm: 6px;
-  --r-md: 10px;
-  --r-lg: 16px;
+  /* --- Vorm --------------------------------------------------------------
+     Radii 12 / 16 / 20 / 999 uit het ontwerp; 6px is een eigen toevoeging
+     voor het kleine vinkvakje, dat in het ontwerp zelf niet voorkomt. */
+  --r-2xs: 6px;
+  --r-sm: 12px;
+  --r-md: 16px;
+  --r-lg: 20px;
   --r-pill: 999px;
 
-  /* Schaduw: papier op papier, geen glow */
-  --shadow-card: 0 1px 2px rgba(28, 26, 23, 0.04), 0 8px 24px rgba(28, 26, 23, 0.05);
-  --shadow-frog: 0 2px 4px rgba(28, 26, 23, 0.05), 0 16px 40px rgba(28, 26, 23, 0.07);
+  /* Kaarten op donker zijn vlak (rand, geen glow) — zo staat het ook in het
+     bronbestand: alleen het telefoonframe zelf heeft een schaduw. */
+  --shadow-card: none;
+  --shadow-frog: 0 20px 48px rgba(0, 0, 0, 0.35);
 
   --measure: 62ch; /* leesbreedte */
-  --page-max: 44rem;
+  --page-max: 40rem;
 
   /* Beweging: alleen functioneel (§7) */
   --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
   --dur: 220ms;
 }
 
-/* Dark mode als tweede thema, niet als hoofdthema (§7) */
-@media (prefers-color-scheme: dark) {
+/* Licht is de tweede variant, niet het hoofdthema — zelfde tokens, warme
+   papierwaarden in plaats van grond/inkt. */
+@media (prefers-color-scheme: light) {
   :root {
-    --paper: #14130f;
-    --paper-raised: #1c1a16;
-    --paper-sunk: #100f0c;
-    --ink: #f2eee6;
-    --ink-body: #ded8cd;
-    --ink-muted: #9b948a;
-    --ink-faint: #6b655c;
-    --rule: #2c2924;
-    --rule-strong: #3d3931;
-    --accent: #7fbfb2;
-    --accent-soft: #1b2b28;
-    --accent-ink: #a8d6cb;
-    --signal: #c9a86a;
-    --signal-soft: #26211a;
-    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
-    --shadow-frog: 0 2px 4px rgba(0, 0, 0, 0.45), 0 16px 40px rgba(0, 0, 0, 0.4);
+    --paper: #f7f4ee;
+    --paper-raised: #fffdf9;
+    --paper-sunk: #f0ece3;
+    --ink: #1c1a17;
+    --ink-body: #35312b;
+    --ink-muted: #6f6a61;
+    --ink-faint: #a09a90;
+    --rule: #e2dcd1;
+    --rule-strong: #cfc7b8;
+
+    --accent: #1f5f56;
+    --accent-hover: #16443d;
+    --accent-ink: #143f39;
+    --accent-strong: #1f5f56;
+    --accent-strong-hover: #16443d;
+    --accent-strong-active: #123330;
+    --accent-on-strong: #fff;
+    --accent-soft: #e4efec;
+
+    --signal: #8a6a2f;
+    --signal-soft: #f3ece0;
+
+    --shadow-card: 0 1px 2px rgba(28, 26, 23, 0.04), 0 8px 24px rgba(28, 26, 23, 0.05);
+    --shadow-frog: 0 2px 4px rgba(28, 26, 23, 0.05), 0 16px 40px rgba(28, 26, 23, 0.07);
   }
 }
 
