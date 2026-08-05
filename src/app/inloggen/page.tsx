@@ -11,6 +11,10 @@ export const dynamic = "force-dynamic";
  * emailConfigured leest AUTH_EMAIL_SERVER hier op de server — de client komt
  * nooit in de buurt van of hóe mail verstuurd wordt, alleen van het feit of
  * het kan.
+ *
+ * googleConfigured is hetzelfde patroon voor AUTH_GOOGLE_ID/-SECRET (zie
+ * auth.ts): zonder die twee staat de Google-provider niet in de providerlijst,
+ * dus zou de knop toch nooit iets doen.
  */
 export default function InloggenPage({
   searchParams,
@@ -18,6 +22,7 @@ export default function InloggenPage({
   searchParams: { vanaf?: string; link?: string };
 }) {
   const emailConfigured = Boolean(process.env.AUTH_EMAIL_SERVER);
+  const googleConfigured = Boolean(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET);
   const callbackUrl = safeReturnPath(searchParams.vanaf);
   const linkExpired = searchParams.link === "ongeldig";
 
@@ -50,7 +55,11 @@ export default function InloggenPage({
         </p>
       )}
 
-      <LoginForm emailConfigured={emailConfigured} callbackUrl={callbackUrl} />
+      <LoginForm
+        emailConfigured={emailConfigured}
+        googleConfigured={googleConfigured}
+        callbackUrl={callbackUrl}
+      />
 
       <div className="login__notice">
         <p>

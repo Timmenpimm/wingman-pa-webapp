@@ -1,9 +1,12 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import Google from "next-auth/providers/google";
+import type { Provider } from "next-auth/providers";
 import bcrypt from "bcryptjs";
 import { authConfig } from "./auth.config";
 import { ownerPrisma as prisma } from "@/lib/db/owner-prisma";
 import { verifyMagicLinkToken } from "@/lib/auth/magic-link";
+import { findOrCreateUserByEmail, upsertGoogleConnectors } from "@/lib/auth/google-connectors";
 
 /**
  * Volledige NextAuth-config — alleen voor Node-contexten (route handlers,
@@ -71,9 +74,83 @@ const magicLinkProvider = Credentials({
   },
 });
 
+/**
+ * "Inloggen met Google" + connector-autorisatie in één stap: naast de gewone
+ * OIDC-scopes vragen we meteen agenda- en gmail-toegang op, zodat de
+ * gebruiker niet twee keer langs een Google-consentscherm hoeft. Zonder
+ * access_type=offline + prompt=consent geeft Google alleen bij het állereerste
+ * consent ooit een refresh_token terug — met prompt=consent forceren we dat
+ * bij elke login, wat hier bewust is: zonder refresh_token kan de connector
+ * na een uur niet meer ververst worden (zie src/lib/auth/google-token.ts).
+ *
+ * calendar.readonly en gmail.* zijn restricted scopes: vóór productie is een
+ * CASA-assessment nodig en tot die tijd staat het Google Cloud-project op
+ * "Testing" (max. 100 testgebruikers) — zie de toelichting in
+ * src/connectors/google-calendar.ts en het redirect-URI-blok in DEPLOY.md.
+ *
+ * Alleen in de providerlijst als AUTH_GOOGLE_ID/-SECRET gezet zijn — net als
+ * magicLinkProvider hierboven: geen key betekent geen aanvalsoppervlak dat
+ * toch nooit geldig aangeroepen kan worden.
+ */
+const googleProvider = Google({
+  authorization: {
+    params: {
+      scope: [
+        "openid",
+        "email",
+        "profile",
+        "https://www.googleapis.com/auth/calendar.readonly",
+        "https://www.googleapis.com/auth/gmail.readonly",
+        "https://www.googleapis.com/auth/gmail.compose",
+      ].join(" "),
+      access_type: "offline",
+      prompt: "consent",
+    },
+  },
+});
+
+const hasGoogleOAuth = Boolean(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET);
+
+const providers: Provider[] = [credentialsProvider];
+if (process.env.AUTH_EMAIL_SERVER) providers.push(magicLinkProvider);
+if (hasGoogleOAuth) providers.push(googleProvider);
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
-  providers: process.env.AUTH_EMAIL_SERVER
-    ? [credentialsProvider, magicLinkProvider]
-    : [credentialsProvider],
+  providers,
+  callbacks: {
+    ...authConfig.callbacks,
+
+    /**
+     * Draait vóór er een sessie bestaat. Voor Google: koppelt aan een
+     * bestaande User met hetzelfde e-mailadres (nooit een tweede User) en
+     * schrijft/ververst meteen de twee Connector-rijen (agenda + gmail).
+     *
+     * We muteren hier `user.id` naar onze eigen cuid. Er is geen
+     * PrismaAdapter geconfigureerd (JWT-only sessions, zie auth.config.ts) —
+     * zonder adapter geeft Auth.js hetzelfde `user`-object door aan de
+     * jwt-callback hieronder, dus die ziet via `user.id` meteen onze eigen
+     * userId in plaats van Googles `sub`. Zie next-auth.d.ts voor waarom
+     * currentUserId() (src/lib/db/client.ts) op precies dat veld leunt.
+     */
+    async signIn({ user, account, profile }) {
+      if (account?.provider !== "google") return true;
+      if (!profile?.email || profile.email_verified !== true) return false;
+
+      const dbUser = await findOrCreateUserByEmail(profile.email, profile.name);
+      user.id = dbUser.id;
+
+      await upsertGoogleConnectors(dbUser.id, profile.email, {
+        access_token: account.access_token,
+        refresh_token: account.refresh_token,
+        expires_at: account.expires_at,
+        scope: account.scope,
+      });
+
+      return true;
+    },
+
+    // authConfig.jwt zet token.uid = user.id — dat is hier al genoeg, ook
+    // voor Google, dankzij de mutatie in signIn() hierboven.
+  },
 });
