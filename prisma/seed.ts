@@ -18,9 +18,20 @@
  */
 
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
+import { randomBytes } from "node:crypto";
 import { localDayStart, localDayRange } from "../src/lib/day";
 
 const prisma = new PrismaClient();
+
+// Wachtwoord voor het demo-persona. SEED_PASSWORD gezet? Dan dat wachtwoord
+// hashen (kosten 12, zelfde als auth.ts) en niets loggen — degene die de
+// variabele zette kent 'm al. Niet gezet? Dan zelf iets willekeurigs maken en
+// dat één keer in de seed-uitvoer printen; nergens anders staat het, en er
+// komt geen hardgecodeerd wachtwoord in de repo.
+const seedPasswordFromEnv = process.env.SEED_PASSWORD;
+const generatedSeedPassword = seedPasswordFromEnv ? null : randomBytes(9).toString("base64url");
+const seedPassword = seedPasswordFromEnv || generatedSeedPassword!;
 
 // De demodag is de lokale dag van het persona, niet die van de machine waarop
 // de seed toevallig draait. Anders staat de briefing op de verkeerde datum
@@ -51,12 +62,15 @@ async function main() {
     prisma.user.deleteMany(),
   ]);
 
+  const passwordHash = await bcrypt.hash(seedPassword, 12);
+
   const user = await prisma.user.create({
     data: {
       email: "nora@voorbeeld.nl",
       name: "Nora Vermeer",
       timezone: "Europe/Amsterdam",
       locale: "nl",
+      password_hash: passwordHash,
     },
   });
   const uid = user.id;
@@ -572,6 +586,12 @@ async function main() {
   });
 
   console.log("Seed klaar voor", user.email, "(fictief demo-persona)");
+  if (generatedSeedPassword) {
+    console.log(
+      `Wachtwoord gegenereerd (SEED_PASSWORD stond niet in de omgeving): ${generatedSeedPassword}`,
+    );
+    console.log("Staat nergens anders — bewaar 'm nu, of zet SEED_PASSWORD en seed opnieuw.");
+  }
 }
 
 main()

@@ -40,6 +40,7 @@
         <button onClick="{{ goToday }}" style="{{ navTodayStyle }}">Vandaag</button>
         <button onClick="{{ goLoose }}" style="{{ navLooseStyle }}">Losse eindjes</button>
         <button onClick="{{ goGraph }}" style="{{ navGraphStyle }}">Vraag de graaf</button>
+        <button onClick="{{ goLogin }}" style="{{ navLoginStyle }}">Inloggen</button>
       </div>
 
       <div style="font-family:Archivo; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:rgba(236,234,230,0.45); margin-bottom:10px">Staat van Vandaag</div>
@@ -321,8 +322,63 @@
               </div>
             </div>
           </sc-if>
+
+          <sc-if value="{{ isLogin }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:8px 26px 26px; display:flex; flex-direction:column; min-height:762px">
+              <div style="flex:1 1 auto; display:flex; flex-direction:column; justify-content:center; padding-bottom:12px">
+                <span style="display:flex; align-items:center; justify-content:center; width:46px; height:46px; border-radius:15px; background:rgba(142,208,129,0.14); color:#8ed081; margin-bottom:26px">
+                  <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="4"></circle></svg>
+                </span>
+                <div style="font-family:Newsreader,serif; font-weight:500; font-size:40px; line-height:1.05; letter-spacing:-0.015em; margin-bottom:10px">Wingman</div>
+                <p style="margin:0 0 34px; font-size:16px; line-height:1.5; color:rgba(236,234,230,0.6); text-wrap:pretty; max-width:280px">Je hoeft niet alles zelf te onthouden. Log in en ik zet de dag voor je klaar.</p>
+
+                <div style="display:flex; flex-direction:column; gap:16px; margin-bottom:8px">
+                  <label style="display:flex; flex-direction:column; gap:8px">
+                    <span style="font-family:Archivo; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:rgba(236,234,230,0.45)">E-mail</span>
+                    <input type="email" value="{{ loginEmail }}" onChange="{{ setEmail }}" placeholder="nora@studio.nl" autoComplete="username" style="width:100%; font-family:Archivo; font-size:16px; color:#eceae6; background:#141a17; border:1px solid rgba(236,234,230,0.14); border-radius:14px; padding:14px 16px" style-focus="border-color:rgba(142,208,129,0.6)"></input>
+                  </label>
+                  <label style="display:flex; flex-direction:column; gap:8px">
+                    <span style="display:flex; align-items:baseline; justify-content:space-between; font-family:Archivo; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:rgba(236,234,230,0.45)">
+                      Wachtwoord
+                      <button type="button" onClick="{{ togglePw }}" style="font-family:Archivo; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:#8ed081; background:transparent; border:0; padding:0; cursor:pointer" style-hover="color:#b3e0a8">{{ pwToggleLabel }}</button>
+                    </span>
+                    <input type="{{ pwType }}" value="{{ loginPw }}" onChange="{{ setPw }}" placeholder="••••••••" autoComplete="current-password" style="width:100%; font-family:Archivo; font-size:16px; color:#eceae6; background:#141a17; border:1px solid rgba(236,234,230,0.14); border-radius:14px; padding:14px 16px" style-focus="border-color:rgba(142,208,129,0.6)"></input>
+                  </label>
+                </div>
+
+                <sc-if value="{{ loginErr }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex; gap:9px; align-items:flex-start; margin-top:14px; font-size:14px; line-height:1.45; color:#e8a08f">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="flex:0 0 auto; margin-top:2px"><path d="M12 8v5"></path><circle cx="12" cy="16.5" r="0.6" fill="currentColor"></circle><circle cx="12" cy="12" r="9"></circle></svg>
+                    <span>{{ loginErrText }}</span>
+                  </div>
+                </sc-if>
+
+                <button onClick="{{ doLogin }}" style="display:flex; align-items:center; justify-content:center; gap:9px; width:100%; margin-top:26px; font-family:Archivo; font-weight:600; font-size:16px; padding:15px 0; background:#8ab377; color:#0b0d0c; border:0; border-radius:14px; cursor:pointer" style-hover="background:#9cc389" style-active="background:#78a066">
+                  {{ loginCta }}
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6.5 18.5 12 13 17.5"></path></svg>
+                </button>
+
+                <div style="display:flex; align-items:center; gap:14px; margin:22px 0">
+                  <span style="flex:1 1 auto; height:1px; background:rgba(236,234,230,0.1)"></span>
+                  <span style="font-family:Archivo; font-size:12px; letter-spacing:0.1em; text-transform:uppercase; color:rgba(236,234,230,0.35)">of</span>
+                  <span style="flex:1 1 auto; height:1px; background:rgba(236,234,230,0.1)"></span>
+                </div>
+
+                <button onClick="{{ sendLink }}" style="display:flex; align-items:center; justify-content:center; gap:10px; width:100%; font-family:Archivo; font-weight:600; font-size:15px; padding:14px 0; background:transparent; color:#eceae6; border:1px solid rgba(236,234,230,0.22); border-radius:14px; cursor:pointer" style-hover="border-color:rgba(236,234,230,0.5)">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5.5" width="18" height="13" rx="2.5"></rect><path d="M3.6 7l8.4 6 8.4-6"></path></svg>
+                  {{ linkCta }}
+                </button>
+              </div>
+
+              <div style="border-top:1px solid rgba(236,234,230,0.09); padding-top:18px">
+                <p style="margin:0 0 8px; font-size:14px; color:rgba(236,234,230,0.55)">Nog geen Wingman? <a href="#" style="font-family:Archivo; font-weight:600">Account aanmaken</a></p>
+                <p style="margin:0; font-size:13px; line-height:1.45; color:rgba(236,234,230,0.35); text-wrap:pretty">Wingman leest je agenda en mail alleen om je dag te ordenen. Je kunt elke bron los weer intrekken.</p>
+              </div>
+            </div>
+          </sc-if>
         </div>
 
+        <sc-if value="{{ showTabs }}" hint-placeholder-val="{{ true }}">
         <div style="display:flex; border-top:1px solid rgba(236,234,230,0.09); padding:10px 8px 4px">
           <button onClick="{{ goToday }}" style="{{ tabTodayStyle }}">
             <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"></path></svg>
@@ -337,6 +393,7 @@
             <span style="font-family:Archivo; font-weight:500; font-size:12px">Vraag de graaf</span>
           </button>
         </div>
+        </sc-if>
         <div style="display:flex; justify-content:center; padding:6px 0 10px"><span style="display:block; width:128px; height:4px; border-radius:999px; background:rgba(236,234,230,0.35)"></span></div>
       </div>
     </div>
@@ -423,6 +480,7 @@ const ANSWERS = {
 class Component extends DCLogic {
   state = {
     screen: 'today', variant: 'normal',
+    loginEmail: '', loginPw: '', pwShown: false, loginErr: false, linkSent: false, loggingIn: false,
     frogDone: false, prioDone: {}, gone: {}, fading: {},
     looseIdx: 0, cardLeaving: false, tally: { done: 0, later: 0, drop: 0, skip: 0 },
     q: '', answerKey: null
@@ -601,6 +659,25 @@ class Component extends DCLogic {
       hasAnswer: !!ans,
       answer: ans ? ans.text : '', answerLabel: ans ? ans.label : '', nodes: ans ? ans.nodes : [],
 
+      isLogin: s.screen === 'login',
+      showTabs: s.screen !== 'login',
+      loginEmail: s.loginEmail, loginPw: s.loginPw,
+      pwType: s.pwShown ? 'text' : 'password',
+      pwToggleLabel: s.pwShown ? 'Verberg' : 'Toon',
+      loginErr: s.loginErr,
+      loginErrText: 'Vul je e-mail en wachtwoord in — dan zet ik je dag klaar.',
+      loginCta: s.loggingIn ? 'Even je dag ophalen…' : 'Inloggen',
+      linkCta: s.linkSent ? 'Link verstuurd — check je mail' : 'Stuur me een inloglink',
+      setEmail: e => this.setState({ loginEmail: e.target.value, loginErr: false }),
+      setPw: e => this.setState({ loginPw: e.target.value, loginErr: false }),
+      togglePw: () => this.setState(st => ({ pwShown: !st.pwShown })),
+      sendLink: () => this.setState({ linkSent: true }),
+      doLogin: () => {
+        if (!s.loginEmail.trim() || !s.loginPw.trim()) return this.setState({ loginErr: true });
+        this.setState({ loggingIn: true, loginErr: false });
+        setTimeout(() => this.setState({ loggingIn: false, screen: 'today' }), 700);
+      },
+      goLogin: () => this.setState({ screen: 'login', loginErr: false, linkSent: false, loggingIn: false }),
       goToday: () => this.setState({ screen: 'today' }),
       goLoose: () => this.setState({ screen: 'loose' }),
       goGraph: () => this.setState({ screen: 'graph' }),
@@ -614,6 +691,7 @@ class Component extends DCLogic {
       navTodayStyle: this.navBtn(isToday),
       navLooseStyle: this.navBtn(s.screen === 'loose'),
       navGraphStyle: this.navBtn(s.screen === 'graph'),
+      navLoginStyle: this.navBtn(s.screen === 'login'),
       vEmptyStyle: this.navBtn(isToday && day1),
       vNormalStyle: this.navBtn(isToday && v === 'normal'),
       vDegradedStyle: this.navBtn(isToday && v === 'degraded'),
@@ -622,7 +700,7 @@ class Component extends DCLogic {
       tabLooseStyle: this.tabBtn(s.screen === 'loose'),
       tabGraphStyle: this.tabBtn(s.screen === 'graph'),
 
-      frameNote: isToday ? notes.today[v] : (s.screen === 'loose' ? notes.loose : notes.graph),
+      frameNote: s.screen === 'login' ? 'Inloggen. Wachtwoord of inloglink; de knop toont eerst wat er gebeurt en gaat daarna naar Vandaag. Onderin staat wat Wingman leest en dat je het kunt intrekken.' : (isToday ? notes.today[v] : (s.screen === 'loose' ? notes.loose : notes.graph)),
 
       colors: [
         { n: 'Grond', v: '#0b0d0c' },

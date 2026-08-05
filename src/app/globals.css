@@ -987,3 +987,129 @@ textarea.input {
   line-height: var(--lh-snug);
   font-family: inherit;
 }
+
+/* ---------- Inloggen ---------------------------------------------------
+   Eigen, smallere kolom binnen .page — geen nieuwe kleuren, alleen tokens
+   die elders ook al gebruikt worden (accent-soft voor het merkje, signal
+   voor de foutmelding — nooit rood, zie tokens.css). */
+
+.login {
+  max-width: 26rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.login__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: var(--r-sm);
+  background: var(--accent-soft);
+  color: var(--accent);
+  margin-bottom: var(--s-5);
+}
+
+.login__title {
+  font-size: var(--t-2xl);
+  margin-bottom: var(--s-2);
+}
+
+.login__lede {
+  margin-bottom: var(--s-6);
+  max-width: 32ch;
+}
+
+.login__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.login__label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+/* .eyebrow heeft standaard margin-bottom voor gebruik boven een blok tekst;
+   hier zit de afstand al in de gap van .login__label, dus die margin eruit. */
+.login__label .eyebrow {
+  margin: 0;
+}
+
+.login__label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.login__toggle {
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: var(--t-xs);
+  font-weight: var(--w-semi);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.login__toggle:hover {
+  color: var(--accent-hover);
+}
+
+.login__error {
+  display: flex;
+  gap: var(--s-2);
+  align-items: flex-start;
+  font-size: var(--t-sm);
+  line-height: var(--lh-snug);
+  color: var(--signal);
+}
+
+.login__error svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.login__submit {
+  width: 100%;
+}
+
+.login__divider {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  margin: var(--s-5) 0;
+  font-size: var(--t-xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.login__divider::before,
+.login__divider::after {
+  content: "";
+  flex: 1 1 auto;
+  height: 1px;
+  background: var(--rule);
+}
+
+.login__hint {
+  margin-top: var(--s-3);
+  font-size: var(--t-sm);
+  color: var(--ink-muted);
+}
+
+.login__notice {
+  margin-top: var(--s-7);
+  padding-top: var(--s-5);
+  border-top: 1px solid var(--rule);
+  font-size: var(--t-xs);
+  line-height: var(--lh-body);
+  color: var(--ink-faint);
+  max-width: var(--measure);
+}

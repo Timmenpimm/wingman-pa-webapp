@@ -22,12 +22,13 @@ datasource db {
 }
 
 model User {
-  id         String   @id @default(cuid())
-  email      String   @unique
-  name       String?
-  timezone   String   @default("Europe/Amsterdam")
-  locale     String   @default("nl")
-  created_at DateTime @default(now())
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String?
+  timezone      String   @default("Europe/Amsterdam")
+  locale        String   @default("nl")
+  password_hash String?
+  created_at    DateTime @default(now())
 
   connectors   Connector[]
   events       Event[]

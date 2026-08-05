@@ -1,53 +1,61 @@
+import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { authConfig } from "../auth.config";
 
 /**
- * Toegangsslot voor niet-publieke omgevingen.
+ * Toegangsslot — nu sessiecontrole in plaats van één gedeeld wachtwoord.
  *
- * Waarom dit bestaat: Vercel Authentication dekt op het huidige plan alleen
- * deployment-URL's, niet het productiedomein. Zonder dit slot stond
- * wingman-pa-webapp.vercel.app open — inclusief /api/v1/briefing/today, dat
- * agendagegevens teruggeeft. Voor een app die mail, agenda en bank leest is
- * "het is maar demodata" geen verdediging: de vorm van het lek is het
- * probleem, niet de inhoud.
+ * Dit is de enige toegangspoort tot productie (zie het `matcher` hieronder:
+ * alles behalve statische build-assets en het PWA-icoon loopt hierdoorheen).
+ * Een gat hier betekent dat de hele app open staat, inclusief /api/v1/* dat
+ * agenda-, mail- en bankgegevens teruggeeft — dus strikt, niet slim:
  *
- * Dit is een deurslot, geen gebruikersauthenticatie. Echte accounts (NextAuth
- * + row-level security per gebruiker) komen als de app meerdere mensen krijgt;
- * tot die tijd houdt dit iedereen buiten die het wachtwoord niet heeft.
+ *   - geen sessie + pagina  → redirect naar /inloggen
+ *   - geen sessie + /api/v1 → 401 JSON (geen redirect: een fetch-call kan
+ *     een redirect niet volgen naar een inlogscherm en zou anders op een
+ *     onduidelijke manier stuklopen)
+ *   - /inloggen, /api/auth/* en de statische assets blijven vrij — zonder
+ *     die vrijstelling kan het inlogscherm zichzelf niet laden en kan
+ *     NextAuth zijn eigen routes (sign-in, callback, sessie-check) niet
+ *     bereiken.
  *
- * Zonder ACCESS_PASSWORD doet dit niets — lokaal ontwikkelen blijft dus vrij.
+ * Anders dan het oude wachtwoordslot is er geen "geen env-var = open" vrijstelling
+ * meer: ook lokaal moet je inloggen. Dat is met opzet — de vorige vrijstelling
+ * bestond voor een gedeeld wachtwoord dat je lokaal niet wilde intypen; met
+ * echte sessies is inloggen net zo goedkoop als eenmalig het seed-wachtwoord
+ * gebruiken (zie prisma/seed.ts).
+ *
+ * Dit bestand importeert bewust alleen auth.config.ts, nooit ../auth.ts.
+ * auth.ts trekt Prisma en bcryptjs binnen (via de Credentials-provider) en
+ * geen van beide werkt in de Edge-runtime waarin middleware draait. Zie de
+ * toelichting in auth.config.ts.
  */
-export function middleware(req: NextRequest) {
-  const password = process.env.ACCESS_PASSWORD;
-  if (!password) return NextResponse.next();
+const { auth } = NextAuth(authConfig);
 
-  const header = req.headers.get("authorization");
+const PUBLIC_PATHS = ["/inloggen", "/api/auth"];
 
-  if (header?.startsWith("Basic ")) {
-    const decoded = atob(header.slice(6));
-    const separator = decoded.indexOf(":");
-    const given = separator === -1 ? "" : decoded.slice(separator + 1);
-    const expected = password;
+export default auth((req) => {
+  const { pathname } = req.nextUrl;
 
-    // Vergelijking in constante tijd: een naïeve === lekt via responstijd hoe
-    // veel van het wachtwoord klopt.
-    if (given.length === expected.length) {
-      let diff = 0;
-      for (let i = 0; i < expected.length; i++) {
-        diff |= given.charCodeAt(i) ^ expected.charCodeAt(i);
-      }
-      if (diff === 0) return NextResponse.next();
-    }
+  if (PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`))) {
+    return NextResponse.next();
   }
 
-  return new NextResponse("Toegang alleen met wachtwoord.", {
-    status: 401,
-    headers: {
-      "WWW-Authenticate": 'Basic realm="Wingman", charset="UTF-8"',
-      "cache-control": "no-store",
-    },
-  });
-}
+  if (req.auth) {
+    return NextResponse.next();
+  }
+
+  if (pathname.startsWith("/api/v1")) {
+    return NextResponse.json(
+      { error: "unauthorized", message: "Log in om bij deze gegevens te kunnen." },
+      { status: 401, headers: { "cache-control": "no-store" } },
+    );
+  }
+
+  const loginUrl = new URL("/inloggen", req.nextUrl.origin);
+  loginUrl.searchParams.set("vanaf", pathname);
+  return NextResponse.redirect(loginUrl);
+});
 
 export const config = {
   // Alles achter het slot, ook de API. Alleen de statische build-assets en het
