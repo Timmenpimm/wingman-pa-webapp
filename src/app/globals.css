@@ -143,6 +143,10 @@ button {
 /* Navigatie ------------------------------------------------------------- */
 
 .nav {
+  /* Hoogte als variabele: elementen die boven de navigatie moeten dokken
+     (zie .loose-actions) hebben deze waarde nodig, en twee losse getallen
+     lopen bij de eerste wijziging uit elkaar. */
+  --nav-h: calc(2.625rem + env(safe-area-inset-bottom));
   border-top: 1px solid var(--rule);
   background: var(--paper);
   position: sticky;
@@ -986,6 +990,222 @@ textarea.input {
   resize: vertical;
   line-height: var(--lh-snug);
   font-family: inherit;
+}
+
+/* ---------- Losse eindjes: kaart-stapel ---------------------------------
+   Eén kaart tegelijk (design-reference/Wingman-v2.dc.html, secties
+   LOOSE/looseHeading/advance/cardLeaving/tallyLine/segments). Alleen
+   bestaande tokens; de kaart zelf is een normale .card-achtige oppervlakte,
+   geen eigen kleuren. */
+
+.loose-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: var(--s-4);
+}
+
+/* Op een korte telefoon (390x844 met browserbalken) viel de laatste knop
+   achter de navigatie. Bij één kaart tegelijk is dat fataal: de drie acties
+   zijn het hele scherm. Daarom krimpt het verticale ritme mee zodra er weinig
+   hoogte is, in plaats van te vertrouwen op scrollen. */
+@media (max-height: 900px) {
+  .loose-progress {
+    margin-bottom: var(--s-4);
+  }
+
+  .loose-head {
+    margin-bottom: var(--s-4);
+  }
+
+  .loose-head__title {
+    font-size: var(--t-lg);
+  }
+
+  .loose-card {
+    padding: var(--s-5) var(--s-4);
+  }
+
+  .loose-card__avatar {
+    width: 44px;
+    height: 44px;
+    font-size: var(--t-md);
+    margin-bottom: var(--s-3);
+  }
+
+  .loose-card__what {
+    margin-bottom: var(--s-3);
+  }
+
+  .loose-card__story {
+    margin-top: var(--s-3);
+  }
+
+  /* De degraded-melding staat hierboven en kan vier regels lang zijn; die
+     ruimte moet ergens vandaan komen. */
+  .loose-stack {
+    margin-top: var(--s-3);
+  }
+
+  .loose-card {
+    padding: var(--s-4);
+  }
+}
+
+.loose-progress {
+  display: flex;
+  gap: var(--s-1);
+  width: 100%;
+  margin-bottom: var(--s-5);
+}
+
+.loose-progress__seg {
+  flex: 1 1 0;
+  height: 3px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--ink) 12%, transparent);
+  transition: background var(--dur) var(--ease);
+}
+
+.loose-progress__seg[data-state="current"] {
+  background: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.loose-progress__seg[data-state="done"] {
+  background: var(--accent-strong);
+}
+
+.loose-head {
+  text-align: center;
+  margin-bottom: var(--s-5);
+}
+
+.loose-head__title {
+  font-size: var(--t-xl);
+}
+
+.loose-head__sub {
+  margin-top: var(--s-1);
+  font-size: var(--t-base);
+  color: var(--ink-muted);
+}
+
+.loose-card {
+  width: 100%;
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--s-6) var(--s-5);
+  text-align: center;
+  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+
+.loose-card--leaving {
+  opacity: 0;
+  transform: translateY(-16px) scale(0.98);
+}
+
+.loose-card__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--r-pill);
+  margin: 0 auto var(--s-4);
+  font-family: var(--font-sans);
+  font-weight: var(--w-semi);
+  font-size: var(--t-lg);
+  color: var(--accent-on-strong);
+}
+
+.loose-card__party {
+  margin: 0 0 var(--s-2);
+  font-size: var(--t-xs);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.loose-card__what {
+  margin: 0 0 var(--s-4);
+  font-family: var(--font-serif);
+  font-weight: var(--w-medium);
+  font-size: var(--t-lg);
+  line-height: var(--lh-tight);
+  color: var(--ink);
+}
+
+.loose-card__meta {
+  margin: 0 0 var(--s-2);
+  font-size: var(--t-sm);
+}
+
+/* "28 dagen open" is het signaal — de duur zelf. Kleur erbij zou urgentie
+   coderen in kleur, en dat staat op de anti-lijst (§7): het maakt een lijst
+   die toch al zwaar voelt ook nog alarmerend. Wel iets zwaarder gezet, want
+   het is de belangrijkste regel op de kaart. */
+.loose-card__meta--age {
+  color: var(--ink-body);
+  font-weight: var(--w-medium);
+}
+
+.loose-card__meta--source {
+  color: var(--ink-body);
+}
+
+.loose-card__story {
+  margin: var(--s-4) 0 0;
+  font-size: var(--t-base);
+  line-height: var(--lh-body);
+  color: var(--ink-body);
+}
+
+/* De drie acties zijn het hele scherm — met één kaart tegelijk is er niets
+   anders te doen. Ze mogen dus nooit onder de vouw verdwijnen, ook niet als
+   een naam lang is, het verhaal vier regels beslaat of er een melding boven
+   staat. Vandaar vastgeplakt boven de navigatie in plaats van meeschuiven:
+   dat is stabiel bij elke inhoud, waar afmeten op één dataset dat niet is. */
+.loose-actions {
+  position: sticky;
+  /* Boven de navigatiebalk, niet erachter. */
+  bottom: calc(2.625rem + env(safe-area-inset-bottom));
+  z-index: 5;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--s-3);
+  margin-top: var(--s-5);
+  padding: var(--s-3) 0 var(--s-4);
+  width: 100%;
+  flex-wrap: wrap;
+  background: linear-gradient(
+    to top,
+    var(--paper) 65%,
+    color-mix(in srgb, var(--paper) 0%, transparent)
+  );
+}
+
+.loose-counter {
+  margin: calc(-1 * var(--s-3)) 0 var(--s-4);
+  align-self: flex-start;
+  font-size: var(--t-xs);
+  color: var(--ink-muted);
+}
+
+@media (min-width: 700px) {
+  .loose-stack {
+    margin-top: var(--s-6);
+  }
+
+  .loose-card {
+    padding: var(--s-7) var(--s-6);
+  }
+
+  .loose-actions {
+    gap: var(--s-4);
+  }
 }
 
 /* ---------- Inloggen ---------------------------------------------------
