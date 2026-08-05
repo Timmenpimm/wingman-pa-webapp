@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&family=Archivo:wght@400;500;600;700&display=swap">
+<style>
+  body { margin:0; background:#080a09; color:#eceae6; font-family:"Archivo",system-ui,sans-serif; font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased; }
+  * { box-sizing:border-box; }
+  a { color:#8ed081; text-underline-offset:3px; }
+  a:hover { color:#b3e0a8; }
+  button { font-family:inherit; }
+  :focus { outline:none; }
+  :focus-visible { outline:2px solid #8ed081; outline-offset:2px; }
+  ::selection { background:rgba(142,208,129,0.28); }
+  .scr::-webkit-scrollbar { width:0; height:0; }
+</style>
+</helmet>
+
+<div style="padding:40px 40px 80px; max-width:1440px">
+  <div style="display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; margin-bottom:6px">
+    <div style="font-family:Newsreader,serif; font-weight:500; font-size:34px; letter-spacing:-0.01em">Wingman</div>
+    <div style="font-family:Archivo; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:rgba(236,234,230,0.45)">v2 · naar jouw referentie · 390 px</div>
+  </div>
+  <p style="margin:0 0 10px"><a href="Wingman.dc.html" style="font-family:Archivo; font-weight:600; font-size:14px">↩ v1 (Modernist)</a></p>
+  <p style="max-width:600px; margin:0 0 28px; color:rgba(236,234,230,0.6); text-wrap:pretty">Drie schermen: Vandaag, Losse eindjes (één kaart tegelijk) en Vraag de graaf. Frog afvinken, kaarten wegzetten en graaf-vragen werken. Fictief persona: Nora, freelance ontwerper.</p>
+
+  <div style="display:flex; gap:44px; align-items:flex-start; flex-wrap:wrap">
+
+    <aside style="width:236px; flex:0 0 236px; position:sticky; top:24px">
+      <div style="font-family:Archivo; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:rgba(236,234,230,0.45); margin-bottom:10px">Scherm</div>
+      <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:26px">
+        <button onClick="{{ goToday }}" style="{{ navTodayStyle }}">Vandaag</button>
+        <button onClick="{{ goLoose }}" style="{{ navLooseStyle }}">Losse eindjes</button>
+        <button onClick="{{ goGraph }}" style="{{ navGraphStyle }}">Vraag de graaf</button>
+      </div>
+
+      <div style="font-family:Archivo; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:rgba(236,234,230,0.45); margin-bottom:10px">Staat van Vandaag</div>
+      <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:26px">
+        <button onClick="{{ setEmpty }}" style="{{ vEmptyStyle }}">1 · Leeg / dag 1</button>
+        <button onClick="{{ setNormal }}" style="{{ vNormalStyle }}">2 · Normaal</button>
+        <button onClick="{{ setDegraded }}" style="{{ vDegradedStyle }}">3 · Degraded</button>
+        <button onClick="{{ setDone }}" style="{{ vDoneStyle }}">4 · Alles afgehandeld</button>
+      </div>
+
+      <button onClick="{{ reset }}" style="font-family:Archivo; font-weight:600; font-size:13px; padding:9px 14px; background:transparent; color:#eceae6; border:1px solid rgba(236,234,230,0.22); border-radius:999px; cursor:pointer" style-hover="border-color:rgba(236,234,230,0.45)">Terugzetten</button>
+      <p style="margin:22px 0 0; font-size:13px; line-height:1.5; color:rgba(236,234,230,0.45); text-wrap:pretty">{{ frameNote }}</p>
+    </aside>
+
+    <div style="flex:0 0 auto">
+      <div style="width:390px; border:1px solid rgba(236,234,230,0.14); border-radius:40px; background:#0b0d0c; padding:0 0 8px; box-shadow:0 24px 60px rgba(0,0,0,0.6)">
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 26px 6px; font-family:Archivo; font-weight:600; font-size:14px">
+          <span>9:41</span>
+          <span style="display:flex; align-items:center; gap:6px; color:rgba(236,234,230,0.85)">
+            <svg width="16" height="12" viewBox="0 0 18 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12v-3"></path><path d="M6 12V7"></path><path d="M11 12V4"></path><path d="M16 12V1"></path></svg>
+            <svg width="15" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5a10 10 0 0 1 14 0"></path><path d="M8.5 16a6 6 0 0 1 7 0"></path><circle cx="12" cy="19.5" r="1"></circle></svg>
+            <span style="display:inline-block; width:22px; height:11px; border:1px solid rgba(236,234,230,0.6); border-radius:3px; padding:1px"><span style="display:block; width:100%; height:100%; background:#eceae6; border-radius:1px"></span></span>
+          </span>
+        </div>
+
+        <div class="scr" style="height:770px; overflow-y:auto; overflow-x:hidden">
+
+          <sc-if value="{{ isToday }}" hint-placeholder-val="{{ true }}">
+            <div style="padding:8px 22px 28px">
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0 18px">
+                <button style="display:flex; flex-direction:column; gap:4px; padding:8px 4px; background:transparent; border:0; cursor:pointer" style-hover="opacity:0.7">
+                  <span style="display:block; width:20px; height:1.5px; background:#eceae6"></span>
+                  <span style="display:block; width:20px; height:1.5px; background:#eceae6"></span>
+                </button>
+                <button style="padding:8px; background:transparent; border:0; cursor:pointer; color:#eceae6" style-hover="color:#8ed081">
+                  <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M10.3 21a2 2 0 0 0 3.4 0"></path></svg>
+                </button>
+              </div>
+
+              <div style="font-family:Newsreader,serif; font-weight:500; font-size:38px; line-height:1.1; letter-spacing:-0.015em; margin-bottom:6px">{{ greeting }}</div>
+              <div style="font-size:15px; color:rgba(236,234,230,0.5); margin-bottom:26px">Woensdag 5 augustus</div>
+
+              <sc-if value="{{ vDegraded }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex; gap:12px; background:#141a17; border:1px solid rgba(236,234,230,0.1); border-radius:16px; padding:16px; margin-bottom:24px">
+                  <span style="flex:0 0 auto; color:rgba(236,234,230,0.5); padding-top:2px">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 8v5"></path><circle cx="12" cy="16.5" r="0.6" fill="currentColor"></circle><circle cx="12" cy="12" r="9"></circle></svg>
+                  </span>
+                  <span style="flex:1 1 auto">
+                    <span style="display:block; font-size:15px; line-height:1.5; color:rgba(236,234,230,0.85); text-wrap:pretty">Dit beeld is incompleet. Je mail gaf sinds gisteren 14:10 geen antwoord — wat vandaag binnenkwam zie ik niet.</span>
+                    <button style="margin-top:10px; font-family:Archivo; font-weight:600; font-size:14px; color:#8ed081; background:transparent; border:0; padding:0; cursor:pointer" style-hover="color:#b3e0a8">Mail opnieuw verbinden →</button>
+                  </span>
+                </div>
+              </sc-if>
+
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
+                <span style="font-family:Archivo; font-weight:500; font-size:15px; color:rgba(236,234,230,0.75)">{{ frogLabel }}</span>
+                <button style="font-family:Archivo; font-weight:600; font-size:13px; padding:7px 15px; background:transparent; color:#eceae6; border:1px solid rgba(236,234,230,0.22); border-radius:999px; cursor:pointer" style-hover="border-color:rgba(236,234,230,0.5)">Uitleg</button>
+              </div>
+
+              <div style="background:#111a13; border:1px solid rgba(142,208,129,0.22); border-radius:20px; padding:20px; margin-bottom:28px">
+                <span style="display:flex; align-items:center; justify-content:center; width:42px; height:42px; border-radius:14px; background:rgba(142,208,129,0.14); color:#8ed081; margin-bottom:16px">
+                  <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="4"></circle></svg>
+                </span>
+                <div style="font-family:Newsreader,serif; font-weight:500; font-size:27px; line-height:1.15; letter-spacing:-0.01em; margin-bottom:12px; opacity:{{ frogOpacity }}; text-decoration:{{ frogDeco }}; transition:opacity 240ms">{{ frogTitle }}</div>
+                <div style="display:flex; align-items:center; gap:8px; font-size:14px; color:rgba(236,234,230,0.6); margin-bottom:14px">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5V12l3 2"></path></svg>
+                  {{ frogMeta }}
+                </div>
+                <p style="margin:0 0 18px; font-size:15px; line-height:1.55; color:rgba(236,234,230,0.8); text-wrap:pretty">{{ frogBody }}</p>
+
+                <sc-if value="{{ frogOpen }}" hint-placeholder-val="{{ true }}">
+                  <div>
+                    <button onClick="{{ tickFrog }}" style="display:flex; align-items:center; justify-content:center; gap:9px; width:100%; font-family:Archivo; font-weight:600; font-size:16px; padding:14px 0; background:#8ab377; color:#0b0d0c; border:0; border-radius:14px; cursor:pointer" style-hover="background:#9cc389" style-active="background:#78a066">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                      {{ frogCta }}
+                    </button>
+                    <button style="display:block; margin:12px auto 0; font-family:Archivo; font-weight:500; font-size:14px; color:rgba(236,234,230,0.55); background:transparent; border:0; cursor:pointer" style-hover="color:#eceae6">{{ frogAlt }}</button>
+                  </div>
+                </sc-if>
+
+                <sc-if value="{{ frogDone }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex; align-items:center; gap:10px; border-top:1px solid rgba(236,234,230,0.1); padding-top:16px; color:#8ed081">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                    <span style="font-family:Archivo; font-weight:600; font-size:15px">Weg om 09:52. De rest is bonus.</span>
+                  </div>
+                </sc-if>
+              </div>
+
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
+                <span style="font-family:Archivo; font-weight:500; font-size:15px; color:rgba(236,234,230,0.75)">{{ prioLabel }}</span>
+                <button style="font-family:Archivo; font-weight:600; font-size:13px; padding:7px 15px; background:transparent; color:#eceae6; border:1px solid rgba(236,234,230,0.22); border-radius:999px; cursor:pointer" style-hover="border-color:rgba(236,234,230,0.5)">Wijzig</button>
+              </div>
+
+              <div style="background:#101312; border:1px solid rgba(236,234,230,0.08); border-radius:16px; overflow:hidden; margin-bottom:26px">
+                <sc-for list="{{ prios }}" as="p" hint-placeholder-count="3">
+                  <button onClick="{{ p.toggle }}" style="display:flex; align-items:center; gap:13px; width:100%; text-align:left; background:transparent; border:0; border-bottom:1px solid rgba(236,234,230,0.07); padding:14px 16px; cursor:pointer; opacity:{{ p.op }}; transition:opacity 240ms" style-hover="background:rgba(236,234,230,0.04)">
+                    <span style="flex:0 0 24px; width:24px; height:24px; border-radius:999px; background:{{ p.numBg }}; color:{{ p.numFg }}; display:flex; align-items:center; justify-content:center; font-family:Archivo; font-weight:600; font-size:12px">{{ p.n }}</span>
+                    <span style="flex:1 1 auto; font-family:Archivo; font-weight:500; font-size:15px; color:#eceae6; text-decoration:{{ p.deco }}">{{ p.t }}</span>
+                    <span style="flex:0 0 auto; font-size:12px; color:rgba(236,234,230,0.58)">{{ p.m }}</span>
+                  </button>
+                </sc-for>
+              </div>
+
+              <div style="display:flex; gap:13px; background:#141a17; border:1px solid rgba(236,234,230,0.09); border-radius:16px; padding:17px; margin-bottom:26px">
+                <span style="flex:0 0 auto; color:#8ed081; padding-top:2px">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l1.8 4.7L18.5 10l-4.7 1.8L12 16.5l-1.8-4.7L5.5 10l4.7-1.8z"></path><path d="M18.5 16.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"></path></svg>
+                </span>
+                <span style="flex:1 1 auto">
+                  <span style="display:block; font-size:15px; line-height:1.55; color:rgba(236,234,230,0.85); text-wrap:pretty">{{ coach }}</span>
+                  <button style="margin-top:10px; display:flex; align-items:center; gap:7px; font-family:Archivo; font-weight:600; font-size:14px; color:#8ed081; background:transparent; border:0; padding:0; cursor:pointer" style-hover="color:#b3e0a8">
+                    Lees meer
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15"></path><path d="m13 6 6 6-6 6"></path></svg>
+                  </button>
+                </span>
+              </div>
+
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
+                <span style="font-family:Archivo; font-weight:500; font-size:15px; color:rgba(236,234,230,0.75)">Nog te bevestigen</span>
+                <span style="font-size:12px; color:rgba(236,234,230,0.58)">uit gisteren</span>
+              </div>
+
+              <sc-for list="{{ confirms }}" as="c" hint-placeholder-count="3">
+                <div style="background:#101312; border:1px solid rgba(236,234,230,0.08); border-radius:16px; padding:16px; margin-bottom:10px; opacity:{{ c.op }}; transform:{{ c.tf }}; transition:opacity 240ms, transform 240ms">
+                  <div style="font-family:Archivo; font-weight:500; font-size:16px; line-height:1.35; margin-bottom:4px">{{ c.q }}</div>
+                  <div style="font-size:12px; color:rgba(236,234,230,0.58); margin-bottom:14px">{{ c.m }}</div>
+                  <div style="display:flex; gap:9px">
+                    <button onClick="{{ c.yes }}" style="flex:1 1 0; font-family:Archivo; font-weight:600; font-size:14px; padding:11px 0; background:rgba(142,208,129,0.14); color:#8ed081; border:1px solid rgba(142,208,129,0.3); border-radius:12px; cursor:pointer" style-hover="background:rgba(142,208,129,0.24)">Ja</button>
+                    <button onClick="{{ c.no }}" style="flex:1 1 0; font-family:Archivo; font-weight:600; font-size:14px; padding:11px 0; background:transparent; color:rgba(236,234,230,0.75); border:1px solid rgba(236,234,230,0.16); border-radius:12px; cursor:pointer" style-hover="background:rgba(236,234,230,0.06)">Nee</button>
+                  </div>
+                </div>
+              </sc-for>
+
+              <sc-if value="{{ confirmsEmpty }}" hint-placeholder-val="{{ false }}">
+                <div style="background:#111a13; border:1px solid rgba(142,208,129,0.2); border-radius:16px; padding:18px">
+                  <div style="font-family:Newsreader,serif; font-weight:500; font-size:21px; line-height:1.25; margin-bottom:8px">{{ emptyLine }}</div>
+                  <p style="margin:0; font-size:14px; line-height:1.5; color:rgba(236,234,230,0.65); text-wrap:pretty">{{ emptySub }}</p>
+                </div>
+              </sc-if>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isLoose }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:8px 22px 24px; display:flex; flex-direction:column; min-height:746px">
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0 20px">
+                <button onClick="{{ goToday }}" style="padding:6px; background:transparent; border:0; cursor:pointer; color:#eceae6" style-hover="color:#8ed081">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg>
+                </button>
+                <button onClick="{{ nextLoose }}" style="font-family:Archivo; font-weight:500; font-size:15px; color:rgba(236,234,230,0.6); background:transparent; border:0; cursor:pointer" style-hover="color:#eceae6">Overslaan</button>
+              </div>
+
+              <div style="display:flex; gap:5px; margin-bottom:26px">
+                <sc-for list="{{ segments }}" as="s" hint-placeholder-count="7">
+                  <span style="flex:1 1 0; height:3px; border-radius:999px; background:{{ s.bg }}; transition:background 240ms"></span>
+                </sc-for>
+              </div>
+
+              <sc-if value="{{ hasLoose }}" hint-placeholder-val="{{ true }}">
+                <div style="flex:1 1 auto; display:flex; flex-direction:column">
+                  <div style="text-align:center; margin-bottom:22px">
+                    <div style="font-family:Newsreader,serif; font-weight:500; font-size:30px; line-height:1.15; letter-spacing:-0.01em; margin-bottom:6px">{{ looseHeading }}</div>
+                    <div style="font-size:15px; color:rgba(236,234,230,0.5)">{{ looseSub }}</div>
+                  </div>
+
+                  <div style="background:#101312; border:1px solid rgba(236,234,230,0.09); border-radius:22px; padding:28px 22px 26px; text-align:center; opacity:{{ cardOp }}; transform:{{ cardTf }}; transition:opacity 200ms, transform 200ms">
+                    <span style="display:flex; align-items:center; justify-content:center; width:64px; height:64px; border-radius:999px; margin:0 auto 16px; background:{{ avatarBg }}; font-family:Archivo; font-weight:600; font-size:24px; color:#0b0d0c">{{ initial }}</span>
+                    <div style="font-family:Archivo; font-weight:600; font-size:12px; letter-spacing:0.16em; text-transform:uppercase; color:rgba(236,234,230,0.5); margin-bottom:10px">{{ party }}</div>
+                    <div style="font-family:Newsreader,serif; font-weight:500; font-size:26px; line-height:1.2; margin-bottom:16px">{{ what }}</div>
+                    <div style="display:flex; align-items:center; justify-content:center; gap:8px; font-family:Archivo; font-weight:500; font-size:15px; color:#d9a441; margin-bottom:12px">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5V12l3 2"></path></svg>
+                      {{ age }}
+                    </div>
+                    <div style="display:flex; align-items:center; justify-content:center; gap:8px; font-size:15px; color:rgba(236,234,230,0.7); margin-bottom:18px">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9.9 9.9 0 0 1-2.8-.4L4 21l1.5-4.2A8.2 8.2 0 0 1 3.6 11.5C3.6 6.8 7.7 3 12.4 3S21 6.8 21 11.5z"></path></svg>
+                      {{ source }}
+                    </div>
+                    <p style="margin:0; font-size:16px; line-height:1.6; color:rgba(236,234,230,0.85); text-wrap:pretty">{{ story }}</p>
+                  </div>
+
+                  <div style="display:flex; justify-content:center; gap:26px; margin:28px 0 0">
+                    <button onClick="{{ actDone }}" style="display:flex; flex-direction:column; align-items:center; gap:9px; background:transparent; border:0; cursor:pointer" style-hover="opacity:0.8">
+                      <span style="display:flex; align-items:center; justify-content:center; width:62px; height:62px; border-radius:999px; background:rgba(142,208,129,0.12); border:1px solid rgba(142,208,129,0.35); color:#8ed081">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                      </span>
+                      <span style="font-family:Archivo; font-weight:500; font-size:13px; color:rgba(236,234,230,0.7)">{{ doneLabel }}</span>
+                    </button>
+                    <button onClick="{{ actLater }}" style="display:flex; flex-direction:column; align-items:center; gap:9px; background:transparent; border:0; cursor:pointer" style-hover="opacity:0.8">
+                      <span style="display:flex; align-items:center; justify-content:center; width:62px; height:62px; border-radius:999px; background:rgba(217,164,65,0.12); border:1px solid rgba(217,164,65,0.35); color:#d9a441">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5V12l3 2"></path></svg>
+                      </span>
+                      <span style="font-family:Archivo; font-weight:500; font-size:13px; color:rgba(236,234,230,0.7)">Later</span>
+                    </button>
+                    <button onClick="{{ actDrop }}" style="display:flex; flex-direction:column; align-items:center; gap:9px; background:transparent; border:0; cursor:pointer" style-hover="opacity:0.8">
+                      <span style="display:flex; align-items:center; justify-content:center; width:62px; height:62px; border-radius:999px; background:rgba(193,97,90,0.12); border:1px solid rgba(193,97,90,0.35); color:#c1615a">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg>
+                      </span>
+                      <span style="font-family:Archivo; font-weight:500; font-size:13px; color:rgba(236,234,230,0.7)">Laat vallen</span>
+                    </button>
+                  </div>
+
+                  <div style="margin-top:auto; padding-top:26px; text-align:center">
+                    <div style="font-family:Archivo; font-weight:500; font-size:14px; color:rgba(236,234,230,0.5); margin-bottom:8px">{{ counter }}</div>
+                    <button onClick="{{ nextLoose }}" style="display:inline-flex; align-items:center; gap:8px; font-family:Archivo; font-weight:500; font-size:14px; color:rgba(236,234,230,0.5); background:transparent; border:0; cursor:pointer" style-hover="color:#eceae6">
+                      Swipe omhoog voor volgende
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m6 15 6-6 6 6"></path></svg>
+                    </button>
+                  </div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ looseEmpty }}" hint-placeholder-val="{{ false }}">
+                <div style="flex:1 1 auto; display:flex; flex-direction:column; justify-content:center; text-align:center; padding-bottom:60px">
+                  <span style="display:flex; align-items:center; justify-content:center; width:56px; height:56px; border-radius:999px; margin:0 auto 20px; background:rgba(142,208,129,0.12); border:1px solid rgba(142,208,129,0.32); color:#8ed081">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                  </span>
+                  <div style="font-family:Newsreader,serif; font-weight:500; font-size:29px; line-height:1.2; margin-bottom:12px">Alle zeven zijn langs geweest.</div>
+                  <p style="margin:0 auto; max-width:280px; font-size:15px; line-height:1.55; color:rgba(236,234,230,0.6); text-wrap:pretty">{{ tallyLine }}</p>
+                </div>
+              </sc-if>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isGraph }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:8px 22px 28px">
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0 18px">
+                <button style="display:flex; flex-direction:column; gap:4px; padding:8px 4px; background:transparent; border:0; cursor:pointer" style-hover="opacity:0.7">
+                  <span style="display:block; width:20px; height:1.5px; background:#eceae6"></span>
+                  <span style="display:block; width:20px; height:1.5px; background:#eceae6"></span>
+                </button>
+                <button style="padding:8px; background:transparent; border:0; cursor:pointer; color:#eceae6" style-hover="color:#8ed081">
+                  <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v4h4"></path><path d="M12 8v4.5l3 1.8"></path></svg>
+                </button>
+              </div>
+
+              <div style="font-family:Newsreader,serif; font-weight:500; font-size:34px; line-height:1.1; letter-spacing:-0.015em; margin-bottom:6px">Vraag de graaf</div>
+              <div style="font-size:15px; color:rgba(236,234,230,0.5); margin-bottom:22px">Stel een vraag aan jouw gegevens.</div>
+
+              <div style="position:relative; margin-bottom:26px">
+                <input type="text" value="{{ q }}" onInput="{{ onQ }}" onKeyDown="{{ onQKey }}" placeholder="Stel je vraag…" style="width:100%; height:104px; background:#101312; border:1px solid rgba(236,234,230,0.12); border-radius:18px; padding:18px 52px 18px 18px; font-family:Archivo; font-size:16px; color:#eceae6; outline:none" style-focus="border-color:rgba(142,208,129,0.5)">
+                <button onClick="{{ runQ }}" style="position:absolute; right:14px; bottom:14px; display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:999px; background:transparent; border:0; cursor:pointer; color:rgba(236,234,230,0.6)" style-hover="color:#8ed081">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="2.5" width="6" height="11" rx="3"></rect><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0"></path><path d="M12 18v3.5"></path></svg>
+                </button>
+              </div>
+
+              <sc-if value="{{ hasAnswer }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-bottom:28px">
+                  <div style="font-family:Archivo; font-weight:500; font-size:15px; color:rgba(236,234,230,0.75); margin-bottom:12px">{{ answerLabel }}</div>
+                  <p style="margin:0 0 16px; font-size:16px; line-height:1.6; color:rgba(236,234,230,0.9); text-wrap:pretty">{{ answer }}</p>
+                  <sc-for list="{{ nodes }}" as="n" hint-placeholder-count="3">
+                    <div style="background:#101312; border:1px solid rgba(236,234,230,0.09); border-radius:16px; padding:16px; margin-bottom:10px">
+                      <div style="font-family:Archivo; font-weight:600; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:#8ed081; margin-bottom:8px">{{ n.type }}</div>
+                      <div style="font-family:Newsreader,serif; font-weight:500; font-size:20px; line-height:1.2; margin-bottom:6px">{{ n.title }}</div>
+                      <div style="font-size:15px; line-height:1.5; color:rgba(236,234,230,0.8); margin-bottom:10px">{{ n.body }}</div>
+                      <div style="font-size:12px; color:rgba(236,234,230,0.58); border-top:1px solid rgba(236,234,230,0.07); padding-top:10px">{{ n.edge }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-if>
+
+              <div style="font-family:Archivo; font-weight:500; font-size:15px; color:rgba(236,234,230,0.75); margin-bottom:12px">Voorbeelden</div>
+              <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:28px">
+                <sc-for list="{{ suggestions }}" as="s" hint-placeholder-count="3">
+                  <button onClick="{{ s.run }}" style="display:flex; align-items:center; gap:14px; width:100%; text-align:left; background:#101312; border:1px solid rgba(236,234,230,0.09); border-radius:16px; padding:16px; cursor:pointer" style-hover="border-color:rgba(142,208,129,0.35)">
+                    <span style="flex:1 1 auto; font-family:Archivo; font-weight:500; font-size:16px; line-height:1.35; color:#eceae6">{{ s.q }}</span>
+                    <span style="flex:0 0 auto; color:rgba(236,234,230,0.45)">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg>
+                    </span>
+                  </button>
+                </sc-for>
+              </div>
+
+              <div style="font-family:Archivo; font-weight:500; font-size:15px; color:rgba(236,234,230,0.75); margin-bottom:12px">Recente vragen</div>
+              <div style="background:#101312; border:1px solid rgba(236,234,230,0.08); border-radius:16px; overflow:hidden">
+                <sc-for list="{{ recent }}" as="r" hint-placeholder-count="3">
+                  <button onClick="{{ r.run }}" style="display:flex; align-items:center; gap:12px; width:100%; text-align:left; background:transparent; border:0; border-bottom:1px solid rgba(236,234,230,0.07); padding:14px 16px; cursor:pointer" style-hover="background:rgba(236,234,230,0.04)">
+                    <span style="flex:1 1 auto; font-family:Archivo; font-size:15px; color:rgba(236,234,230,0.9)">{{ r.q }}</span>
+                    <span style="flex:0 0 auto; font-family:Archivo; font-weight:500; font-size:13px; color:#8ed081">{{ r.when }}</span>
+                  </button>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+
+        <div style="display:flex; border-top:1px solid rgba(236,234,230,0.09); padding:10px 8px 4px">
+          <button onClick="{{ goToday }}" style="{{ tabTodayStyle }}">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"></path></svg>
+            <span style="font-family:Archivo; font-weight:500; font-size:12px">Vandaag</span>
+          </button>
+          <button onClick="{{ goLoose }}" style="{{ tabLooseStyle }}">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"></rect><path d="M8 3.5V6M16 3.5V6M3.5 10h17"></path></svg>
+            <span style="font-family:Archivo; font-weight:500; font-size:12px">Losse eindjes</span>
+          </button>
+          <button onClick="{{ goGraph }}" style="{{ tabGraphStyle }}">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.5"></circle><circle cx="18" cy="6" r="2.5"></circle><circle cx="12" cy="18" r="2.5"></circle><path d="M7.6 8 11 15.6M16.4 8 13 15.6"></path></svg>
+            <span style="font-family:Archivo; font-weight:500; font-size:12px">Vraag de graaf</span>
+          </button>
+        </div>
+        <div style="display:flex; justify-content:center; padding:6px 0 10px"><span style="display:block; width:128px; height:4px; border-radius:999px; background:rgba(236,234,230,0.35)"></span></div>
+      </div>
+    </div>
+
+    <div style="flex:1 1 300px; min-width:280px; max-width:380px">
+      <div style="font-family:Archivo; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:rgba(236,234,230,0.45); margin-bottom:14px">Tokens · v2</div>
+      <sc-for list="{{ colors }}" as="c" hint-placeholder-count="7">
+        <div style="display:flex; align-items:center; gap:12px; padding:9px 0; border-bottom:1px solid rgba(236,234,230,0.07)">
+          <span style="flex:0 0 34px; width:34px; height:26px; border-radius:8px; border:1px solid rgba(236,234,230,0.14); background:{{ c.v }}"></span>
+          <span style="flex:1 1 auto; font-family:Archivo; font-weight:500; font-size:14px">{{ c.n }}</span>
+          <span style="font-family:Archivo; font-size:12px; color:rgba(236,234,230,0.58)">{{ c.v }}</span>
+        </div>
+      </sc-for>
+
+      <div style="margin-top:24px; padding-top:20px; border-top:1px solid rgba(236,234,230,0.12)">
+        <div style="font-family:Newsreader,serif; font-weight:500; font-size:26px; line-height:1.15">Newsreader 500 — display</div>
+        <div style="font-family:Archivo; font-weight:500; font-size:16px; margin-top:8px">Archivo 500 — interface, 15/16px</div>
+        <div style="font-family:Archivo; font-weight:600; font-size:11px; letter-spacing:0.16em; text-transform:uppercase; color:rgba(236,234,230,0.5); margin-top:8px">Archivo 600 — label 11/0.16em</div>
+        <p style="margin:16px 0 0; font-size:13px; line-height:1.55; color:rgba(236,234,230,0.5); text-wrap:pretty">Radii 12 / 16 / 20 / 22 / 999. Groen alleen op de primaire actie en op bevestiging; amber en rood alleen als icoonrand op de drie kaart-acties — nooit als vlak achter tekst.</p>
+      </div>
+
+      <div style="margin-top:24px; padding-top:20px; border-top:1px solid rgba(236,234,230,0.12)">
+        <div style="font-family:Archivo; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:rgba(236,234,230,0.45); margin-bottom:12px">Karakterbudget</div>
+        <sc-for list="{{ budgets }}" as="b" hint-placeholder-count="6">
+          <div style="display:flex; justify-content:space-between; gap:12px; align-items:baseline; padding:7px 0; border-bottom:1px solid rgba(236,234,230,0.07)">
+            <span style="font-family:Archivo; font-weight:500; font-size:14px">{{ b.n }}</span>
+            <span style="font-family:Archivo; font-size:12px; color:rgba(236,234,230,0.58); text-align:right; white-space:nowrap">{{ b.v }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1200}}">
+const LOOSE = [
+  { id: 'l1', dir: 'wait', party: 'Tibbe', initial: 'T', bg: '#8f8dc0', what: 'Nieuwe afspraak', age: '26 dagen stil', source: 'WhatsApp', story: 'Je hebt op 10/7 voorgesteld om af te spreken. Sindsdien geen reactie.' },
+  { id: 'l2', dir: 'owe', party: 'Wessel', initial: 'W', bg: '#c0a37d', what: 'Reactie op de doc', age: '28 dagen open', source: 'Mail · project Kadeloods', story: 'Je schreef op 8/7 “ik kijk er dit weekend naar”. Het bestand staat sinds 9/7 open in je map.' },
+  { id: 'l3', dir: 'wait', party: 'Kade 12', initial: 'K', bg: '#7fa9b8', what: 'Betaling factuur #204', age: '19 dagen stil', source: 'Bank · € 2.480', story: 'Verstuurd op 12/7, termijn was 26/7. Je hebt nooit een ontvangstbevestiging gehad.' },
+  { id: 'l4', dir: 'owe', party: 'Sanne', initial: 'S', bg: '#a8b87f', what: 'Tweede ronde inplannen', age: '6 dagen open', source: 'Mail · project Vlot', story: 'Toegezegd in het gesprek van 30/7. Er staat nog geen datum in je agenda.' },
+  { id: 'l5', dir: 'wait', party: 'Bureau Meridiaan', initial: 'M', bg: '#b88f9e', what: 'Go op het voorstel', age: '11 dagen stil', source: 'Mail 25/7', story: 'Voorstel van twaalf pagina’s verstuurd. Twee keer eerder bij deze klant: pas antwoord na een korte nabelactie.' },
+  { id: 'l6', dir: 'owe', party: 'Boekhouder', initial: 'B', bg: '#9eb8a8', what: 'Uren juli aanleveren', age: '4 dagen open', source: 'Chat · elke maand hetzelfde', story: 'Vierde maand op rij te laat. De vraag komt altijd op de 1e, jij levert rond de 8e.' },
+  { id: 'l7', dir: 'wait', party: 'Drukkerij', initial: 'D', bg: '#c0b07d', what: 'Proef huisstijl', age: '9 dagen stil', source: 'Mail 27/7', story: 'Bestand aangeleverd, geen proefdruk terug. Levering staat gepland op 15/8.' }
+];
+
+const ANSWERS = {
+  belofte: {
+    label: 'Vier mensen · afgelopen 30 dagen',
+    text: 'Je hebt vier mensen iets toegezegd en bij drie is er daarna niets gebeurd. Twee wachten op hetzelfde soort ding: een bestand dat al klaar is.',
+    nodes: [
+      { type: 'Persoon → Belofte', title: 'Wessel Baart', body: 'Reactie op de doc van 8/7. Je schreef “ik kijk er dit weekend naar”.', edge: 'OWES · mailthread 8/7 · project Kadeloods' },
+      { type: 'Persoon → Belofte', title: 'Sanne de Rooij', body: 'Tweede ronde inplannen, toegezegd in het gesprek van 30/7.', edge: 'OWES · agenda-item 30/7 · project Vlot' },
+      { type: 'Patroon', title: 'Uren aanleveren', body: 'Vier maanden op rij dezelfde belofte, vier keer rond de 8e ingelost.', edge: 'NEXT_ACTION · terugkerend · boekhouder' }
+    ]
+  },
+  wachten: {
+    label: 'Drie mensen wachten op jou',
+    text: 'Bij alle drie ligt de bal bij jou en bij alle drie is het bestand al klaar. Wat ontbreekt is niet het werk, maar het versturen.',
+    nodes: [
+      { type: 'Persoon', title: 'Wessel Baart', body: '28 dagen. Langste van de drie, en de enige met een deadline in augustus.', edge: 'OWES · project Kadeloods' },
+      { type: 'Persoon', title: 'Sanne de Rooij', body: '6 dagen. Vraagt om een datum, niet om werk.', edge: 'OWES · project Vlot' },
+      { type: 'Persoon', title: 'Boekhouder', body: '4 dagen. Blokkeert je BTW-aangifte van Q2.', edge: 'OWES · deadline 31/8' }
+    ]
+  },
+  betaling: {
+    label: 'Drie posten open · bank + mail',
+    text: 'Er staat € 4.290 aan geleverd werk open. Bij één factuur is nooit een ontvangstbevestiging gekomen — die is waarschijnlijk niet geboekt.',
+    nodes: [
+      { type: 'Transactie ← Factuur', title: 'Factuur #204 · Kade 12', body: '€ 2.480 · 19 dagen over de termijn, geen bevestiging.', edge: 'HAS_TRANSACTION · bank · MENTIONS mail 17/7' },
+      { type: 'Transactie ← Factuur', title: 'Factuur #206 · Meridiaan', body: '€ 1.360 · 4 dagen open, binnen de termijn.', edge: 'PART_OF · project Meridiaan' },
+      { type: 'Verplichting', title: 'BTW Q2', body: '€ 450 · voor 31/8. Staat gereserveerd, wacht op je uren.', edge: 'CATEGORIZED_AS · belasting · gedekt' }
+    ]
+  },
+  project: {
+    label: 'Twee projecten · via Kade 12',
+    text: 'Kade 12 hangt aan twee dingen tegelijk: je werkplek en je grootste opdracht. Dezelfde partij is je verhuurder en je traagste betaler.',
+    nodes: [
+      { type: 'Project', title: 'Kadeloods — huisstijl', body: 'Loopt. Open: doc-reactie aan Wessel, proefdruk bij de drukkerij.', edge: 'PART_OF · 6 commitments · 2 mensen' },
+      { type: 'Organisatie', title: 'Kade 12', body: 'Verhuurder én opdrachtgever. € 245 per maand eruit, € 2.480 open erin.', edge: 'HAS_TRANSACTION · 14 transacties' }
+    ]
+  }
+};
+
+class Component extends DCLogic {
+  state = {
+    screen: 'today', variant: 'normal',
+    frogDone: false, prioDone: {}, gone: {}, fading: {},
+    looseIdx: 0, cardLeaving: false, tally: { done: 0, later: 0, drop: 0, skip: 0 },
+    q: '', answerKey: null
+  };
+
+  pick(t) {
+    if (/wacht|reactie|antwoord/i.test(t)) return 'wachten';
+    if (/belof|belov|toegezeg/i.test(t)) return 'belofte';
+    if (/betaal|betaling|factu|geld|kost|btw|belasting/i.test(t)) return 'betaling';
+    if (/project|kade|meridiaan|vlot|techlab|samen/i.test(t)) return 'project';
+    return null;
+  }
+
+  removeConfirm(id) {
+    this.setState(s => ({ fading: { ...s.fading, [id]: true } }));
+    setTimeout(() => this.setState(s => ({ gone: { ...s.gone, [id]: true } })), 240);
+  }
+
+  advance(kind) {
+    if (this.state.cardLeaving) return;
+    this.setState(s => ({ cardLeaving: true, tally: { ...s.tally, [kind]: s.tally[kind] + 1 } }));
+    setTimeout(() => this.setState(s => ({ looseIdx: s.looseIdx + 1, cardLeaving: false })), 200);
+  }
+
+  tallyLine() {
+    const t = this.state.tally;
+    const w = (n, s, p) => n + ' ' + (n === 1 ? s : p);
+    const parts = [];
+    if (t.done) parts.push(w(t.done, 'afgehandeld', 'afgehandeld'));
+    if (t.later) parts.push(w(t.later, 'op later gezet', 'op later gezet'));
+    if (t.drop) parts.push(w(t.drop, 'laten vallen', 'laten vallen'));
+    if (t.skip) parts.push(w(t.skip, 'overgeslagen', 'overgeslagen'));
+    if (!parts.length) return 'Je hebt ze alle zeven gezien.';
+    const head = parts.length === 1 ? parts[0] : parts.slice(0, -1).join(', ') + ' en ' + parts[parts.length - 1];
+    const tail = t.drop ? ' Dat laatste telt net zo hard.' : t.later ? ' Wat je later doet, kom ik morgen terugvragen.' : '';
+    return head.charAt(0).toUpperCase() + head.slice(1) + '.' + tail;
+  }
+
+  navBtn(active) {
+    return 'display:block; width:100%; text-align:left; font-family:Archivo; font-weight:' + (active ? '600' : '500') +
+      '; font-size:14px; padding:10px 14px; cursor:pointer; border-radius:999px; border:1px solid ' +
+      (active ? 'rgba(142,208,129,0.4)' : 'rgba(236,234,230,0.12)') + '; background:' +
+      (active ? 'rgba(142,208,129,0.12)' : 'transparent') + '; color:' + (active ? '#8ed081' : '#eceae6');
+  }
+
+  tabBtn(active) {
+    return 'flex:1 1 0; display:flex; flex-direction:column; align-items:center; gap:5px; padding:8px 2px 6px; background:transparent; border:0; cursor:pointer; color:' +
+      (active ? '#8ed081' : 'rgba(236,234,230,0.5)');
+  }
+
+  renderVals() {
+    const s = this.state;
+    const isToday = s.screen === 'today';
+    const v = s.variant;
+    const day1 = v === 'empty';
+    const allDone = v === 'done';
+    const frogDone = s.frogDone || allDone;
+
+    const confirmSets = {
+      normal: [
+        { id: 'c1', q: 'Voorstel Bureau Meridiaan verstuurd?', m: 'gisteren 16:40 · agendablok “voorstel afmaken”' },
+        { id: 'c2', q: 'Uren van dinsdag geboekt op Vlot?', m: 'gisteren · uit je urenblok' },
+        { id: 'c3', q: 'Joost teruggebeld?', m: 'gisteren 11:00 · toegezegd per mail' }
+      ],
+      degraded: [{ id: 'd1', q: 'Voorstel Bureau Meridiaan verstuurd?', m: 'gisteren 16:40 · agendablok' }],
+      empty: [], done: []
+    };
+
+    const confirms = (confirmSets[v] || []).filter(c => !s.gone[c.id]).map(c => ({
+      ...c,
+      op: s.fading[c.id] ? 0 : 1,
+      tf: s.fading[c.id] ? 'translateX(-12px)' : 'translateX(0)',
+      yes: () => this.removeConfirm(c.id),
+      no: () => this.removeConfirm(c.id)
+    }));
+
+    const prioBase = day1
+      ? [{ id: 'p1', n: '2', t: 'Zet quiet hours', m: 'nu: geen' }, { id: 'p2', n: '3', t: 'Koppel je bank', m: 'stap 3/7' }, { id: 'p3', n: '4', t: 'Push toestaan', m: 'stap 5/7' }]
+      : [{ id: 'p1', n: '2', t: 'Sanne antwoorden', m: 'vandaag' }, { id: 'p2', n: '3', t: 'Uren juli afsluiten', m: 'voor vr' }, { id: 'p3', n: '4', t: 'Voorstel inkorten', m: 'deze week' }];
+
+    const prios = prioBase.map(p => {
+      const done = allDone || !!s.prioDone[p.id];
+      return {
+        ...p,
+        op: done ? 0.4 : 1,
+        deco: done ? 'line-through' : 'none',
+        numBg: done ? 'rgba(142,208,129,0.18)' : 'rgba(236,234,230,0.09)',
+        numFg: done ? '#8ed081' : 'rgba(236,234,230,0.7)',
+        toggle: () => this.setState(st => ({ prioDone: { ...st.prioDone, [p.id]: !st.prioDone[p.id] } }))
+      };
+    });
+
+    const coach = day1
+      ? 'Ik heb je agenda, mail en bank één keer gelezen. Je zet facturen klaar en verstuurt ze niet — drie keer in vier weken. Daar zou ik vandaag mee beginnen.'
+      : allDone
+        ? 'Je frog was om 09:52 weg, de drie prioriteiten daarna. Wat er nog staat is één gesprek om 14:00. De rest van vandaag is van jou.'
+        : v === 'degraded'
+          ? 'Wat ik zie: drie facturen klaargezet, één verstuurd. Wat ik niet zie: of er vandaag antwoord kwam. Behandel de frog alsof er geen antwoord is.'
+          : 'Je zet facturen klaar en verstuurt ze niet — drie keer nu, elke keer op een dag met een klantgesprek erin. Vandaag staat dat gesprek om 14:00.';
+
+    const idx = s.looseIdx;
+    const cur = LOOSE[idx] || LOOSE[LOOSE.length - 1];
+    const segments = LOOSE.map((x, i) => ({ bg: i < idx ? '#8ab377' : i === idx ? 'rgba(142,208,129,0.45)' : 'rgba(236,234,230,0.12)' }));
+
+    const suggestions = [
+      { q: 'Wie wacht er op mijn reactie?', key: 'wachten' },
+      { q: 'Welke betalingen staan er open?', key: 'betaling' },
+      { q: 'Welke projecten hangen met Kade 12 samen?', key: 'project' }
+    ].map(x => ({ ...x, run: () => this.setState({ q: x.q, answerKey: x.key }) }));
+
+    const recent = [
+      { q: 'Wie heb ik iets beloofd deze maand?', when: 'Vandaag', key: 'belofte' },
+      { q: 'Wie wacht er op mijn reactie?', when: 'Gisteren', key: 'wachten' },
+      { q: 'Welke belastingbetalingen zijn open?', when: 'Gisteren', key: 'betaling' }
+    ].map(x => ({ ...x, run: () => this.setState({ q: x.q, answerKey: x.key }) }));
+
+    const ans = s.answerKey ? ANSWERS[s.answerKey] : null;
+
+    const notes = {
+      today: {
+        empty: 'Staat 1 · dag 1. Geen historie: de app stelt zelf een frog voor en vraagt bevestiging.',
+        normal: 'Staat 2 · normaal. Vink de frog af, tik de prioriteiten aan, maak “nog te bevestigen” leeg met ja/nee.',
+        degraded: 'Staat 3 · degraded. Eerlijk over wat ontbrak, in dezelfde tint als de rest — geen alarmkleur.',
+        done: 'Staat 4 · alles afgehandeld. Beloning in type en ruimte, niet in confetti.'
+      },
+      loose: 'Eén draad per kaart, zeven in totaal. Drie acties, en “laat vallen” staat even dicht bij je duim als “afgehandeld”.',
+      graph: 'Vraag typen of een voorbeeld tikken; antwoord komt als gekoppelde kaartjes, nooit als ruwe JSON.'
+    };
+
+    return {
+      isToday, isLoose: s.screen === 'loose', isGraph: s.screen === 'graph',
+      vEmpty: isToday && day1, vNormal: isToday && v === 'normal',
+      vDegraded: isToday && v === 'degraded', vDone: isToday && allDone,
+
+      greeting: allDone ? 'Klaar, Nora.' : 'Goedemorgen Nora.',
+      frogLabel: day1 ? 'Voorstel · jouw frog' : allDone ? 'Je frog · afgevinkt' : 'Je frog vandaag',
+      prioLabel: allDone ? 'Prioriteiten · klaar' : '3 prioriteiten',
+      frogTitle: day1 ? 'Factuur Kade 12 versturen' : 'Kade 12 factuur nasturen',
+      frogMeta: '09:30 · 15 min',
+      frogBody: day1
+        ? 'Ik zag drie klaargezette facturen en één verstuurde. Deze staat het langst klaar. Is dit je frog?'
+        : 'Vraag alleen: bedrag plus urenbijlage, geen begeleidende tekst. Aan je bureau, voor het gesprek van 14:00.',
+      frogCta: day1 ? 'Ja, dit is m’n frog' : 'Afgevinkt',
+      frogAlt: day1 ? 'Nee, kies iets anders' : 'Lukt niet vandaag',
+      frogOpen: !frogDone, frogDone,
+      frogOpacity: frogDone ? 0.5 : 1,
+      frogDeco: frogDone ? 'line-through' : 'none',
+
+      coach, prios, confirms,
+      confirmsEmpty: confirms.length === 0,
+      emptyLine: allDone ? 'Niets meer open uit gisteren, en niets meer voor vandaag.' : 'Niets meer open uit gisteren.',
+      emptySub: allDone
+        ? 'Om 14:00 heb je Vlot. Tot dan hoef je hier niet te kijken. Wil je dat ik morgen alvast klaarzet?'
+        : 'Morgen begint dit blok weer leeg. Dat is het hele doel.',
+
+      hasLoose: idx < LOOSE.length,
+      looseEmpty: idx >= LOOSE.length,
+      looseHeading: cur.dir === 'wait' ? 'Ik wacht op' : 'Ik moet iets',
+      looseSub: cur.dir === 'wait' ? 'Dit vraagt jouw aandacht.' : 'Hier ligt de bal bij jou.',
+      party: cur.party, initial: cur.initial, avatarBg: cur.bg,
+      what: cur.what, age: cur.age, source: cur.source, story: cur.story,
+      doneLabel: cur.dir === 'wait' ? 'Herinner' : 'Afgehandeld',
+      counter: Math.min(idx + 1, LOOSE.length) + ' van ' + LOOSE.length,
+      cardOp: s.cardLeaving ? 0 : 1,
+      cardTf: s.cardLeaving ? 'translateY(-16px) scale(0.98)' : 'translateY(0) scale(1)',
+      segments,
+      actDone: () => this.advance('done'), actLater: () => this.advance('later'), actDrop: () => this.advance('drop'),
+      nextLoose: () => this.advance('skip'),
+      tallyLine: this.tallyLine(),
+
+      q: s.q,
+      onQ: e => this.setState({ q: e.target.value }),
+      onQKey: e => { if (e.key === 'Enter') this.setState({ answerKey: this.pick(this.state.q) || 'wachten' }); },
+      runQ: () => this.setState({ answerKey: this.pick(this.state.q) || 'wachten' }),
+      suggestions, recent,
+      hasAnswer: !!ans,
+      answer: ans ? ans.text : '', answerLabel: ans ? ans.label : '', nodes: ans ? ans.nodes : [],
+
+      goToday: () => this.setState({ screen: 'today' }),
+      goLoose: () => this.setState({ screen: 'loose' }),
+      goGraph: () => this.setState({ screen: 'graph' }),
+      setEmpty: () => this.setState({ screen: 'today', variant: 'empty', frogDone: false, gone: {}, fading: {}, prioDone: {} }),
+      setNormal: () => this.setState({ screen: 'today', variant: 'normal', frogDone: false, gone: {}, fading: {}, prioDone: {} }),
+      setDegraded: () => this.setState({ screen: 'today', variant: 'degraded', frogDone: false, gone: {}, fading: {}, prioDone: {} }),
+      setDone: () => this.setState({ screen: 'today', variant: 'done', frogDone: true, gone: { c1: true, c2: true, c3: true }, fading: {}, prioDone: {} }),
+      reset: () => this.setState({ screen: 'today', variant: 'normal', frogDone: false, prioDone: {}, gone: {}, fading: {}, looseIdx: 0, cardLeaving: false, tally: { done: 0, later: 0, drop: 0, skip: 0 }, q: '', answerKey: null }),
+      tickFrog: () => this.setState({ frogDone: true }),
+
+      navTodayStyle: this.navBtn(isToday),
+      navLooseStyle: this.navBtn(s.screen === 'loose'),
+      navGraphStyle: this.navBtn(s.screen === 'graph'),
+      vEmptyStyle: this.navBtn(isToday && day1),
+      vNormalStyle: this.navBtn(isToday && v === 'normal'),
+      vDegradedStyle: this.navBtn(isToday && v === 'degraded'),
+      vDoneStyle: this.navBtn(isToday && allDone),
+      tabTodayStyle: this.tabBtn(isToday),
+      tabLooseStyle: this.tabBtn(s.screen === 'loose'),
+      tabGraphStyle: this.tabBtn(s.screen === 'graph'),
+
+      frameNote: isToday ? notes.today[v] : (s.screen === 'loose' ? notes.loose : notes.graph),
+
+      colors: [
+        { n: 'Grond', v: '#0b0d0c' },
+        { n: 'Kaart', v: '#101312' },
+        { n: 'Kaart · warm', v: '#141a17' },
+        { n: 'Frog-vlak', v: '#111a13' },
+        { n: 'Tekst', v: '#eceae6' },
+        { n: 'Groen · actie', v: '#8ab377' },
+        { n: 'Groen · label', v: '#8ed081' },
+        { n: 'Amber · later', v: '#d9a441' },
+        { n: 'Rood · laat vallen', v: '#c1615a' }
+      ],
+      budgets: [
+        { n: 'Begroeting', v: '24 tekens · 2 regels' },
+        { n: 'Frog-titel', v: '40 tekens · 2 regels · hard' },
+        { n: 'Frog-body', v: '140 tekens · 3 regels · hard' },
+        { n: 'Coachregel', v: '260 tekens · 4 regels · hard' },
+        { n: 'Prioriteit', v: '30 tekens · 1 regel · afkappen' },
+        { n: 'Kaart-titel eindje', v: '34 tekens · 2 regels' },
+        { n: 'Kaart-verhaal', v: '150 tekens · 4 regels · hard' },
+        { n: 'Graaf-kaart body', v: '120 tekens · 3 regels' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
