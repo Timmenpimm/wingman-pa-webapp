@@ -16,41 +16,61 @@ import type { RunResult } from "@/brain/runs/types";
  *   meldingsbalk op een vergrendeld scherm een lek.
  * - **Geen mailserver ingesteld.** Dan verstuurt hij niets en noteert de run
  *   `notified: false`. Eerlijk falen, niet stil doen alsof.
+ *
+ * Elke uitkomst geeft een reden terug. Een `false` zonder uitleg dwingt je
+ * later om in code te gaan zoeken waarom je niets kreeg — precies het soort
+ * stilte dat deze app juist wil wegnemen.
  */
+
+export interface Meldresultaat {
+  verstuurd: boolean;
+  reden?: string;
+}
 export async function stuurRunBericht(
   userId: string,
   kind: RunKind,
   resultaat: RunResult,
   now: Date = new Date(),
-): Promise<boolean> {
+): Promise<Meldresultaat> {
   const server = process.env.AUTH_EMAIL_SERVER;
-  if (!server) return false;
+  if (!server) return { verstuurd: false, reden: "geen mailserver ingesteld" };
 
   const user = await ownerPrisma.user.findUnique({
     where: { id: userId },
     select: { email: true, name: true, timezone: true },
   });
-  if (!user) return false;
+  if (!user) return { verstuurd: false, reden: "gebruiker niet gevonden" };
 
   const instellingen = await withUser(userId, (tx) =>
     tx.userSetting.findMany({ where: { user_id: userId } }),
   );
   const waarde = (key: string) => instellingen.find((s) => s.key === key)?.value;
 
-  if (inStilleUren(waarde("quiet_hours"), user.timezone, now)) return false;
+  if (inStilleUren(waarde("quiet_hours"), user.timezone, now)) {
+    return { verstuurd: false, reden: `stille uren (${waarde("quiet_hours")})` };
+  }
 
   const magDetails = waarde("sensitive_in_push") === "true" || !resultaat.sensitive;
   const tekst = magDetails && resultaat.detail ? resultaat.detail : "Open Wingman om te zien wat er is.";
 
-  const transport = nodemailer.createTransport(server);
-  await transport.sendMail({
-    to: user.email,
-    from: process.env.AUTH_EMAIL_FROM || "Wingman <noreply@wingman.app>",
-    subject: magDetails ? resultaat.summary : "Er is iets voor je",
-    text: `${RUN_LABELS[kind]}\n\n${magDetails ? resultaat.summary : ""}\n\n${tekst}\n`,
-  });
-
-  return true;
+  try {
+    const transport = nodemailer.createTransport(server);
+    await transport.sendMail({
+      to: user.email,
+      from: process.env.AUTH_EMAIL_FROM || "Wingman <noreply@wingman.app>",
+      subject: magDetails ? resultaat.summary : "Er is iets voor je",
+      text: `${RUN_LABELS[kind]}\n\n${magDetails ? resultaat.summary : ""}\n\n${tekst}\n`,
+    });
+    return { verstuurd: true };
+  } catch (err) {
+    // De run zelf is geslaagd; alleen de bezorging niet. Dat onderscheid moet
+    // in het logboek blijven staan, anders lijkt een mailprobleem op een
+    // mislukte briefing.
+    return {
+      verstuurd: false,
+      reden: `mail mislukt: ${err instanceof Error ? err.message : "onbekend"}`,
+    };
+  }
 }
 
 /**
