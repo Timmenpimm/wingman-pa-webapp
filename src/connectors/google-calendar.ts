@@ -1,9 +1,12 @@
+import { z } from "zod";
 import type {
   AdapterContext,
   ConnectorAdapter,
   ConnectorHealth,
   NormalizedEvent,
 } from "@/lib/types";
+import type { ConnectorTool } from "@/lib/tools/types";
+import { formatDayLong, formatTime } from "@/lib/text";
 
 /**
  * Google Calendar → NormalizedEvent.
@@ -16,9 +19,107 @@ import type {
  *
  * Zonder token is dit een no-op: de app draait in dev volledig op seed-data.
  */
+/* ---------- Tools ------------------------------------------------------- */
+
+const isoDateTime = z.string().datetime({ offset: true });
+
+const listDayParams = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "verwacht jjjj-mm-dd"),
+});
+
+/**
+ * Lezen zonder op de nachtelijke sync te wachten. Nodig omdat "zet dit erin"
+ * bijna altijd voorafgegaan wordt door "is er dan al iets?" — en een antwoord
+ * uit een sync van vanochtend is precies het antwoord dat een dubbele afspraak
+ * oplevert.
+ */
+const listDay: ConnectorTool<z.infer<typeof listDayParams>> = {
+  name: "calendar.list_day",
+  label: "Agenda van één dag ophalen",
+  effect: "read",
+  params: listDayParams,
+  describe: (p) => `Agenda van ${formatDayLong(`${p.date}T12:00:00`)} bekijken`,
+
+  async run(ctx, p) {
+    const params = new URLSearchParams({
+      singleEvents: "true",
+      orderBy: "startTime",
+      timeMin: `${p.date}T00:00:00Z`,
+      timeMax: `${p.date}T23:59:59Z`,
+      maxResults: "50",
+    });
+    const data = await gcal<{ items?: GoogleEvent[] }>(ctx, `events?${params}`);
+    return (data.items ?? []).map((e) => ({
+      id: e.id,
+      title: e.summary ?? "(geen titel)",
+      start: e.start?.dateTime ?? e.start?.date,
+      end: e.end?.dateTime ?? e.end?.date,
+    }));
+  },
+};
+
+const createEventParams = z.object({
+  title: z.string().min(1).max(200),
+  start: isoDateTime,
+  end: isoDateTime,
+  description: z.string().max(2_000).optional(),
+  location: z.string().max(200).optional(),
+  /**
+   * Genodigden maken van dit een tool met publiek gevolg: een uitnodiging komt
+   * bij anderen binnen en is niet stil terug te draaien. Vandaar effect "write"
+   * en niet "draft", ook als de afspraak zelf onschuldig lijkt.
+   */
+  attendees: z.array(z.string().email()).max(20).optional(),
+});
+
+const createEvent: ConnectorTool<z.infer<typeof createEventParams>> = {
+  name: "calendar.create_event",
+  label: "Afspraak in de agenda zetten",
+  effect: "write",
+  params: createEventParams,
+  describe: (p) =>
+    `"${p.title}" op ${formatDayLong(p.start)} ${formatTime(p.start)}–${formatTime(p.end)}` +
+    (p.attendees?.length ? ` met ${p.attendees.length} genodigde(n)` : ""),
+
+  async run(ctx, p) {
+    if (new Date(p.end) <= new Date(p.start)) {
+      throw new Error("Einde ligt niet na de start.");
+    }
+    const event = await gcal<{ id: string; htmlLink?: string }>(ctx, "events", {
+      method: "POST",
+      body: JSON.stringify({
+        summary: p.title,
+        description: p.description,
+        location: p.location,
+        start: { dateTime: p.start, timeZone: "Europe/Amsterdam" },
+        end: { dateTime: p.end, timeZone: "Europe/Amsterdam" },
+        attendees: p.attendees?.map((email) => ({ email })),
+      }),
+    });
+    return { event_id: event.id, link: event.htmlLink };
+  },
+};
+
+async function gcal<T>(ctx: AdapterContext, path: string, init: RequestInit = {}): Promise<T> {
+  const res = await fetch(
+    `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(ctx.accountId)}/${path}`,
+    {
+      ...init,
+      headers: {
+        Authorization: `Bearer ${ctx.accessToken}`,
+        "Content-Type": "application/json",
+        ...init.headers,
+      },
+    },
+  );
+  if (!res.ok) throw new Error(`Google Calendar ${res.status}`);
+  return (await res.json()) as T;
+}
+
 export const googleCalendar: ConnectorAdapter<NormalizedEvent> = {
   provider: "google",
   type: "calendar",
+  tools: [listDay, createEvent],
 
   async fetchDelta(ctx: AdapterContext, since?: Date): Promise<NormalizedEvent[]> {
     if (!ctx.accessToken) return [];

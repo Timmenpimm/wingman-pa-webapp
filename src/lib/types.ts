@@ -6,6 +6,8 @@
  * Nieuwe bron toevoegen = nieuwe adapter, geen wijziging aan schermen of API.
  */
 
+import type { AnyTool } from "./tools/types";
+
 export type Provider =
   | "google"
   | "outlook"
@@ -160,6 +162,13 @@ export interface ConnectorAdapter<T> {
   fetchDelta(ctx: AdapterContext, since?: Date): Promise<T[]>;
   /** Draait de connector nog? Geeft ook consent-vervaldatum terug (PSD2). */
   health(ctx: AdapterContext): Promise<ConnectorHealth>;
+  /**
+   * Wat deze bron kan dóén, naast lezen. Optioneel en dat is het punt: een bank
+   * hoort hier niets te hebben (§6.7 — "bank = alleen lezen + categoriseren"),
+   * en een adapter die alleen synct hoeft niet met lege methodes te doen alsof.
+   * Zie src/lib/tools/types.ts.
+   */
+  tools?: AnyTool[];
 }
 
 export interface AdapterContext {

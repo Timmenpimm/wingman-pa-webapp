@@ -1,9 +1,11 @@
+import { z } from "zod";
 import type {
   AdapterContext,
   ConnectorAdapter,
   ConnectorHealth,
   NormalizedEmail,
 } from "@/lib/types";
+import type { ConnectorTool } from "@/lib/tools/types";
 
 /**
  * Gmail → NormalizedEmail.
@@ -11,13 +13,71 @@ import type {
  * Twee dingen die het ontwerp raken:
  *  - Verzonden mail is even belangrijk als ontvangen mail: de stijlkaart (§6.6)
  *    wordt eruit gebouwd. Daarom `is_sent` als eersteklas veld, niet een label.
- *  - v1 verstuurt niets (§2B). Deze adapter heeft bewust geen send().
+ *  - v1 verstuurt niets (§2B). Deze adapter heeft bewust geen send(); de tool
+ *    hieronder maakt een concept dat in Gmail klaarstaat tot jíj op verzenden
+ *    drukt. Dat onderscheid is geen detail: het is precies waar de stand
+ *    "concept maken" uit §6.7 over gaat.
  *
  * Delta gaat in productie via historyId; hieronder de simpele q-variant.
  */
+
+const draftReplyParams = z.object({
+  /** Gmail-thread waarop geantwoord wordt. Leeg = losse nieuwe concept-mail. */
+  thread_id: z.string().min(1).optional(),
+  to: z.string().email(),
+  subject: z.string().min(1).max(200),
+  body: z.string().min(1).max(5_000),
+  /** Message-ID waarop dit een antwoord is; houdt de thread heel in andere clients. */
+  in_reply_to: z.string().optional(),
+});
+
+const draftReply: ConnectorTool<z.infer<typeof draftReplyParams>> = {
+  name: "gmail.draft_reply",
+  label: "Concept-antwoord klaarzetten in Gmail",
+  effect: "draft",
+  params: draftReplyParams,
+
+  // Geen inhoud van de mail in de samenvatting: deze zin kan in een notificatie
+  // belanden en dan leest een meekijker mee (§6.7, "geen gevoelige details").
+  describe: (p) => `Concept-mail aan ${p.to} — onderwerp: ${p.subject}`,
+
+  async run(ctx, p) {
+    const headers = [
+      `To: ${p.to}`,
+      `Subject: ${encodeHeader(p.subject)}`,
+      "Content-Type: text/plain; charset=UTF-8",
+      ...(p.in_reply_to ? [`In-Reply-To: ${p.in_reply_to}`, `References: ${p.in_reply_to}`] : []),
+    ].join("\r\n");
+    const raw = Buffer.from(`${headers}\r\n\r\n${p.body}`, "utf8").toString("base64url");
+
+    const res = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/drafts", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${ctx.accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ message: { raw, threadId: p.thread_id } }),
+    });
+    if (!res.ok) throw new Error(`Gmail HTTP ${res.status}`);
+
+    const draft = (await res.json()) as { id: string; message?: { threadId?: string } };
+    // Geen mailinhoud terug: dit belandt in ToolCall.result in de database.
+    return { draft_id: draft.id, thread_id: draft.message?.threadId };
+  },
+};
+
+/** RFC 2047 voor niet-ASCII in een header — "Beëindiging" hoort leesbaar aan te komen. */
+function encodeHeader(value: string): string {
+  // eslint-disable-next-line no-control-regex
+  return /^[\x00-\x7F]*$/.test(value)
+    ? value
+    : `=?UTF-8?B?${Buffer.from(value, "utf8").toString("base64")}?=`;
+}
+
 export const gmail: ConnectorAdapter<NormalizedEmail> = {
   provider: "gmail",
   type: "mail",
+  tools: [draftReply],
 
   async fetchDelta(ctx: AdapterContext, since?: Date): Promise<NormalizedEmail[]> {
     if (!ctx.accessToken) return [];

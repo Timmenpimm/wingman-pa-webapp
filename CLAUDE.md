@@ -20,6 +20,13 @@ Deze staan in code afgedwongen, niet in een review-checklist:
 4. **"Laat vallen" is even makkelijk als "afgehandeld".** Geen bevestigingsvraag,
    geen prullenbak. Een lijst die alleen kan groeien wordt genegeerd.
 5. **v1 verstuurt geen mail.** De mail-adapters hebben bewust geen `send()`.
+   Een mailtool mag `draft` zijn, nooit `write` — `assertNoMailSending()` in
+   `src/lib/tools/registry.ts` en de test in `tests/tools.test.ts` bewaken dat.
+6. **Elke actie bij een bron gaat door de permissiepoort.** `gate()` in
+   `src/lib/tools/permission.ts` vertaalt de permissiegradiënt (§6.7) plus de
+   staat van de connector naar: doen, vragen, of weigeren. Er is geen tweede
+   route naar buiten; adapters worden alleen aangeroepen via
+   `src/lib/tools/execute.ts`. Elke poging landt in `ToolCall`, ook de mislukte.
 
 ## Toon
 
@@ -35,6 +42,11 @@ Engelse. Ontwerp en test dus met de echte tekst.
 - **Adapters praten nooit rechtstreeks met de UI.** Elke bron normaliseert naar
   `src/lib/types.ts` en registreert zich in `src/connectors/index.ts`. Een nieuwe
   bron toevoegen mag geen enkel scherm of endpoint raken.
+- **Lezen is een adapter, doen is een tool.** `fetchDelta`/`health` blijven de
+  synckant; alles wat iets verandert bij een bron staat in `tools` op diezelfde
+  adapter (optioneel — een bank hoort er geen te hebben). Geen gedeelde
+  `write()`-interface: schrijven betekent per bron iets anders, en een verplichte
+  methode levert alleen no-ops op. Zie `src/lib/tools/types.ts`.
 - **Eén gedrag, twee ingangen.** Alle mutaties staan in `src/lib/actions.ts`; de
   REST-routes roepen dezelfde functies aan als de knoppen. Nooit logica
   dupliceren in een route handler.

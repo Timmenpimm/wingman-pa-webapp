@@ -23,6 +23,7 @@ export const BUDGET = {
   graphEdgeLabel: 30,
   connectorStatus: 120,
   inboxItem: 280,
+  toolCallSummary: 120,
 } as const;
 
 export type BudgetKey = keyof typeof BUDGET;
