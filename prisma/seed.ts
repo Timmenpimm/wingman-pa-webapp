@@ -22,7 +22,15 @@ import bcrypt from "bcryptjs";
 import { randomBytes } from "node:crypto";
 import { localDayStart, localDayRange } from "../src/lib/day";
 
-const prisma = new PrismaClient();
+// Draait bewust als eigenaar (DIRECT_URL), niet als app_user (DATABASE_URL).
+// De seed ruimt eerst alle tabellen leeg en herbouwt ze dan voor één demo-
+// gebruiker (§seed hierboven) — dat is precies het soort brede, cross-user
+// operatie die RLS/FORCE ROW LEVEL SECURITY hoort te blokkeren voor app_user.
+// Als DIRECT_URL ontbreekt (lokale SQLite-dev, "file:./dev.db"), valt dit
+// terug op DATABASE_URL — daar geldt dit onderscheid toch niet.
+const prisma = new PrismaClient({
+  datasourceUrl: process.env.DIRECT_URL || process.env.DATABASE_URL,
+});
 
 // Wachtwoord voor het demo-persona. SEED_PASSWORD gezet? Dan dat wachtwoord
 // hashen (kosten 12, zelfde als auth.ts) en niets loggen — degene die de

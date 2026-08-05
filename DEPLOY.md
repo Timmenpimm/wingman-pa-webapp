@@ -166,9 +166,38 @@ twee blijft de knop staan maar meldt hij eerlijk dat mailen nog niet is
 ingesteld. `SEED_PASSWORD` gebruikt de seed om het demo-account een wachtwoord
 te geven; laat je hem leeg, dan genereert de seed er één en print die eenmalig.
 
+### Scheiding tussen gebruikers
+
+Staat nu op twee plekken: in de queries én in de database.
+
+De app verbindt als `app_user` — een rol zonder `BYPASSRLS`. Elke tabel heeft
+`FORCE ROW LEVEL SECURITY` en één policy die `user_id` vergelijkt met
+`current_setting('app.user_id')`. Die waarde wordt per transactie gezet door
+`withUser()` (`src/lib/db/with-user.ts`), met `set_config(..., true)` — dus
+LOCAL. Dat laatste is geen detail: op de transaction pooler wordt dezelfde
+verbinding voor een volgende request hergebruikt, en een waarde met
+sessie-scope zou daar blijven hangen.
+
+Eén uitzondering: het inlogpad zoekt een gebruiker op vóórdat er een sessie
+is, en gebruikt daarvoor de eigenaarsrol (`src/lib/db/owner-prisma.ts`). Dat
+pad leest alleen e-mail en wachtwoord-hash om te bepalen wíé iemand is; alles
+daarna loopt via `app_user`.
+
+`npm run rls:bewijs` toont aan dat het werkt: gebruiker A krijgt B's rijen niet,
+ook niet met een expliciete `where` op B's id, en kan niets namens B wegschrijven.
+Dat draait ook in CI.
+
+### Nieuwe omgeving opzetten
+
+De migratie maakt de rol `app_user` aan maar zet geen wachtwoord — dat hoort
+niet in git. Dus eenmalig per omgeving:
+
+```sql
+ALTER ROLE app_user WITH PASSWORD '<genereer iets langs>';
+```
+
+Zet daarna `DATABASE_URL` naar `app_user` en `DIRECT_URL` naar de eigenaarsrol.
+
 ### Wat er nog niet is
 
-Geen registratie: accounts ontstaan alleen via de seed. En de scheiding tussen
-gebruikers zit nu in de queries (`user_id` op elke tabel), nog niet in de
-database zelf. Zet row-level security in Supabase aan per `user_id` voordat er
-een tweede echte gebruiker bij komt — dan is een fout in de code geen lek.
+Geen registratie: accounts ontstaan alleen via de seed.

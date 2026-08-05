@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { prisma, currentUserId } from "@/lib/db/client";
+import { currentUserId } from "@/lib/db/client";
+import { withUser } from "@/lib/db/with-user";
 import { getOpenCommitments, type LooseEnd } from "@/lib/commitments";
 import { resolveCommitment } from "@/lib/actions";
 import { durationPhrase } from "@/lib/text";
@@ -23,10 +24,14 @@ const SNOOZE_DAYS = 3;
  */
 export default async function OpenEindjesPage() {
   const userId = await currentUserId();
-  const [{ i_owe, they_owe, total }, connectors, everHad] = await Promise.all([
+  // Twee losse queries binnen één RLS-transactie: buiten withUser() staat
+  // app.user_id niet en geeft de database geen enkele rij terug.
+  const [{ i_owe, they_owe, total }, { connectors, everHad }] = await Promise.all([
     getOpenCommitments(userId),
-    prisma.connector.findMany({ where: { user_id: userId } }),
-    prisma.commitment.count({ where: { user_id: userId } }),
+    withUser(userId, async (tx) => ({
+      connectors: await tx.connector.findMany({ where: { user_id: userId } }),
+      everHad: await tx.commitment.count({ where: { user_id: userId } }),
+    })),
   ]);
 
   // Dezelfde vier staten als Vandaag (§9), ongewijzigde bepaling. Het verschil

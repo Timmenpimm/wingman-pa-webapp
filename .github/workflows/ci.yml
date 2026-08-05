@@ -25,7 +25,9 @@ jobs:
           --health-interval 5s --health-timeout 3s --health-retries 10
 
     env:
-      DATABASE_URL: postgresql://wingman:wingman@localhost:5433/wingman
+      # De app draait als app_user (geen BYPASSRLS), zodat CI het echte
+      # gedrag test en niet de eigenaarsrol die overal langs mag.
+      DATABASE_URL: postgresql://app_user:ci@localhost:5433/wingman
       DIRECT_URL: postgresql://wingman:wingman@localhost:5433/wingman
       AUTH_SECRET: ci-alleen-voor-tests
       SEED_PASSWORD: lokaal
@@ -43,7 +45,14 @@ jobs:
       - run: npm test
 
       - name: Database klaarzetten
-        run: npx prisma migrate deploy && npx tsx prisma/seed.ts
+        run: |
+          PGPASSWORD=wingman psql -h localhost -p 5433 -U wingman -d wingman \
+            -c "CREATE ROLE app_user WITH LOGIN PASSWORD 'ci';"
+          npx prisma migrate deploy
+          npx tsx prisma/seed.ts
+
+      - name: Schermt row-level security echt af?
+        run: node scripts/rls-bewijs.mjs
 
       - name: Bouwen en de poort controleren
         run: |

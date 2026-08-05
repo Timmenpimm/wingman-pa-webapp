@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { prisma, currentUserId } from "@/lib/db/client";
+import { currentUserId, withUser } from "@/lib/db/client";
 import { resolveCommitment } from "@/lib/actions";
 import { durationPhrase, formatAmount, formatDayShort } from "@/lib/text";
 
@@ -13,21 +13,25 @@ export const dynamic = "force-dynamic";
  */
 export default async function ProjectDetail({ params }: { params: { id: string } }) {
   const userId = await currentUserId();
-  const project = await prisma.project.findFirst({
-    where: { id: params.id, user_id: userId },
-  });
+  const project = await withUser(userId, (tx) =>
+    tx.project.findFirst({
+      where: { id: params.id, user_id: userId },
+    }),
+  );
   if (!project) notFound();
 
-  const [commitments, transactions] = await Promise.all([
-    prisma.commitment.findMany({
-      where: { user_id: userId, project_id: project.id },
-      orderBy: { opened_at: "asc" },
-    }),
-    prisma.transaction.findMany({
-      where: { user_id: userId, project_id: project.id },
-      orderBy: { booked_at: "desc" },
-    }),
-  ]);
+  const [commitments, transactions] = await withUser(userId, (tx) =>
+    Promise.all([
+      tx.commitment.findMany({
+        where: { user_id: userId, project_id: project.id },
+        orderBy: { opened_at: "asc" },
+      }),
+      tx.transaction.findMany({
+        where: { user_id: userId, project_id: project.id },
+        orderBy: { booked_at: "desc" },
+      }),
+    ]),
+  );
 
   const open = commitments.filter((c) => c.status === "open" || c.status === "snoozed");
   const iOwe = open.filter((c) => c.direction === "i_owe");

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { prisma, currentUserId } from "@/lib/db/client";
+import { currentUserId, withUser } from "@/lib/db/client";
 import { getOpenCommitments } from "@/lib/commitments";
 
 export const dynamic = "force-dynamic";
@@ -10,8 +10,12 @@ export const dynamic = "force-dynamic";
  */
 export default async function ProjectenPage() {
   const userId = await currentUserId();
+  // getOpenCommitments() wikkelt zichzelf al in withUser() (eigen transactie);
+  // de projectquery hier krijgt zijn eigen, kortere transactie.
   const [projects, looseEnds] = await Promise.all([
-    prisma.project.findMany({ where: { user_id: userId }, orderBy: { status: "asc" } }),
+    withUser(userId, (tx) =>
+      tx.project.findMany({ where: { user_id: userId }, orderBy: { status: "asc" } }),
+    ),
     getOpenCommitments(userId),
   ]);
 

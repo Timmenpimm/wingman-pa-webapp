@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { prisma, currentUserId } from "@/lib/db/client";
+import { currentUserId, withUser } from "@/lib/db/client";
 import { formatAmount } from "@/lib/text";
 
 export const dynamic = "force-dynamic";
@@ -14,15 +14,17 @@ export const dynamic = "force-dynamic";
  */
 export default async function OnboardingPage() {
   const userId = await currentUserId();
-  const [connectors, txs, people] = await Promise.all([
-    prisma.connector.findMany({ where: { user_id: userId } }),
-    prisma.transaction.findMany({
-      where: { user_id: userId },
-      orderBy: { booked_at: "desc" },
-      take: 5,
-    }),
-    prisma.person.count({ where: { user_id: userId } }),
-  ]);
+  const [connectors, txs, people] = await withUser(userId, (tx) =>
+    Promise.all([
+      tx.connector.findMany({ where: { user_id: userId } }),
+      tx.transaction.findMany({
+        where: { user_id: userId },
+        orderBy: { booked_at: "desc" },
+        take: 5,
+      }),
+      tx.person.count({ where: { user_id: userId } }),
+    ]),
+  );
 
   const connected = (provider: string) =>
     connectors.some((c) => c.provider === provider && c.status !== "not_connected");

@@ -1,6 +1,7 @@
 import { auth } from "../../../auth";
 
 export { prisma } from "./prisma";
+export { withUser } from "./with-user";
 
 /**
  * Dev draaide tot en met de auth-branch single-user op een vast e-mailadres.
