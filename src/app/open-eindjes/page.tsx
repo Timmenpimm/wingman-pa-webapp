@@ -2,16 +2,24 @@ import Link from "next/link";
 import { prisma, currentUserId } from "@/lib/db/client";
 import { getOpenCommitments, type LooseEnd } from "@/lib/commitments";
 import { resolveCommitment } from "@/lib/actions";
-import { clamp, durationPhrase, formatDayShort } from "@/lib/text";
+import { durationPhrase } from "@/lib/text";
+import { Stapel } from "./Stapel";
 
 export const dynamic = "force-dynamic";
+
+/** Zie Stapel.tsx voor dezelfde constante — bewust hier gedupliceerd in
+ *  plaats van een gedeeld bestand, want beide kanten (server-fallback,
+ *  client-stapel) mogen zelfstandig blijven werken. */
+const SNOOZE_DAYS = 3;
 
 /**
  * Open eindjes (§6.2) — de differentiator.
  *
- * Twee secties, want "ik moet iets" en "ik wacht op iemand" vragen een ander
- * soort actie. Elk item heeft drie gelijkwaardige uitgangen; "laat vallen" is
- * bewust net zo makkelijk als "afgehandeld".
+ * Eén kaart tegelijk in plaats van twee kolommen met lijsten (ontwerp:
+ * design-reference/Wingman-v2.dc.html, secties LOOSE/looseHeading/advance).
+ * "Ik moet iets" en "ik wacht op iemand" blijven het onderliggende verschil —
+ * die twee vragen een ander soort actie — maar tonen nu als kop die meewisselt
+ * per kaart in plaats van als aparte lijst.
  */
 export default async function OpenEindjesPage() {
   const userId = await currentUserId();
@@ -21,19 +29,22 @@ export default async function OpenEindjesPage() {
     prisma.commitment.count({ where: { user_id: userId } }),
   ]);
 
-  // Dezelfde vier staten als Vandaag (§9). Het verschil tussen "dag 1" en
-  // "alles afgehandeld" is essentieel: een leeg scherm betekent iets heel
-  // anders als je net gekoppeld hebt dan wanneer je net hebt opgeruimd.
+  // Dezelfde vier staten als Vandaag (§9), ongewijzigde bepaling. Het verschil
+  // tussen "dag 1" en "alles afgehandeld" is essentieel: een leeg scherm
+  // betekent iets heel anders als je net gekoppeld hebt dan wanneer je net
+  // hebt opgeruimd.
   const degraded = connectors.filter(
     (c) => c.status === "error" || c.status === "reauth_required",
   );
   const state: "empty" | "degraded" | "clear" | "normal" =
     everHad === 0 ? "empty" : total === 0 ? "clear" : degraded.length > 0 ? "degraded" : "normal";
 
-  const oldest = [...i_owe, ...they_owe].reduce<string | null>(
-    (acc, e) => (acc === null || e.opened_at < acc ? e.opened_at : acc),
-    null,
+  // Eén stapel, oudste eerst — ongeacht richting. De kop op de kaart zelf
+  // maakt het onderscheid tussen "ik moet iets" en "ik wacht op iemand".
+  const items: LooseEnd[] = [...i_owe, ...they_owe].sort((a, b) =>
+    a.opened_at.localeCompare(b.opened_at),
   );
+  const oldest = items[0]?.opened_at ?? null;
 
   return (
     <>
@@ -65,12 +76,7 @@ export default async function OpenEindjesPage() {
           <span className="notice__mark">Incompleet</span>
           <span>
             {degraded
-              .map((c) =>
-                clamp(
-                  c.error_message ?? `${c.label} was niet bereikbaar.`,
-                  "connectorStatus",
-                ),
-              )
+              .map((c) => c.error_message ?? `${c.label} was niet bereikbaar.`)
               .join(" ")}{" "}
             Er kunnen dus draden ontbreken.{" "}
             <Link href="/instellingen" className="btn--text">
@@ -80,34 +86,66 @@ export default async function OpenEindjesPage() {
         </div>
       )}
 
-      <div className="split split--2">
-        <Group
-          title="Ik moet iets"
-          note="belofte gedaan, niet ingelost"
-          items={i_owe}
-          empty="Niemand wacht op jou."
-        />
-        <Group
-          title="Ik wacht op iemand"
-          note="vraag gesteld, geen antwoord"
-          items={they_owe}
-          empty="Je wacht nergens op."
-        />
-      </div>
+      {(state === "normal" || state === "degraded") && (
+        <>
+          {/* Werkt alleen met JS: de client-stapel gebruikt useTransition om
+              resolveCommitment aan te roepen en animeert per kaart. */}
+          <Stapel items={items} />
+
+          {/* Zonder JS bestaat de client-stapel wel als HTML, maar de knoppen
+              hebben geen werkende handler. <noscript> wordt door de browser
+              alleen geparsed als scripting uit staat — dan verbergt deze
+              style-regel de stapel en komt de gewone lijst met formulieren
+              (die zonder JS al werkt via server actions) in beeld. */}
+          <noscript>
+            <style>{".loose-stack{display:none}"}</style>
+            <FallbackList i_owe={i_owe} they_owe={they_owe} />
+          </noscript>
+        </>
+      )}
     </>
   );
 }
 
-function Group({
+/**
+ * Val-terug-lijst zonder client-JS: hetzelfde gedrag als vóór de kaart-stapel
+ * (twee groepen, server actions in gewone formulieren), met bijgewerkte
+ * knoplabels zodat "Later" en het wisselende eerste label overeenkomen met
+ * de kaart-versie.
+ */
+function FallbackList({ i_owe, they_owe }: { i_owe: LooseEnd[]; they_owe: LooseEnd[] }) {
+  return (
+    <div className="split split--2" style={{ marginTop: "var(--s-5)" }}>
+      <FallbackGroup
+        title="Ik moet iets"
+        note="belofte gedaan, niet ingelost"
+        items={i_owe}
+        empty="Niemand wacht op jou."
+        doneLabel="Afgehandeld"
+      />
+      <FallbackGroup
+        title="Ik wacht op iemand"
+        note="vraag gesteld, geen antwoord"
+        items={they_owe}
+        empty="Je wacht nergens op."
+        doneLabel="Herinner"
+      />
+    </div>
+  );
+}
+
+function FallbackGroup({
   title,
   note,
   items,
   empty,
+  doneLabel,
 }: {
   title: string;
   note: string;
   items: LooseEnd[];
   empty: string;
+  doneLabel: string;
 }) {
   return (
     <section className="section">
@@ -135,27 +173,26 @@ function Group({
                     <span className="chip">{durationPhrase(item.opened_at)} open</span>
                     <span className="chip">{item.source_label}</span>
                     {item.project && <span className="chip chip--accent">{item.project}</span>}
-                    {item.due_date && (
-                      <span className="chip">afspraak {formatDayShort(item.due_date)}</span>
-                    )}
                   </div>
                   <div className="row__actions">
                     <form action={resolveCommitment.bind(null, item.id, "done", 0)}>
                       <button
                         className="btn btn--quiet"
                         type="submit"
-                        aria-label={`Afgehandeld: ${item.party} — ${item.what}`}
+                        aria-label={`${doneLabel}: ${item.party} — ${item.what}`}
                       >
-                        Afgehandeld
+                        {doneLabel}
                       </button>
                     </form>
-                    <form action={resolveCommitment.bind(null, item.id, "snoozed", 3)}>
+                    <form
+                      action={resolveCommitment.bind(null, item.id, "snoozed", SNOOZE_DAYS)}
+                    >
                       <button
                         className="btn btn--quiet"
                         type="submit"
-                        aria-label={`Herinner me over 3 dagen: ${item.party} — ${item.what}`}
+                        aria-label={`Later: ${item.party} — ${item.what}`}
                       >
-                        Over 3 dagen
+                        Later
                       </button>
                     </form>
                     <form action={resolveCommitment.bind(null, item.id, "dismissed", 0)}>

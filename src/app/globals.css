@@ -988,6 +988,155 @@ textarea.input {
   font-family: inherit;
 }
 
+/* ---------- Losse eindjes: kaart-stapel ---------------------------------
+   Eén kaart tegelijk (design-reference/Wingman-v2.dc.html, secties
+   LOOSE/looseHeading/advance/cardLeaving/tallyLine/segments). Alleen
+   bestaande tokens; de kaart zelf is een normale .card-achtige oppervlakte,
+   geen eigen kleuren. */
+
+.loose-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: var(--s-5);
+}
+
+.loose-progress {
+  display: flex;
+  gap: var(--s-1);
+  width: 100%;
+  margin-bottom: var(--s-5);
+}
+
+.loose-progress__seg {
+  flex: 1 1 0;
+  height: 3px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--ink) 12%, transparent);
+  transition: background var(--dur) var(--ease);
+}
+
+.loose-progress__seg[data-state="current"] {
+  background: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.loose-progress__seg[data-state="done"] {
+  background: var(--accent-strong);
+}
+
+.loose-head {
+  text-align: center;
+  margin-bottom: var(--s-5);
+}
+
+.loose-head__title {
+  font-size: var(--t-xl);
+}
+
+.loose-head__sub {
+  margin-top: var(--s-1);
+  font-size: var(--t-base);
+  color: var(--ink-muted);
+}
+
+.loose-card {
+  width: 100%;
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--s-6) var(--s-5);
+  text-align: center;
+  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+
+.loose-card--leaving {
+  opacity: 0;
+  transform: translateY(-16px) scale(0.98);
+}
+
+.loose-card__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--r-pill);
+  margin: 0 auto var(--s-4);
+  font-family: var(--font-sans);
+  font-weight: var(--w-semi);
+  font-size: var(--t-lg);
+  color: var(--accent-on-strong);
+}
+
+.loose-card__party {
+  margin: 0 0 var(--s-2);
+  font-size: var(--t-xs);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.loose-card__what {
+  margin: 0 0 var(--s-4);
+  font-family: var(--font-serif);
+  font-weight: var(--w-medium);
+  font-size: var(--t-lg);
+  line-height: var(--lh-tight);
+  color: var(--ink);
+}
+
+.loose-card__meta {
+  margin: 0 0 var(--s-2);
+  font-size: var(--t-sm);
+}
+
+.loose-card__meta--age {
+  color: var(--signal);
+  font-weight: var(--w-medium);
+}
+
+.loose-card__meta--source {
+  color: var(--ink-body);
+}
+
+.loose-card__story {
+  margin: var(--s-4) 0 0;
+  font-size: var(--t-base);
+  line-height: var(--lh-body);
+  color: var(--ink-body);
+}
+
+.loose-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--s-3);
+  margin-top: var(--s-6);
+  flex-wrap: wrap;
+}
+
+.loose-counter {
+  margin-top: var(--s-5);
+  font-size: var(--t-sm);
+  color: var(--ink-muted);
+  text-align: center;
+}
+
+@media (min-width: 700px) {
+  .loose-stack {
+    margin-top: var(--s-6);
+  }
+
+  .loose-card {
+    padding: var(--s-7) var(--s-6);
+  }
+
+  .loose-actions {
+    gap: var(--s-4);
+  }
+}
+
 /* ---------- Inloggen ---------------------------------------------------
    Eigen, smallere kolom binnen .page — geen nieuwe kleuren, alleen tokens
    die elders ook al gebruikt worden (accent-soft voor het merkje, signal
