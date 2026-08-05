@@ -15,7 +15,8 @@
     "db:nuke": "docker compose down -v && docker compose up -d && sleep 3 && prisma migrate deploy && tsx prisma/seed.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "smoke": "node scripts/smoke.mjs"
+    "smoke": "node scripts/smoke.mjs",
+    "build:check": "next build --no-lint"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

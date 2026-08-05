@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { safeReturnPath } from "@/app/inloggen/page";
+import { safeReturnPath } from "@/lib/return-path";
 
 /**
  * Een inlogscherm dat een aanvaller kan laten doorsturen is de standaardopzet

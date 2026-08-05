@@ -1,3 +1,4 @@
+import { safeReturnPath } from "@/lib/return-path";
 import { LoginForm } from "./LoginForm";
 
 export const dynamic = "force-dynamic";
@@ -61,28 +62,3 @@ export default function InloggenPage({
   );
 }
 
-/**
- * Waar mag je na het inloggen naartoe?
- *
- * "Begint met een /" is niet genoeg: `//kwaadaardig.nl` begint ook met een
- * slash en is een protocol-relatieve URL — de browser stuurt je dan naar een
- * andere site. Een inlogscherm dat een aanvaller kan laten doorsturen is
- * precies de opzet van een phishing-flow, dus alles wat niet aantoonbaar een
- * eigen pad is, gaat naar de homepage.
- */
-export function safeReturnPath(raw?: string): string {
-  if (!raw) return "/";
-  const decoded = (() => {
-    try {
-      return decodeURIComponent(raw);
-    } catch {
-      return raw;
-    }
-  })();
-  const path = decoded.trim();
-  if (!path.startsWith("/")) return "/";
-  if (path.startsWith("//")) return "/"; // protocol-relatief
-  if (path.startsWith("/\\")) return "/"; // backslash: sommige browsers lezen dit als //
-  if (/[\r\n]/.test(path)) return "/"; // header-injectie
-  return path;
-}
