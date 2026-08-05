@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db/prisma";
+import { ownerPrisma as prisma } from "@/lib/db/owner-prisma";
 import { signMagicLinkToken } from "@/lib/auth/magic-link";
 import { sendMagicLinkMail } from "@/lib/auth/mailer";
 
@@ -11,6 +11,10 @@ export const dynamic = "force-dynamic";
  * Verstuurt alleen echt iets als AUTH_EMAIL_SERVER is gezet. Staat die leeg,
  * dan is dit een 501 en laat het inlogscherm dat eerlijk zien — geen knop die
  * doet alsof er iets onderweg is terwijl er nooit mail verstuurd wordt.
+ *
+ * Ook dit is een pre-sessie lookup (net als in auth.ts): er is nog geen
+ * userId om app.user_id mee te zetten, dus gaat de user-by-email-query via
+ * de eigenaarsrol. Zie src/lib/db/owner-prisma.ts.
  */
 export async function POST(req: NextRequest) {
   if (!process.env.AUTH_EMAIL_SERVER) {

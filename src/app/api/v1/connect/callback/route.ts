@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma, currentUserId } from "@/lib/db/client";
+import { currentUserId, withUser } from "@/lib/db/client";
 
 /**
  * POST /api/v1/connect/callback — Nango meldt dat een koppeling rond is.
@@ -28,10 +28,12 @@ export async function POST(req: Request) {
   }
 
   const userId = await currentUserId();
-  await prisma.connector.updateMany({
-    where: { user_id: userId, provider: body.provider },
-    data: { status: "active", error_message: null, last_sync_at: null },
-  });
+  await withUser(userId, (tx) =>
+    tx.connector.updateMany({
+      where: { user_id: userId, provider: body.provider },
+      data: { status: "active", error_message: null, last_sync_at: null },
+    }),
+  );
 
   return NextResponse.json({ ok: true });
 }

@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db/client";
+import { withUser } from "@/lib/db/with-user";
 import { localDateKey, dateKeyToUtc, localDayRange } from "@/lib/day";
 import { clamp } from "@/lib/text";
 import type { BriefingToday } from "@/lib/types";
@@ -23,89 +23,91 @@ export async function getBriefingToday(
   userId: string,
   opts: { date?: Date; forceState?: BriefingToday["state"] } = {},
 ): Promise<BriefingToday> {
-  // De dag wordt bepaald in de tijdzone van de gebruiker, niet die van de
-  // server. Anders krijgt iemand in Amsterdam tussen middernacht en 02:00 de
-  // briefing van gisteren te zien — de server staat immers op UTC.
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { timezone: true },
-  });
-  const timezone = user?.timezone ?? "Europe/Amsterdam";
-  const now = opts.date ?? new Date();
+  return withUser(userId, async (tx) => {
+    // De dag wordt bepaald in de tijdzone van de gebruiker, niet die van de
+    // server. Anders krijgt iemand in Amsterdam tussen middernacht en 02:00 de
+    // briefing van gisteren te zien — de server staat immers op UTC.
+    const user = await tx.user.findUnique({
+      where: { id: userId },
+      select: { timezone: true },
+    });
+    const timezone = user?.timezone ?? "Europe/Amsterdam";
+    const now = opts.date ?? new Date();
 
-  const dateKey = localDateKey(timezone, now);
-  const date = dateKeyToUtc(dateKey);
-  const day = localDayRange(timezone, now);
+    const dateKey = localDateKey(timezone, now);
+    const date = dateKeyToUtc(dateKey);
+    const day = localDayRange(timezone, now);
 
-  const [briefing, events, connectors] = await Promise.all([
-    prisma.dailyBriefing.findFirst({ where: { user_id: userId, date } }),
-    prisma.event.findMany({
-      where: { user_id: userId, start_at: { gte: day.start, lt: day.end } },
-      orderBy: { start_at: "asc" },
-    }),
-    prisma.connector.findMany({ where: { user_id: userId } }),
-  ]);
+    const [briefing, events, connectors] = await Promise.all([
+      tx.dailyBriefing.findFirst({ where: { user_id: userId, date } }),
+      tx.event.findMany({
+        where: { user_id: userId, start_at: { gte: day.start, lt: day.end } },
+        orderBy: { start_at: "asc" },
+      }),
+      tx.connector.findMany({ where: { user_id: userId } }),
+    ]);
 
-  const degraded = connectors
-    .filter((c) => c.status === "error" || c.status === "reauth_required")
-    .map((c) => ({
-      connector: c.label,
-      message: clamp(
-        c.error_message ??
-          (c.status === "reauth_required"
-            ? `${c.label} vraagt opnieuw toestemming. Deze briefing mist die bron.`
-            : `${c.label} was niet bereikbaar. Deze briefing mist die bron.`),
-        "connectorStatus",
-      ),
+    const degraded = connectors
+      .filter((c) => c.status === "error" || c.status === "reauth_required")
+      .map((c) => ({
+        connector: c.label,
+        message: clamp(
+          c.error_message ??
+            (c.status === "reauth_required"
+              ? `${c.label} vraagt opnieuw toestemming. Deze briefing mist die bron.`
+              : `${c.label} was niet bereikbaar. Deze briefing mist die bron.`),
+          "connectorStatus",
+        ),
+      }));
+
+    if (!briefing) {
+      return {
+        date: dateKey,
+        frog: null,
+        coach_text: "",
+        priorities: [],
+        timeline: toTimeline(events),
+        confirmations: [],
+        degraded,
+        state: "empty",
+      };
+    }
+
+    const priorities = (JSON.parse(briefing.priorities) as Priority[])
+      .slice(0, MAX_PRIORITIES)
+      .map((p) => ({ ...p, text: clamp(p.text, "priority") }));
+
+    const confirmations = (JSON.parse(briefing.confirmations) as Confirmation[]).map((c) => ({
+      ...c,
+      text: clamp(c.text, "looseEndTitle"),
     }));
 
-  if (!briefing) {
+    const allDone =
+      briefing.frog_status !== "open" &&
+      priorities.every((p) => p.done) &&
+      confirmations.every((c) => c.answered);
+
     return {
       date: dateKey,
-      frog: null,
-      coach_text: "",
-      priorities: [],
+      frog: {
+        id: briefing.id,
+        title: clamp(briefing.frog_title, "frogTitle"),
+        sub: briefing.frog_sub ? clamp(briefing.frog_sub, "frogSub") : undefined,
+        implement: briefing.frog_implement
+          ? clamp(briefing.frog_implement, "frogImplement")
+          : undefined,
+        status: briefing.frog_status as "open" | "done" | "deferred",
+      },
+      coach_text: clamp(briefing.coach_text, "coach"),
+      priorities,
       timeline: toTimeline(events),
-      confirmations: [],
+      confirmations,
       degraded,
-      state: "empty",
+      state:
+        opts.forceState ??
+        (degraded.length > 0 ? "degraded" : allDone ? "clear" : "normal"),
     };
-  }
-
-  const priorities = (JSON.parse(briefing.priorities) as Priority[])
-    .slice(0, MAX_PRIORITIES)
-    .map((p) => ({ ...p, text: clamp(p.text, "priority") }));
-
-  const confirmations = (JSON.parse(briefing.confirmations) as Confirmation[]).map((c) => ({
-    ...c,
-    text: clamp(c.text, "looseEndTitle"),
-  }));
-
-  const allDone =
-    briefing.frog_status !== "open" &&
-    priorities.every((p) => p.done) &&
-    confirmations.every((c) => c.answered);
-
-  return {
-    date: dateKey,
-    frog: {
-      id: briefing.id,
-      title: clamp(briefing.frog_title, "frogTitle"),
-      sub: briefing.frog_sub ? clamp(briefing.frog_sub, "frogSub") : undefined,
-      implement: briefing.frog_implement
-        ? clamp(briefing.frog_implement, "frogImplement")
-        : undefined,
-      status: briefing.frog_status as "open" | "done" | "deferred",
-    },
-    coach_text: clamp(briefing.coach_text, "coach"),
-    priorities,
-    timeline: toTimeline(events),
-    confirmations,
-    degraded,
-    state:
-      opts.forceState ??
-      (degraded.length > 0 ? "degraded" : allDone ? "clear" : "normal"),
-  };
+  });
 }
 
 /**

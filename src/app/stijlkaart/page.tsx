@@ -1,4 +1,4 @@
-import { prisma, currentUserId } from "@/lib/db/client";
+import { currentUserId, withUser } from "@/lib/db/client";
 import { updateStyleCard } from "@/lib/actions";
 import { clamp } from "@/lib/text";
 
@@ -18,7 +18,7 @@ const REGISTER_LABEL: Record<string, string> = {
  */
 export default async function StijlkaartPage() {
   const userId = await currentUserId();
-  const cards = await prisma.styleCard.findMany({ where: { user_id: userId } });
+  const cards = await withUser(userId, (tx) => tx.styleCard.findMany({ where: { user_id: userId } }));
 
   return (
     <>

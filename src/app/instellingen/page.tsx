@@ -1,4 +1,4 @@
-import { prisma, currentUserId } from "@/lib/db/client";
+import { currentUserId, withUser } from "@/lib/db/client";
 import { setConnectorPermission } from "@/lib/actions";
 import { PERMISSION_LABELS } from "@/lib/types";
 import Link from "next/link";
@@ -25,10 +25,12 @@ const STATUS_TEXT: Record<string, string> = {
  */
 export default async function InstellingenPage() {
   const userId = await currentUserId();
-  const [connectors, settings] = await Promise.all([
-    prisma.connector.findMany({ where: { user_id: userId }, orderBy: { type: "asc" } }),
-    prisma.userSetting.findMany({ where: { user_id: userId } }),
-  ]);
+  const [connectors, settings] = await withUser(userId, (tx) =>
+    Promise.all([
+      tx.connector.findMany({ where: { user_id: userId }, orderBy: { type: "asc" } }),
+      tx.userSetting.findMany({ where: { user_id: userId } }),
+    ]),
+  );
 
   const setting = (key: string) => settings.find((s) => s.key === key)?.value;
 

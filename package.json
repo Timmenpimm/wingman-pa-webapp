@@ -16,7 +16,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "smoke": "node scripts/smoke.mjs",
-    "build:check": "next build --no-lint"
+    "build:check": "next build --no-lint",
+    "rls:bewijs": "node --env-file=.env scripts/rls-bewijs.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

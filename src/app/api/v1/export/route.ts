@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma, currentUserId } from "@/lib/db/client";
+import { currentUserId, withUser } from "@/lib/db/client";
 
 export const dynamic = "force-dynamic";
 
@@ -14,21 +14,23 @@ export async function GET() {
   const userId = await currentUserId();
 
   const [user, connectors, events, emails, transactions, commitments, people, projects, briefings, inbox, styleCards, nodes, edges] =
-    await Promise.all([
-      prisma.user.findUnique({ where: { id: userId } }),
-      prisma.connector.findMany({ where: { user_id: userId } }),
-      prisma.event.findMany({ where: { user_id: userId } }),
-      prisma.email.findMany({ where: { user_id: userId } }),
-      prisma.transaction.findMany({ where: { user_id: userId } }),
-      prisma.commitment.findMany({ where: { user_id: userId } }),
-      prisma.person.findMany({ where: { user_id: userId } }),
-      prisma.project.findMany({ where: { user_id: userId } }),
-      prisma.dailyBriefing.findMany({ where: { user_id: userId } }),
-      prisma.inboxItem.findMany({ where: { user_id: userId } }),
-      prisma.styleCard.findMany({ where: { user_id: userId } }),
-      prisma.graphNode.findMany({ where: { user_id: userId } }),
-      prisma.graphEdge.findMany({ where: { user_id: userId } }),
-    ]);
+    await withUser(userId, (tx) =>
+      Promise.all([
+        tx.user.findUnique({ where: { id: userId } }),
+        tx.connector.findMany({ where: { user_id: userId } }),
+        tx.event.findMany({ where: { user_id: userId } }),
+        tx.email.findMany({ where: { user_id: userId } }),
+        tx.transaction.findMany({ where: { user_id: userId } }),
+        tx.commitment.findMany({ where: { user_id: userId } }),
+        tx.person.findMany({ where: { user_id: userId } }),
+        tx.project.findMany({ where: { user_id: userId } }),
+        tx.dailyBriefing.findMany({ where: { user_id: userId } }),
+        tx.inboxItem.findMany({ where: { user_id: userId } }),
+        tx.styleCard.findMany({ where: { user_id: userId } }),
+        tx.graphNode.findMany({ where: { user_id: userId } }),
+        tx.graphEdge.findMany({ where: { user_id: userId } }),
+      ]),
+    );
 
   const payload = {
     exported_at: new Date().toISOString(),

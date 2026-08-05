@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma, currentUserId } from "@/lib/db/client";
+import { currentUserId, withUser } from "@/lib/db/client";
 
 export const dynamic = "force-dynamic";
 
@@ -7,10 +7,12 @@ export const dynamic = "force-dynamic";
 // Tokens gaan hier nooit overheen.
 export async function GET() {
   const userId = await currentUserId();
-  const rows = await prisma.connector.findMany({
-    where: { user_id: userId },
-    orderBy: { type: "asc" },
-  });
+  const rows = await withUser(userId, (tx) =>
+    tx.connector.findMany({
+      where: { user_id: userId },
+      orderBy: { type: "asc" },
+    }),
+  );
   return NextResponse.json(
     rows.map((c) => ({
       id: c.id,

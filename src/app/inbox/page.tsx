@@ -1,4 +1,4 @@
-import { prisma, currentUserId } from "@/lib/db/client";
+import { currentUserId, withUser } from "@/lib/db/client";
 import { triageInbox } from "@/lib/actions";
 import { CaptureField } from "@/components/CaptureField";
 
@@ -10,10 +10,12 @@ export const dynamic = "force-dynamic";
  */
 export default async function InboxPage() {
   const userId = await currentUserId();
-  const items = await prisma.inboxItem.findMany({
-    where: { user_id: userId, status: "new" },
-    orderBy: { created_at: "asc" },
-  });
+  const items = await withUser(userId, (tx) =>
+    tx.inboxItem.findMany({
+      where: { user_id: userId, status: "new" },
+      orderBy: { created_at: "asc" },
+    }),
+  );
 
   const SOURCE_LABEL: Record<string, string> = {
     capture: "app",

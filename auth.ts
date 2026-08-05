@@ -2,7 +2,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { authConfig } from "./auth.config";
-import { prisma } from "@/lib/db/prisma";
+import { ownerPrisma as prisma } from "@/lib/db/owner-prisma";
 import { verifyMagicLinkToken } from "@/lib/auth/magic-link";
 
 /**
@@ -15,6 +15,12 @@ import { verifyMagicLinkToken } from "@/lib/auth/magic-link";
  * "onbekend e-mailadres" en "verkeerd wachtwoord" — authorize() geeft in
  * beide gevallen null, zodat een aanvaller niet kan aftasten welke adressen
  * bestaan.
+ *
+ * De user-by-email-lookups hieronder gaan bewust via ownerPrisma (de
+ * eigenaarsrol), niet via de gewone `prisma`/withUser()-route: er is hier nog
+ * geen sessie en dus geen userId om app.user_id mee te zetten. Zie de
+ * toelichting in src/lib/db/owner-prisma.ts voor waarom dat geen gat in de
+ * RLS is.
  */
 const credentialsProvider = Credentials({
   id: "credentials",

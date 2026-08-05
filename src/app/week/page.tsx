@@ -1,4 +1,4 @@
-import { prisma, currentUserId } from "@/lib/db/client";
+import { currentUserId, withUser } from "@/lib/db/client";
 import { getOpenCommitments } from "@/lib/commitments";
 import { durationPhrase } from "@/lib/text";
 
@@ -13,13 +13,16 @@ export const dynamic = "force-dynamic";
  */
 export default async function WeekPage() {
   const userId = await currentUserId();
+  // getOpenCommitments() wikkelt zichzelf al in withUser() (eigen transactie).
   const [{ i_owe, they_owe }, briefings] = await Promise.all([
     getOpenCommitments(userId),
-    prisma.dailyBriefing.findMany({
-      where: { user_id: userId },
-      orderBy: { date: "desc" },
-      take: 7,
-    }),
+    withUser(userId, (tx) =>
+      tx.dailyBriefing.findMany({
+        where: { user_id: userId },
+        orderBy: { date: "desc" },
+        take: 7,
+      }),
+    ),
   ]);
 
   const langstlopend = [...i_owe, ...they_owe]
