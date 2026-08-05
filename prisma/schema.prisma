@@ -38,6 +38,8 @@ model User {
   people       Person[]
   projects     Project[]
   briefings    DailyBriefing[]
+  runs         ScheduledRun[]
+  runLogs      RunLog[]
   inbox        InboxItem[]
   styleCards   StyleCard[]
   settings     UserSetting[]
@@ -296,4 +298,38 @@ model GraphEdge {
   label   String?
 
   @@index([user_id, from_id])
+}
+
+model ScheduledRun {
+  id          String  @id @default(cuid())
+  user_id     String
+  kind        String // morning | midday | evening
+  at          String // "08:00" — lokale tijd van de gebruiker
+  days        String  @default("[1,2,3,4,5,6,7]") // JSON, ISO-weekdagen
+  channel     String  @default("mail") // mail | push | none
+  enabled     Boolean @default(true)
+  // Lokale datum, niet een tijdstempel: de vraag is "is dit moment vandaag al
+  // geweest", en die stel je in de kalender van de gebruiker, niet in UTC.
+  last_run_on String?
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, kind])
+  @@index([enabled])
+}
+
+model RunLog {
+  id          String   @id @default(cuid())
+  user_id     String
+  kind        String
+  ran_at      DateTime @default(now())
+  local_date  String
+  status      String // done | skipped | failed
+  reason      String? // waarom overgeslagen of gefaald
+  notified    Boolean  @default(false)
+  duration_ms Int?
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, ran_at])
 }
