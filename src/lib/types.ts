@@ -169,6 +169,25 @@ export interface ConnectorAdapter<T> {
    * Zie src/lib/tools/types.ts.
    */
   tools?: AnyTool[];
+  /**
+   * Zorg dat er een bruikbaar access_token is en geef het terug — ververst zo
+   * nodig en schrijft het nieuwe token weg.
+   *
+   * Optioneel, want niet elke bron heeft het: CalDAV en IMAP hebben een
+   * wachtwoord dat niet verloopt. De kern weet hierdoor niets van OAuth-details
+   * en niets van Google in het bijzonder; hij vraagt de adapter om een token en
+   * krijgt er een, of een fout.
+   */
+  ensureAccessToken?(connector: ConnectorTokenState): Promise<string>;
+}
+
+/** Wat een adapter van de connectorrij nodig heeft om te kunnen verversen. */
+export interface ConnectorTokenState {
+  id: string;
+  user_id: string;
+  access_token: string | null;
+  refresh_token: string | null;
+  expires_at: Date | null;
 }
 
 export interface AdapterContext {

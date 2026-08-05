@@ -3,6 +3,7 @@ import { withUser, type Tx } from "@/lib/db/with-user";
 import { clamp } from "@/lib/text";
 import type { AdapterContext, ConnectorHealth } from "@/lib/types";
 import { asPermission, gate } from "./permission";
+import { adapterFor } from "@/connectors";
 import { findTool } from "./registry";
 import { toolErrors, ToolError, type ResolvedTool } from "./types";
 
@@ -228,16 +229,19 @@ async function perform(
   connector: Connector,
   params: unknown,
 ): Promise<ToolRequest> {
-  const ctx: AdapterContext = {
-    userId,
-    connectorId: connector.id,
-    accountId: connector.account_id,
-    accessToken: connector.access_token ?? undefined,
-    refreshToken: connector.refresh_token ?? undefined,
-  };
-
   const started = Date.now();
   try {
+    const ctx: AdapterContext = {
+      userId,
+      connectorId: connector.id,
+      accountId: connector.account_id,
+      // Het opgeslagen token kan verlopen zijn; de adapter weet hoe je aan een
+      // vers token komt (of dat het niet nodig is). Staat binnen de try, want
+      // "je koppeling is verlopen" is een uitkomst van deze aanroep en hoort in
+      // dezelfde ToolCall-rij als elke andere mislukking.
+      accessToken: await accessTokenFor(resolved, connector),
+      refreshToken: connector.refresh_token ?? undefined,
+    };
     const result = await withTimeout(
       resolved.tool.run(ctx, params),
       connector.label,
@@ -281,6 +285,22 @@ async function perform(
   }
 }
 
+/**
+ * Een geldig token, of het token dat er lag.
+ *
+ * De kern kent geen OAuth-details: hij vraagt de adapter erom. Heeft die geen
+ * `ensureAccessToken` (CalDAV, IMAP — wachtwoord dat niet verloopt), dan gaat
+ * het opgeslagen token mee zoals het is.
+ */
+async function accessTokenFor(
+  resolved: ResolvedTool,
+  connector: Connector,
+): Promise<string | undefined> {
+  const adapter = adapterFor(resolved.provider);
+  if (!adapter?.ensureAccessToken) return connector.access_token ?? undefined;
+  return adapter.ensureAccessToken(connector);
+}
+
 function withTimeout<T>(promise: Promise<T>, label: string): Promise<T> {
   return Promise.race([
     promise,
@@ -297,6 +317,12 @@ function withTimeout<T>(promise: Promise<T>, label: string): Promise<T> {
  */
 export function asToolError(raw: unknown, label: string): ToolError {
   if (raw instanceof ToolError) return raw;
+  // De refresh-laag gooit dit als Google het refresh_token weigert; hij heeft de
+  // connector dan al op reauth_required gezet. Op naam vergelijken en niet op
+  // instanceof: de fout kan uit een andere modulekopie komen (worker, test).
+  if (raw instanceof Error && raw.name === "ReauthRequiredError") {
+    return toolErrors.auth(label);
+  }
   const message = raw instanceof Error ? raw.message : String(raw);
   if (/\b401\b|invalid_grant|unauthorized/i.test(message)) return toolErrors.auth(label);
   if (/\b429\b|rate.?limit/i.test(message)) return toolErrors.rateLimit(label);

@@ -6,6 +6,7 @@ import type {
   NormalizedEvent,
 } from "@/lib/types";
 import type { ConnectorTool } from "@/lib/tools/types";
+import { getValidGoogleAccessToken } from "@/lib/auth/google-token";
 import { formatDayLong, formatTime } from "@/lib/text";
 
 /**
@@ -120,6 +121,9 @@ export const googleCalendar: ConnectorAdapter<NormalizedEvent> = {
   provider: "google",
   type: "calendar",
   tools: [listDay, createEvent],
+  // Google-tokens leven een uur. Zonder dit werkt een tool alleen in het uur na
+  // het inloggen — precies het soort storing dat pas opvalt als je erop rekent.
+  ensureAccessToken: getValidGoogleAccessToken,
 
   async fetchDelta(ctx: AdapterContext, since?: Date): Promise<NormalizedEvent[]> {
     if (!ctx.accessToken) return [];

@@ -6,6 +6,7 @@ import type {
   NormalizedEmail,
 } from "@/lib/types";
 import type { ConnectorTool } from "@/lib/tools/types";
+import { getValidGoogleAccessToken } from "@/lib/auth/google-token";
 
 /**
  * Gmail → NormalizedEmail.
@@ -78,6 +79,8 @@ export const gmail: ConnectorAdapter<NormalizedEmail> = {
   provider: "gmail",
   type: "mail",
   tools: [draftReply],
+  // Agenda en mail delen één OAuth-grant, dus ook één refresh-pad.
+  ensureAccessToken: getValidGoogleAccessToken,
 
   async fetchDelta(ctx: AdapterContext, since?: Date): Promise<NormalizedEmail[]> {
     if (!ctx.accessToken) return [];

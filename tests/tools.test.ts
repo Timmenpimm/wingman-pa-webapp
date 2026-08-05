@@ -3,6 +3,8 @@ import { asPermission, gate } from "@/lib/tools/permission";
 import { assertNoMailSending, findTool, toolCatalog } from "@/lib/tools/registry";
 import { asToolError } from "@/lib/tools/execute";
 import { ToolError, type Permission, type ToolEffect } from "@/lib/tools/types";
+import { adapterFor } from "@/connectors";
+import { needsRefresh, ReauthRequiredError } from "@/lib/auth/google-token";
 
 const base = {
   connectorLabel: "Gmail",
@@ -136,6 +138,40 @@ describe("parametervalidatie", () => {
     });
     expect(summary).not.toContain("Vertrouwelijke");
     expect(summary).toContain("stijn@voetstepp.nl");
+  });
+});
+
+describe("tokenverversing", () => {
+  // De kern hoort niets van OAuth te weten; de adapter levert het token. Deze
+  // test bewaakt dat de haak er blijft — zonder hem werkt een tool alleen in
+  // het uur na het inloggen, en dat merk je pas als je erop rekent.
+  it("laat de Google-adapters zelf een geldig token leveren", () => {
+    for (const name of ["calendar.create_event", "gmail.draft_reply"]) {
+      const adapter = adapterFor(findTool(name).provider);
+      expect(typeof adapter?.ensureAccessToken, name).toBe("function");
+    }
+  });
+
+  it("laat bronnen zonder verlopende tokens met rust", () => {
+    // CalDAV en IMAP hebben een wachtwoord, geen token dat na een uur vervalt.
+    for (const provider of ["caldav", "imap"] as const) {
+      expect(adapterFor(provider)?.ensureAccessToken).toBeUndefined();
+    }
+  });
+
+  it("vertaalt een geweigerd refresh_token naar 'opnieuw verbinden'", () => {
+    const geweigerd = new ReauthRequiredError();
+    expect(asToolError(geweigerd, "Agenda").code).toBe("Authentication");
+    expect(asToolError(geweigerd, "Agenda").remedy).toBe("Verbind opnieuw in instellingen.");
+  });
+
+  it("ververst pas als het token bijna om is", () => {
+    const now = new Date("2026-08-06T12:00:00Z");
+    const ruim = new Date("2026-08-06T12:05:00Z");
+    const bijna = new Date("2026-08-06T12:00:30Z");
+    expect(needsRefresh(ruim, now)).toBe(false);
+    expect(needsRefresh(bijna, now)).toBe(true);
+    expect(needsRefresh(null, now)).toBe(true);
   });
 });
 
