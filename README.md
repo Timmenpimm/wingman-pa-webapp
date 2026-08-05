@@ -1,0 +1,83 @@
+# Wingman — PA web-app
+
+Persoonlijke assistent die je échte bronnen leest (agenda, mail, bank), je dag
+plant volgens één methodiek, en losse eindjes vangt die anders wegzakken.
+
+Gebouwd op `webapp-designbriefing.md` (§1–§11 + Appendix A/B).
+
+## Draaien
+
+```bash
+npm install
+npm run db:reset   # schema + seed-data
+npm run dev        # http://localhost:3111
+```
+
+Er zijn geen API-keys nodig. De app draait volledig op seed-data uit
+`prisma/seed.ts` — één realistische dag, inclusief een connector die stuk is,
+want dat is de normale toestand van een PSD2-koppeling.
+
+## Wat er werkt
+
+| Scherm | Route | Staat |
+|---|---|---|
+| Vandaag | `/` | frog afvinken/uitstellen, prioriteiten omzetten, bevestigingen leegmaken, capture |
+| Open eindjes | `/open-eindjes` | afgehandeld / herinner later / laat vallen |
+| Inbox | `/inbox` | triëren naar frog, prioriteit, open eindje of weg |
+| Onboarding | `/onboarding` | zeven stappen, elke koppeling geeft meteen iets terug |
+| Projecten | `/projecten` | één statusregel per project |
+| Week | `/week` | patronen, geen score |
+| Stijlkaart | `/stijlkaart` | drie registers uit verzonden mail |
+| Graaf | `/graaf` | natuurlijke vraag → kaartjes met verbindingen |
+| Instellingen | `/instellingen` | permissie per bron, connector-gezondheid, dataregels |
+
+De vier staten uit §9 (normaal, bron ontbreekt, dag 1, alles af) staan onderaan
+Vandaag als schakelaar: `/?state=degraded` enzovoort.
+
+## API
+
+Alle mutaties lopen via `src/lib/actions.ts`; de REST-routes onder
+`/api/v1` roepen exact dezelfde functies aan als de knoppen. Zo kan een
+push-notificatie ("afvinken") niet uit de pas lopen met het scherm.
+
+```
+GET  /api/v1/briefing/today
+POST /api/v1/briefing/confirm            { block_id, decision }
+GET  /api/v1/commitments/open
+POST /api/v1/commitment/{id}/done|dismiss|remind_later
+POST /api/v1/graph/query                 { query }
+GET  /api/v1/connectors
+GET  /api/v1/connect/{provider}
+GET  /api/v1/inbox · POST /api/v1/inbox  { text, source }
+GET  /api/v1/style-card · POST /api/v1/style-card
+POST /api/v1/webhooks/ponto-transactions
+```
+
+## Architectuur
+
+- `src/connectors/` — adapters per bron, allemaal naar één genormaliseerd
+  schema (`src/lib/types.ts`). Nieuwe bron = nieuw bestand + één regel in de
+  registry. Geen wijziging aan schermen of endpoints.
+- `src/brain/` — briefing-engine (stelt Vandaag samen) en de prompts. Twee
+  productregels zitten hier hard in: maximaal drie prioriteiten, en een
+  onvolledige briefing zegt dat zelf.
+- `src/lib/graphify/` — graaf-bevraging. Nu lokaal op `GraphNode`/`GraphEdge`,
+  in productie Graphify per gebruiker.
+- `workers/` — Inngest-jobs (sync → extractie → graaf → coaching → push).
+- `src/lib/text.ts` — de karakterbudgetten. Elk LLM-tekstslot is gebounded.
+
+## Van dev naar productie
+
+1. `prisma/schema.prisma`: `provider = "postgresql"`, `DATABASE_URL` naar
+   Supabase/Neon in een **EU-regio** (PII, GDPR art. 9).
+2. Row-level security per gebruiker aanzetten.
+3. Nango koppelen (`NANGO_HOST`, `NANGO_PUBLIC_KEY`) voor OAuth-tokens.
+4. `ANTHROPIC_API_KEY` en de Inngest-worker aanzetten.
+5. Google restricted scope: CASA-assessment vóór productie; tot die tijd max
+   100 testgebruikers.
+6. Deploy naar Vercel (EU-zone) of Fly.io.
+
+## Wat er bewust niet in zit
+
+Geen chatvenster, geen kanban, geen dashboard met widgets, geen streaks of
+scores, geen mail versturen (v1 leest alleen). Zie §2 en §7 van de briefing.

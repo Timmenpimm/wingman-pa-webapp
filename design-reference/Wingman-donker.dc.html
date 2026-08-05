@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&family=Archivo+Mono:wght@400&display=swap">
+<style>
+  body { margin:0; background:#201e1d; color:#f3f2f2; font-family:"Archivo",system-ui,sans-serif; font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased; }
+  * { box-sizing:border-box; }
+  a { color:#ff563c; text-underline-offset:3px; }
+  a:hover { color:#ffc4b8; }
+  button { font-family:inherit; }
+  :focus { outline:none; }
+  :focus-visible { outline:2px solid #ff563c; outline-offset:2px; }
+  ::selection { background:rgba(255,86,60,0.3); }
+  .scr::-webkit-scrollbar { width:0; height:0; }
+</style>
+</helmet>
+
+<div style="padding:40px 40px 80px; max-width:1440px">
+
+  <div style="display:flex; align-items:baseline; gap:16px; flex-wrap:wrap; margin-bottom:8px">
+    <div style="font-family:Archivo; font-weight:800; font-size:32px; letter-spacing:-0.015em">Wingman</div>
+    <div style="font-family:'Archivo Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(243,242,242,0.55)">werktitel · v1 mockups · 390 px · donker</div>
+  </div>
+  <p style="margin:0 0 10px"><a href="Wingman.dc.html" style="font-family:Archivo; font-weight:600; font-size:14px">↩ Lichte versie</a></p>
+  <p style="max-width:640px; margin:0 0 24px; color:rgba(243,242,242,0.7); text-wrap:pretty">Klikbaar prototype van vier schermen, met de vier staten van Vandaag als schakelaar. Frog afvinken en “nog te bevestigen” leegmaken werken echt. Fictief persona: Nora, freelance ontwerper.</p>
+  <hr style="height:2px; border:0; background:rgba(243,242,242,0.4); margin:0 0 32px">
+
+  <div style="display:flex; gap:48px; align-items:flex-start; flex-wrap:wrap">
+
+    <aside style="width:248px; flex:0 0 248px; position:sticky; top:24px">
+      <div style="font-family:'Archivo Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(243,242,242,0.55); margin-bottom:10px">Scherm</div>
+      <div style="display:flex; flex-direction:column; gap:2px; margin-bottom:28px">
+        <button onClick="{{ goToday }}" style="{{ navTodayStyle }}" style-hover="background:rgba(243,242,242,0.07)">Vandaag</button>
+        <button onClick="{{ goLoose }}" style="{{ navLooseStyle }}" style-hover="background:rgba(243,242,242,0.07)">Open eindjes</button>
+        <button onClick="{{ goOnb }}" style="{{ navOnbStyle }}" style-hover="background:rgba(243,242,242,0.07)">Onboarding · stap 3</button>
+        <button onClick="{{ goGraph }}" style="{{ navGraphStyle }}" style-hover="background:rgba(243,242,242,0.07)">Kennisgraaf</button>
+      </div>
+
+      <div style="font-family:'Archivo Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(243,242,242,0.55); margin-bottom:10px">Staat van Vandaag</div>
+      <div style="display:flex; flex-direction:column; gap:2px; margin-bottom:28px">
+        <button onClick="{{ setEmpty }}" style="{{ vEmptyStyle }}" style-hover="background:rgba(243,242,242,0.07)">1 · Leeg / dag 1</button>
+        <button onClick="{{ setNormal }}" style="{{ vNormalStyle }}" style-hover="background:rgba(243,242,242,0.07)">2 · Normaal</button>
+        <button onClick="{{ setDegraded }}" style="{{ vDegradedStyle }}" style-hover="background:rgba(243,242,242,0.07)">3 · Degraded</button>
+        <button onClick="{{ setDone }}" style="{{ vDoneStyle }}" style-hover="background:rgba(243,242,242,0.07)">4 · Alles afgehandeld</button>
+      </div>
+
+      <button onClick="{{ reset }}" style="display:inline-flex; align-items:center; gap:6px; font-family:Archivo; font-weight:800; font-size:14px; padding:8px 14px; background:transparent; color:#f3f2f2; border:1px solid rgba(243,242,242,0.4); border-radius:0; cursor:pointer" style-hover="background:rgba(243,242,242,0.07)">Prototype terugzetten</button>
+
+      <p style="margin:24px 0 0; font-size:13px; line-height:1.5; color:rgba(243,242,242,0.55); text-wrap:pretty">Alle tekst in dit prototype staat op de plek waar de LLM per dag schrijft. Karakterbudgetten staan onder de tokens.</p>
+    </aside>
+
+    <div style="flex:0 0 auto">
+      <div style="width:390px; border:2px solid #f3f2f2; background:#201e1d; box-shadow:0 12px 32px rgba(0,0,0,0.55)">
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 20px 8px; font-family:'Archivo Mono',monospace; font-size:11px; letter-spacing:0.04em; color:rgba(243,242,242,0.55)">
+          <span>09:12</span>
+          <span>wo 5 aug</span>
+        </div>
+
+        <div class="scr" style="height:788px; overflow-y:auto; overflow-x:hidden">
+
+          <sc-if value="{{ isToday }}" hint-placeholder-val="{{ true }}">
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 20px; border-bottom:2px solid rgba(243,242,242,0.4)">
+                <div>
+                  <div style="font-family:Archivo; font-weight:800; font-size:20px; letter-spacing:-0.015em; line-height:1.1">Vandaag</div>
+                  <div style="font-family:'Archivo Mono',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:rgba(243,242,242,0.55); margin-top:3px">Woensdag 5 augustus</div>
+                </div>
+                <button onClick="{{ goGraph }}" style="display:flex; align-items:center; gap:6px; background:transparent; border:1px solid rgba(243,242,242,0.4); border-radius:0; padding:7px 10px; cursor:pointer; font-family:Archivo; font-weight:800; font-size:12px; color:#f3f2f2" style-hover="background:rgba(243,242,242,0.07)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+                  Vraag je graaf
+                </button>
+              </div>
+
+              <sc-if value="{{ vDegraded }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:16px 20px; background:#2d2b2b; border-bottom:2px solid rgba(243,242,242,0.4)">
+                  <div style="font-family:'Archivo Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(243,242,242,0.55); margin-bottom:6px">Dit beeld is incompleet</div>
+                  <p style="margin:0 0 10px; font-size:15px; line-height:1.5; text-wrap:pretty">Je mail gaf sinds gisteren 14:10 geen antwoord. Wat vandaag binnenkwam zit hier niet in — de frog en je agenda wel.</p>
+                  <button style="display:inline-flex; align-items:center; gap:6px; font-family:Archivo; font-weight:800; font-size:13px; padding:8px 12px; background:transparent; border:1px solid rgba(243,242,242,0.4); border-radius:0; cursor:pointer; color:#f3f2f2" style-hover="background:rgba(243,242,242,0.07)">Mail opnieuw verbinden</button>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ vEmpty }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:24px 20px 8px">
+                  <div style="font-family:'Archivo Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(243,242,242,0.55); margin-bottom:10px">Dag 1 · nog geen historie</div>
+                  <p style="margin:0 0 4px; font-size:19px; line-height:1.35; font-family:Archivo; font-weight:600; text-wrap:pretty">Ik heb je agenda, mail en bank één keer gelezen. Eén ding komt er drie keer in terug.</p>
+                  <p style="margin:12px 0 0; font-size:15px; line-height:1.55; color:rgba(243,242,242,0.7); text-wrap:pretty">Je zet facturen klaar en verstuurt ze niet. Ik stel voor dat we daar vandaag mee beginnen. Klopt dat?</p>
+                </div>
+              </sc-if>
+
+              <div style="padding:24px 20px 28px">
+                <div style="border-top:2px solid #ff563c; background:#2d2b2b; padding:20px 18px 18px">
+                  <div style="font-family:'Archivo Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(243,242,242,0.55); margin-bottom:12px">{{ frogKicker }}</div>
+                  <div style="font-family:Archivo; font-weight:800; font-size:27px; line-height:1.1; letter-spacing:-0.015em; margin-bottom:10px; opacity:{{ frogOpacity }}; text-decoration:{{ frogDeco }}; transition:opacity 220ms">Kade 12 factuur nasturen</div>
+                  <p style="margin:0 0 18px; font-size:14px; line-height:1.5; color:rgba(243,242,242,0.7); text-wrap:pretty">Vandaag 09:30 · aan je bureau · alleen bedrag en urenbijlage, geen begeleidende tekst. 15 minuten.</p>
+
+                  <sc-if value="{{ frogOpen }}" hint-placeholder-val="{{ true }}">
+                    <div style="display:flex; flex-direction:column; gap:10px">
+                      <button onClick="{{ tickFrog }}" style="display:flex; align-items:center; gap:10px; width:100%; justify-content:flex-start; font-family:Archivo; font-weight:800; font-size:16px; padding:14px 16px; background:#ff563c; color:#201e1d; border:0; border-radius:0; cursor:pointer" style-hover="background:#ff9783" style-active="background:#ff563c" style-active="background:#ff9783">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                        {{ frogCta }}
+                      </button>
+                      <button style="align-self:flex-start; font-family:Archivo; font-weight:600; font-size:14px; padding:6px 0; background:transparent; border:0; border-bottom:1px solid rgba(243,242,242,0.4); border-radius:0; cursor:pointer; color:rgba(243,242,242,0.7)" style-hover="color:#f3f2f2">{{ frogAlt }}</button>
+                    </div>
+                  </sc-if>
+
+                  <sc-if value="{{ frogDone }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex; align-items:center; gap:10px; border-top:1px solid rgba(243,242,242,0.4); padding-top:14px">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff563c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                      <span style="font-family:Archivo; font-weight:800; font-size:15px">Weg om {{ frogTime }}. De rest is bonus.</span>
+                    </div>
+                  </sc-if>
+                </div>
+              </div>
+
+              <div style="padding:0 20px 28px">
+                <div style="font-family:'Archivo Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(243,242,242,0.55); margin-bottom:10px">Wat opvalt</div>
+                <p style="margin:0; font-size:17px; line-height:1.45; font-family:Archivo; font-weight:400; text-wrap:pretty">{{ coach }}</p>
+              </div>
+
+              <hr style="height:2px; border:0; background:rgba(243,242,242,0.4); margin:0 20px">
+
+              <div style="padding:24px 20px 28px">
+                <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:14px">
+                  <div style="font-family:'Archivo Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(243,242,242,0.55)">Daarna · maximaal drie</div>
+                  <span style="font-family:'Archivo Mono',monospace; font-size:11px; color:rgba(243,242,242,0.55)">{{ prioCount }}</span>
+                </div>
+                <sc-for list="{{ prios }}" as="p" hint-placeholder-count="3">
+                  <button onClick="{{ p.toggle }}" style="display:flex; align-items:flex-start; gap:12px; width:100%; text-align:left; background:transparent; border:0; border-bottom:1px solid rgba(243,242,242,0.18); padding:12px 0; cursor:pointer; opacity:{{ p.op }}; transition:opacity 220ms" style-hover="background:rgba(243,242,242,0.04)">
+                    <span style="flex:0 0 22px; width:22px; height:22px; margin-top:1px; border:2px solid #f3f2f2; background:{{ p.boxBg }}; display:flex; align-items:center; justify-content:center">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#201e1d" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="opacity:{{ p.tickOp }}"><path d="M20 6 9 17l-5-5"></path></svg>
+                    </span>
+                    <span style="flex:1 1 auto">
+                      <span style="display:block; font-family:Archivo; font-weight:600; font-size:16px; line-height:1.3; color:#f3f2f2; text-decoration:{{ p.deco }}">{{ p.t }}</span>
+                      <span style="display:block; font-family:'Archivo Mono',monospace; font-size:11px; color:rgba(243,242,242,0.55); margin-top:3px">{{ p.m }}</span>
+                    </span>
+                  </button>
+                </sc-for>
+              </div>
+
+              <hr style="height:2px; border:0; background:rgba(243,242,242,0.4); margin:0 20px">
+
+              <div style="padding:24px 20px 28px">
+                <div style="font-family:'Archivo Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(243,242,242,0.55); margin-bottom:14px">Tijdlijn</div>
+                <sc-for list="{{ timeline }}" as="e" hint-placeholder-count="4">
+                  <div style="display:flex; gap:14px; padding:11px 0; border-bottom:1px solid rgba(243,242,242,0.18)">
+                    <span style="flex:0 0 46px; font-family:'Archivo Mono',monospace; font-size:12px; padding-top:2px; color:rgba(243,242,242,0.7)">{{ e.time }}</span>
+                    <span style="flex:1 1 auto">
+                      <span style="display:block; font-family:Archivo; font-weight:600; font-size:15px; line-height:1.3">{{ e.t }}</span>
+                      <span style="display:block; font-size:13px; color:rgba(243,242,242,0.55); margin-top:2px">{{ e.m }}</span>
+                      <sc-if value="{{ e.clash }}" hint-placeholder-val="{{ false }}">
+                        <span style="display:inline-block; margin-top:6px; font-family:Archivo; font-weight:600; font-size:12px; padding:3px 7px; border:1px solid #f3f2f2">{{ e.clash }}</span>
+                      </sc-if>
+                    </span>
+                  </div>
+                </sc-for>
+              </div>
+
+              <hr style="height:2px; border:0; background:rgba(243,242,242,0.4); margin:0 20px">
+
+              <div style="padding:24px 20px 40px">
+                <div style="font-family:'Archivo Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(243,242,242,0.55); margin-bottom:6px">Nog te bevestigen</div>
+                <p style="margin:0 0 14px; font-size:13px; line-height:1.5; color:rgba(243,242,242,0.55); text-wrap:pretty">{{ confirmIntro }}</p>
+
+                <sc-for list="{{ confirms }}" as="c" hint-placeholder-count="3">
+                  <div style="border:1px solid rgba(243,242,242,0.4); padding:14px 14px 12px; margin-bottom:10px; opacity:{{ c.op }}; transform:{{ c.tf }}; transition:opacity 220ms, transform 220ms">
+                    <div style="font-family:Archivo; font-weight:600; font-size:16px; line-height:1.3; margin-bottom:3px">{{ c.q }}</div>
+                    <div style="font-family:'Archivo Mono',monospace; font-size:11px; color:rgba(243,242,242,0.55); margin-bottom:12px">{{ c.m }}</div>
+                    <div style="display:flex; gap:8px">
+                      <button onClick="{{ c.yes }}" style="flex:1 1 0; font-family:Archivo; font-weight:800; font-size:14px; padding:10px 0; background:#ff563c; color:#201e1d; border:0; border-radius:0; cursor:pointer; text-align:center" style-hover="background:#ff9783" style-active="background:#ff563c" style-active="background:#ff9783">Ja</button>
+                      <button onClick="{{ c.no }}" style="flex:1 1 0; font-family:Archivo; font-weight:800; font-size:14px; padding:10px 0; background:transparent; color:#f3f2f2; border:1px solid rgba(243,242,242,0.4); border-radius:0; cursor:pointer; text-align:center" style-hover="background:rgba(243,242,242,0.07)">Nee</button>
+                    </div>
+                  </div>
+                </sc-for>
+
+                <sc-if value="{{ confirmsEmpty }}" hint-placeholder-val="{{ false }}">
+                  <div style="border-top:2px solid #ff563c; background:#2d2b2b; padding:18px">
+                    <p style="margin:0; font-family:Archivo; font-weight:600; font-size:17px; line-height:1.4; text-wrap:pretty">{{ confirmsEmptyLine }}</p>
+                    <p style="margin:10px 0 0; font-size:14px; line-height:1.5; color:rgba(243,242,242,0.7); text-wrap:pretty">{{ confirmsEmptySub }}</p>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isLoose }}" hint-placeholder-val="{{ false }}">
+            <div>
+              <div style="padding:14px 20px; border-bottom:2px solid rgba(243,242,242,0.4)">
+                <div style="font-family:Archivo; font-weight:800; font-size:20px; letter-spacing:-0.015em; line-height:1.1">Open eindjes</div>
+                <div style="font-family:'Archivo Mono',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:rgba(243,242,242,0.55); margin-top:3px">{{ looseCount }}</div>
+              </div>
+
+              <div style="padding:22px 20px 24px">
+                <p style="margin:0; font-size:17px; line-height:1.45; text-wrap:pretty">{{ looseCoach }}</p>
+              </div>
+
+              <hr style="height:2px; border:0; background:rgba(243,242,242,0.4); margin:0 20px">
+
+              <div style="padding:22px 20px 8px">
+                <div style="font-family:'Archivo Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(243,242,242,0.55)">Ik moet iets</div>
+              </div>
+              <div style="padding:0 20px 20px">
+                <sc-for list="{{ iOwe }}" as="o" hint-placeholder-count="3">
+                  <div style="border:1px solid rgba(243,242,242,0.4); padding:14px; margin-bottom:10px; opacity:{{ o.op }}; transform:{{ o.tf }}; transition:opacity 220ms, transform 220ms">
+                    <div style="display:flex; justify-content:space-between; gap:10px; align-items:baseline; margin-bottom:4px">
+                      <span style="font-family:Archivo; font-weight:800; font-size:16px">{{ o.p }}</span>
+                      <span style="font-family:'Archivo Mono',monospace; font-size:11px; color:rgba(243,242,242,0.55); white-space:nowrap">{{ o.d }}</span>
+                    </div>
+                    <div style="font-size:15px; line-height:1.4; margin-bottom:4px">{{ o.w }}</div>
+                    <div style="font-family:'Archivo Mono',monospace; font-size:11px; color:rgba(243,242,242,0.55); margin-bottom:12px">{{ o.s }}</div>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap">
+                      <button onClick="{{ o.done }}" style="font-family:Archivo; font-weight:800; font-size:13px; padding:8px 11px; background:#ff563c; color:#201e1d; border:0; border-radius:0; cursor:pointer" style-hover="background:#ff9783" style-active="background:#ff563c">Afgehandeld</button>
+                      <button onClick="{{ o.later }}" style="font-family:Archivo; font-weight:800; font-size:13px; padding:8px 11px; background:transparent; color:#f3f2f2; border:1px solid rgba(243,242,242,0.4); border-radius:0; cursor:pointer" style-hover="background:rgba(243,242,242,0.07)">Later</button>
+                      <button onClick="{{ o.drop }}" style="font-family:Archivo; font-weight:800; font-size:13px; padding:8px 11px; background:transparent; color:#f3f2f2; border:1px solid rgba(243,242,242,0.4); border-radius:0; cursor:pointer" style-hover="background:rgba(243,242,242,0.07)">Laat vallen</button>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+
+              <hr style="height:2px; border:0; background:rgba(243,242,242,0.4); margin:0 20px">
+
+              <div style="padding:22px 20px 8px">
+                <div style="font-family:'Archivo Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(243,242,242,0.55)">Ik wacht op iemand</div>
+              </div>
+              <div style="padding:0 20px 40px">
+                <sc-for list="{{ theyOwe }}" as="o" hint-placeholder-count="3">
+                  <div style="border:1px solid rgba(243,242,242,0.4); padding:14px; margin-bottom:10px; opacity:{{ o.op }}; transform:{{ o.tf }}; transition:opacity 220ms, transform 220ms">
+                    <div style="display:flex; justify-content:space-between; gap:10px; align-items:baseline; margin-bottom:4px">
+                      <span style="font-family:Archivo; font-weight:800; font-size:16px">{{ o.p }}</span>
+                      <span style="font-family:'Archivo Mono',monospace; font-size:11px; color:rgba(243,242,242,0.55); white-space:nowrap">{{ o.d }}</span>
+                    </div>
+                    <div style="font-size:15px; line-height:1.4; margin-bottom:4px">{{ o.w }}</div>
+                    <div style="font-family:'Archivo Mono',monospace; font-size:11px; color:rgba(243,242,242,0.55); margin-bottom:12px">{{ o.s }}</div>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap">
+                      <button onClick="{{ o.done }}" style="font-family:Archivo; font-weight:800; font-size:13px; padding:8px 11px; background:#ff563c; color:#201e1d; border:0; border-radius:0; cursor:pointer" style-hover="background:#ff9783" style-active="background:#ff563c">Concept herinnering</button>
+                      <button onClick="{{ o.later }}" style="font-family:Archivo; font-weight:800; font-size:13px; padding:8px 11px; background:transparent; color:#f3f2f2; border:1px solid rgba(243,242,242,0.4); border-radius:0; cursor:pointer" style-hover="background:rgba(243,242,242,0.07)">Later</button>
+                      <button onClick="{{ o.drop }}" style="font-family:Archivo; font-weight:800; font-size:13px; padding:8px 11px; background:transparent; color:#f3f2f2; border:1px solid rgba(243,242,242,0.4); border-radius:0; cursor:pointer" style-hover="background:rgba(243,242,242,0.07)">Laat vallen</button>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isOnb }}" hint-placeholder-val="{{ false }}">
+            <div>
+              <div style="padding:14px 20px; border-bottom:2px solid rgba(243,242,242,0.4)">
+                <div style="font-family:'Archivo Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(243,242,242,0.55)">Stap 3 van 7 · bank</div>
+                <div style="display:flex; gap:4px; margin-top:8px">
+                  <span style="flex:1 1 0; height:4px; background:#f3f2f2"></span>
+                  <span style="flex:1 1 0; height:4px; background:#f3f2f2"></span>
+                  <span style="flex:1 1 0; height:4px; background:#ff563c"></span>
+                  <span style="flex:1 1 0; height:4px; background:rgba(243,242,242,0.18)"></span>
+                  <span style="flex:1 1 0; height:4px; background:rgba(243,242,242,0.18)"></span>
+                  <span style="flex:1 1 0; height:4px; background:rgba(243,242,242,0.18)"></span>
+                  <span style="flex:1 1 0; height:4px; background:rgba(243,242,242,0.18)"></span>
+                </div>
+              </div>
+
+              <div style="padding:24px 20px 20px">
+                <div style="font-family:Archivo; font-weight:800; font-size:27px; line-height:1.1; letter-spacing:-0.015em; margin-bottom:12px">Bank gekoppeld.</div>
+                <p style="margin:0; font-size:17px; line-height:1.45; text-wrap:pretty">Drie klanten betalen je. Kade 12 is de grootste en de traagste: gemiddeld 34 dagen. Je vaste lasten gaan er in de eerste week af, je inkomsten komen in de derde.</p>
+              </div>
+
+              <hr style="height:2px; border:0; background:rgba(243,242,242,0.4); margin:0 20px">
+
+              <div style="padding:22px 20px">
+                <div style="font-family:'Archivo Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(243,242,242,0.55); margin-bottom:12px">Vaste lasten · per maand</div>
+                <sc-for list="{{ fixed }}" as="f" hint-placeholder-count="3">
+                  <div style="display:flex; justify-content:space-between; align-items:baseline; gap:12px; padding:10px 0; border-bottom:1px solid rgba(243,242,242,0.18)">
+                    <span style="font-family:Archivo; font-weight:600; font-size:15px">{{ f.t }}</span>
+                    <span style="font-family:'Archivo Mono',monospace; font-size:13px">{{ f.a }}</span>
+                  </div>
+                </sc-for>
+              </div>
+
+              <hr style="height:2px; border:0; background:rgba(243,242,242,0.4); margin:0 20px">
+
+              <div style="padding:22px 20px">
+                <div style="font-family:'Archivo Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(243,242,242,0.55); margin-bottom:6px">Drie zonder categorie</div>
+                <p style="margin:0 0 14px; font-size:13px; line-height:1.5; color:rgba(243,242,242,0.55); text-wrap:pretty">Kies er één; de rest leer ik daarvan.</p>
+                <sc-for list="{{ uncat }}" as="t" hint-placeholder-count="3">
+                  <div style="border:1px solid rgba(243,242,242,0.4); padding:14px; margin-bottom:10px">
+                    <div style="display:flex; justify-content:space-between; gap:10px; align-items:baseline; margin-bottom:3px">
+                      <span style="font-family:Archivo; font-weight:800; font-size:16px">{{ t.name }}</span>
+                      <span style="font-family:'Archivo Mono',monospace; font-size:13px; white-space:nowrap">{{ t.amount }}</span>
+                    </div>
+                    <div style="font-family:'Archivo Mono',monospace; font-size:11px; color:rgba(243,242,242,0.55); margin-bottom:12px">{{ t.meta }}</div>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap">
+                      <button onClick="{{ t.pick1 }}" style="font-family:Archivo; font-weight:800; font-size:13px; padding:7px 10px; border-radius:0; cursor:pointer; border:1px solid rgba(243,242,242,0.4); background:{{ t.bg1 }}; color:{{ t.fg1 }}" style-hover="background:rgba(243,242,242,0.07)">{{ t.c1 }}</button>
+                      <button onClick="{{ t.pick2 }}" style="font-family:Archivo; font-weight:800; font-size:13px; padding:7px 10px; border-radius:0; cursor:pointer; border:1px solid rgba(243,242,242,0.4); background:{{ t.bg2 }}; color:{{ t.fg2 }}" style-hover="background:rgba(243,242,242,0.07)">{{ t.c2 }}</button>
+                      <button onClick="{{ t.pick3 }}" style="font-family:Archivo; font-weight:800; font-size:13px; padding:7px 10px; border-radius:0; cursor:pointer; border:1px solid rgba(243,242,242,0.4); background:{{ t.bg3 }}; color:{{ t.fg3 }}" style-hover="background:rgba(243,242,242,0.07)">{{ t.c3 }}</button>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+
+              <div style="padding:0 20px 24px">
+                <div style="background:#2d2b2b; padding:16px">
+                  <div style="font-family:'Archivo Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(243,242,242,0.55); margin-bottom:6px">Toegang via Ponto</div>
+                  <p style="margin:0; font-size:14px; line-height:1.5; text-wrap:pretty">Leesrechten, geen betalingen. De toegang loopt tot 3 november; ik vraag je een week ervoor om te verlengen.</p>
+                </div>
+              </div>
+
+              <div style="padding:0 20px 40px">
+                <button onClick="{{ goToday }}" style="display:flex; align-items:center; justify-content:flex-start; width:100%; font-family:Archivo; font-weight:800; font-size:16px; padding:14px 16px; background:#ff563c; color:#201e1d; border:0; border-radius:0; cursor:pointer" style-hover="background:#ff9783" style-active="background:#ff563c" style-active="background:#ff9783">Verder — lees mijn schrijfstijl</button>
+                <button onClick="{{ goToday }}" style="margin-top:10px; font-family:Archivo; font-weight:600; font-size:14px; padding:6px 0; background:transparent; border:0; border-bottom:1px solid rgba(243,242,242,0.4); border-radius:0; cursor:pointer; color:rgba(243,242,242,0.7)" style-hover="color:#f3f2f2">Sla dit over</button>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isGraph }}" hint-placeholder-val="{{ false }}">
+            <div>
+              <div style="padding:14px 20px; border-bottom:2px solid rgba(243,242,242,0.4)">
+                <div style="font-family:Archivo; font-weight:800; font-size:20px; letter-spacing:-0.015em; line-height:1.1">Je graaf</div>
+                <div style="font-family:'Archivo Mono',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:rgba(243,242,242,0.55); margin-top:3px">Privé · EU · versleuteld</div>
+              </div>
+
+              <div style="padding:20px">
+                <div style="display:flex; border:2px solid #f3f2f2; align-items:stretch">
+                  <span style="display:flex; align-items:center; padding-left:12px; color:rgba(243,242,242,0.55)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+                  </span>
+                  <input type="text" value="{{ q }}" onInput="{{ onQ }}" onKeyDown="{{ onQKey }}" placeholder="Vraag iets in gewone taal" style="flex:1 1 auto; min-width:0; border:0; background:transparent; font-family:Archivo; font-weight:600; font-size:15px; padding:13px 12px; color:#f3f2f2; outline:none">
+                  <button onClick="{{ runQ }}" style="font-family:Archivo; font-weight:800; font-size:14px; padding:0 14px; background:#ff563c; color:#201e1d; border:0; border-radius:0; cursor:pointer" style-hover="background:#ff9783" style-active="background:#ff563c">Vraag</button>
+                </div>
+              </div>
+
+              <div style="padding:0 20px 22px">
+                <div style="font-family:'Archivo Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(243,242,242,0.55); margin-bottom:10px">Uit jouw week</div>
+                <sc-for list="{{ suggestions }}" as="s" hint-placeholder-count="3">
+                  <button onClick="{{ s.run }}" style="display:block; width:100%; text-align:left; font-family:Archivo; font-weight:600; font-size:15px; line-height:1.35; padding:11px 0; background:transparent; border:0; border-bottom:1px solid rgba(243,242,242,0.18); cursor:pointer; color:#f3f2f2" style-hover="color:#ffc4b8">{{ s.q }}</button>
+                </sc-for>
+              </div>
+
+              <sc-if value="{{ hasAnswer }}" hint-placeholder-val="{{ false }}">
+                <div>
+                  <hr style="height:2px; border:0; background:rgba(243,242,242,0.4); margin:0 20px">
+                  <div style="padding:22px 20px 8px">
+                    <div style="font-family:'Archivo Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(243,242,242,0.55); margin-bottom:8px">{{ answerLabel }}</div>
+                    <p style="margin:0; font-size:17px; line-height:1.45; text-wrap:pretty">{{ answer }}</p>
+                  </div>
+                  <div style="padding:14px 20px 40px">
+                    <sc-for list="{{ nodes }}" as="n" hint-placeholder-count="3">
+                      <div style="border:1px solid rgba(243,242,242,0.4); padding:14px; margin-bottom:10px; background:#2d2b2b">
+                        <div style="font-family:'Archivo Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:rgba(243,242,242,0.55); margin-bottom:6px">{{ n.type }}</div>
+                        <div style="font-family:Archivo; font-weight:800; font-size:17px; line-height:1.2; margin-bottom:4px">{{ n.title }}</div>
+                        <div style="font-size:14px; line-height:1.45; margin-bottom:8px">{{ n.body }}</div>
+                        <div style="font-family:'Archivo Mono',monospace; font-size:11px; color:rgba(243,242,242,0.55); border-top:1px solid rgba(243,242,242,0.18); padding-top:8px">{{ n.edge }}</div>
+                      </div>
+                    </sc-for>
+                    <button style="margin-top:4px; font-family:Archivo; font-weight:600; font-size:14px; padding:6px 0; background:transparent; border:0; border-bottom:1px solid rgba(243,242,242,0.4); border-radius:0; cursor:pointer; color:rgba(243,242,242,0.7)" style-hover="color:#f3f2f2">Exporteer deze subgraaf</button>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+          </sc-if>
+        </div>
+
+        <sc-if value="{{ showTabs }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex; border-top:2px solid #f3f2f2">
+            <button onClick="{{ goToday }}" style="{{ tabTodayStyle }}">Vandaag</button>
+            <button onClick="{{ goLoose }}" style="{{ tabLooseStyle }}">Eindjes</button>
+            <button onClick="{{ goGraph }}" style="{{ tabGraphStyle }}">Graaf</button>
+            <button onClick="{{ goInbox }}" style="{{ tabInboxStyle }}">Inbox</button>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="width:390px; margin-top:14px; font-family:'Archivo Mono',monospace; font-size:11px; line-height:1.6; color:rgba(243,242,242,0.55)">{{ frameNote }}</div>
+    </div>
+
+    <div style="flex:1 1 320px; min-width:300px; max-width:420px">
+      <div style="font-family:'Archivo Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(243,242,242,0.55); margin-bottom:12px">De stem, op deze schermen</div>
+      <p style="margin:0 0 18px; font-size:15px; line-height:1.55; text-wrap:pretty">Elke coachregel benoemt een mechaniek, niet een gemiste taak. Geen uitroeptekens, geen aanmoediging, geen bullets. Twee tot vier regels, één plek per scherm.</p>
+      <div style="border-left:2px solid #f3f2f2; padding:2px 0 2px 14px; margin-bottom:16px; font-size:15px; line-height:1.5">“Je zet facturen klaar en verstuurt ze niet — drie keer nu, elke keer op een dag met een klantgesprek. Doe deze vóór 14:00.”</div>
+      <div style="border-left:2px solid #f3f2f2; padding:2px 0 2px 14px; margin-bottom:16px; font-size:15px; line-height:1.5">“Vier van deze zes draden staan stil op hetzelfde punt: er is iets verstuurd en nooit nagevraagd.”</div>
+      <div style="border-left:2px solid #f3f2f2; padding:2px 0 2px 14px; font-size:15px; line-height:1.5">“Deze taak schuift nu vier weken door. Dat is geen tijdgebrek meer; er zit iets in wat je niet wil weten.”</div>
+    </div>
+  </div>
+
+  <hr style="height:2px; border:0; background:rgba(243,242,242,0.4); margin:56px 0 32px">
+
+  <div style="font-family:Archivo; font-weight:800; font-size:32px; letter-spacing:-0.015em; margin-bottom:24px">Tokens</div>
+
+  <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:40px">
+
+    <div>
+      <div style="font-family:'Archivo Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(243,242,242,0.55); margin-bottom:14px">Kleur</div>
+      <sc-for list="{{ colors }}" as="c" hint-placeholder-count="6">
+        <div style="display:flex; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid rgba(243,242,242,0.18)">
+          <span style="flex:0 0 40px; width:40px; height:28px; border:1px solid rgba(243,242,242,0.4); background:{{ c.v }}"></span>
+          <span style="flex:1 1 auto; font-family:Archivo; font-weight:600; font-size:14px">{{ c.n }}</span>
+          <span style="font-family:'Archivo Mono',monospace; font-size:11px; color:rgba(243,242,242,0.55)">{{ c.v }}</span>
+        </div>
+      </sc-for>
+      <p style="margin:14px 0 0; font-size:13px; line-height:1.5; color:rgba(243,242,242,0.7); text-wrap:pretty">Rood staat alleen op de primaire actie en op één 2px-rand boven de frog. Nooit op urgentie, nooit op een aantal.</p>
+    </div>
+
+    <div>
+      <div style="font-family:'Archivo Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(243,242,242,0.55); margin-bottom:14px">Type · Archivo</div>
+      <div style="border-bottom:1px solid rgba(243,242,242,0.18); padding-bottom:10px; margin-bottom:10px"><span style="font-family:Archivo; font-weight:800; font-size:27px; letter-spacing:-0.015em; line-height:1.1">Frog 27/800</span></div>
+      <div style="border-bottom:1px solid rgba(243,242,242,0.18); padding-bottom:10px; margin-bottom:10px"><span style="font-family:Archivo; font-weight:800; font-size:20px; letter-spacing:-0.015em">Schermtitel 20/800</span></div>
+      <div style="border-bottom:1px solid rgba(243,242,242,0.18); padding-bottom:10px; margin-bottom:10px"><span style="font-family:Archivo; font-weight:400; font-size:17px">Coachregel 17/400 · 1.45</span></div>
+      <div style="border-bottom:1px solid rgba(243,242,242,0.18); padding-bottom:10px; margin-bottom:10px"><span style="font-family:Archivo; font-weight:600; font-size:16px">Item 16/600</span></div>
+      <div style="border-bottom:1px solid rgba(243,242,242,0.18); padding-bottom:10px; margin-bottom:10px"><span style="font-family:Archivo; font-weight:400; font-size:14px">Subregel 14/400</span></div>
+      <div><span style="font-family:'Archivo Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase">Label mono 11/0.08em</span></div>
+    </div>
+
+    <div>
+      <div style="font-family:'Archivo Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(243,242,242,0.55); margin-bottom:14px">Ruimte, radius, schaduw</div>
+      <div style="display:flex; align-items:flex-end; gap:8px; margin-bottom:16px">
+        <span style="width:4px; height:4px; background:#f3f2f2"></span>
+        <span style="width:8px; height:8px; background:#f3f2f2"></span>
+        <span style="width:12px; height:12px; background:#f3f2f2"></span>
+        <span style="width:16px; height:16px; background:#f3f2f2"></span>
+        <span style="width:24px; height:24px; background:#f3f2f2"></span>
+        <span style="width:32px; height:32px; background:#f3f2f2"></span>
+      </div>
+      <p style="margin:0 0 14px; font-family:'Archivo Mono',monospace; font-size:11px; color:rgba(243,242,242,0.55)">4 · 8 · 12 · 16 · 24 · 32 — schermranden 20</p>
+      <p style="margin:0 0 14px; font-family:'Archivo Mono',monospace; font-size:11px; color:rgba(243,242,242,0.55)">radius 0 overal · rules 2px sectie / 1px item</p>
+      <div style="display:flex; gap:12px">
+        <span style="width:56px; height:40px; background:#201e1d; border:1px solid rgba(243,242,242,0.18); box-shadow:0 1px 2px rgba(0,0,0,0.4)"></span>
+        <span style="width:56px; height:40px; background:#201e1d; border:1px solid rgba(243,242,242,0.18); box-shadow:0 3px 10px rgba(0,0,0,0.45)"></span>
+        <span style="width:56px; height:40px; background:#201e1d; border:1px solid rgba(243,242,242,0.18); box-shadow:0 12px 32px rgba(0,0,0,0.55)"></span>
+      </div>
+      <p style="margin:10px 0 0; font-family:'Archivo Mono',monospace; font-size:11px; color:rgba(243,242,242,0.55)">sm · md · lg — waarden van het lichte thema</p>
+    </div>
+
+    <div>
+      <div style="font-family:'Archivo Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(243,242,242,0.55); margin-bottom:14px">Karakterbudget per tekstslot</div>
+      <sc-for list="{{ budgets }}" as="b" hint-placeholder-count="7">
+        <div style="display:flex; justify-content:space-between; gap:12px; align-items:baseline; padding:8px 0; border-bottom:1px solid rgba(243,242,242,0.18)">
+          <span style="font-family:Archivo; font-weight:600; font-size:14px">{{ b.n }}</span>
+          <span style="font-family:'Archivo Mono',monospace; font-size:11px; color:rgba(243,242,242,0.55); text-align:right; white-space:nowrap">{{ b.v }}</span>
+        </div>
+      </sc-for>
+      <p style="margin:14px 0 0; font-size:13px; line-height:1.5; color:rgba(243,242,242,0.7); text-wrap:pretty">NL-strings zijn 15–25% langer dan Engels; de budgetten hierboven zijn NL-budgetten. Overflow kapt af op de laatste hele zin, nooit met een ellips midden in een woord.</p>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1400}}">
+const FIXED = [
+  { t: 'Werkplek Kade 12', a: '€ 245,00' },
+  { t: 'Beroepsaansprakelijkheid', a: '€ 68,40' },
+  { t: 'Software (3 abonnementen)', a: '€ 112,00' },
+  { t: 'Telefoon en internet', a: '€ 79,95' }
+];
+
+const UNCAT = [
+  { id: 'u1', name: 'Drukkerij Nooitgedacht', amount: '− € 318,00', meta: '28/7 · overboeking · geen categorie', c1: 'Project', c2: 'Vaste last', c3: 'Privé' },
+  { id: 'u2', name: 'A. Wieringa', amount: '+ € 1.150,00', meta: '24/7 · bijschrijving · geen categorie', c1: 'Inkomsten', c2: 'Voorschot', c3: 'Privé' },
+  { id: 'u3', name: 'Stichting Kadeloods', amount: '− € 90,00', meta: '19/7 · incasso · geen categorie', c1: 'Project', c2: 'Vaste last', c3: 'Privé' }
+];
+
+const ANSWERS = {
+  belofte: {
+    label: 'Vier mensen · afgelopen 30 dagen',
+    text: 'Je hebt vier mensen iets toegezegd en bij drie is er daarna niets meer gebeurd. Twee ervan wachten op hetzelfde soort ding: een bestand dat al klaar is.',
+    nodes: [
+      { type: 'Persoon → Belofte', title: 'Wessel Baart', body: 'Reactie op de doc van 8/7. Je schreef “ik kijk er dit weekend naar”.', edge: 'OWES · uit mailthread 8/7 · project Kadeloods' },
+      { type: 'Persoon → Belofte', title: 'Sanne de Rooij', body: 'Tweede ronde inplannen. Toegezegd in het gesprek van 30/7.', edge: 'OWES · uit agenda-item 30/7 · project Vlot' },
+      { type: 'Persoon → Belofte', title: 'Boekhouder', body: 'Uren juli aanleveren. Elke maand dezelfde afspraak, elke maand te laat.', edge: 'OWES · uit chat 1/8 · terugkerend patroon' },
+      { type: 'Persoon → Belofte', title: 'Tibbe Aarts', body: 'Opties voor een nieuwe afspraak sturen. Hier ligt de bal bij hem, niet bij jou.', edge: 'THEY_OWE · uit chat 10/7' }
+    ]
+  },
+  betaling: {
+    label: 'Drie posten open · bank + mail',
+    text: 'Er staat € 4.290 aan werk open dat je al hebt geleverd. Bij één factuur heb je nooit een ontvangstbevestiging gehad — die is waarschijnlijk niet geboekt.',
+    nodes: [
+      { type: 'Transactie ← Factuur', title: 'Factuur #204 · Kade 12', body: '€ 2.480 · 19 dagen over de termijn. Geen bevestiging ontvangen.', edge: 'HAS_TRANSACTION · bank · MENTIONS mailthread 17/7' },
+      { type: 'Transactie ← Factuur', title: 'Factuur #206 · Bureau Meridiaan', body: '€ 1.360 · 4 dagen open. Binnen de termijn, geen actie nodig.', edge: 'PART_OF · project Meridiaan' },
+      { type: 'Verplichting', title: 'BTW Q2', body: '€ 450 · te betalen voor 31/8. Staat gereserveerd op je spaarrekening.', edge: 'CATEGORIZED_AS · belasting · gedekt' }
+    ]
+  },
+  project: {
+    label: 'Twee projecten · via Kade 12',
+    text: 'Kade 12 hangt aan twee dingen tegelijk: je werkplek en je grootste opdracht. Dezelfde partij is dus zowel je verhuurder als je traagste betaler.',
+    nodes: [
+      { type: 'Project', title: 'Kadeloods — huisstijl', body: 'Loopt. Open: doc-reactie aan Wessel, drukwerk-proef.', edge: 'PART_OF · 6 commitments · 2 mensen' },
+      { type: 'Organisatie', title: 'Kade 12', body: 'Verhuurder én opdrachtgever. € 245 per maand eruit, € 2.480 open erin.', edge: 'HAS_TRANSACTION · 14 transacties · 1 project' }
+    ]
+  }
+};
+
+class Component extends DCLogic {
+  state = {
+    screen: 'today',
+    variant: 'normal',
+    frogDone: false,
+    prioDone: {},
+    gone: {},
+    fading: {},
+    cats: {},
+    q: '',
+    answerKey: null
+  };
+
+  pick(key) {
+    if (/belof|belov|toegezeg|gevraagd/i.test(key)) return 'belofte';
+    if (/betaal|betaling|factu|geld|schuld|open.*bedrag|btw/i.test(key)) return 'betaling';
+    if (/project|kade|meridiaan|vlot|samen/i.test(key)) return 'project';
+    return null;
+  }
+
+  remove(id) {
+    this.setState(s => ({ fading: { ...s.fading, [id]: true } }));
+    setTimeout(() => this.setState(s => ({ gone: { ...s.gone, [id]: true } })), 240);
+  }
+
+  navBtn(active) {
+    return 'display:block; width:100%; text-align:left; font-family:Archivo; font-weight:' + (active ? '800' : '600') +
+      '; font-size:14px; padding:9px 12px; cursor:pointer; border:0; border-left:2px solid ' +
+      (active ? '#ff563c' : 'rgba(243,242,242,0.18)') + '; border-radius:0; background:' +
+      (active ? 'rgba(243,242,242,0.07)' : 'transparent') + '; color:#f3f2f2';
+  }
+
+  tabBtn(active) {
+    return 'flex:1 1 0; font-family:Archivo; font-weight:800; font-size:12px; letter-spacing:0.02em; padding:13px 0 15px; cursor:pointer; border:0; border-radius:0; text-align:center; background:' +
+      (active ? '#f3f2f2' : 'transparent') + '; color:' + (active ? '#201e1d' : 'rgba(243,242,242,0.7)');
+  }
+
+  item(o, kind) {
+    const fading = this.state.fading[o.id];
+    return {
+      ...o,
+      op: fading ? 0 : 1,
+      tf: fading ? 'translateX(-10px)' : 'translateX(0)',
+      done: () => this.remove(o.id),
+      later: () => this.remove(o.id),
+      drop: () => this.remove(o.id),
+      kind
+    };
+  }
+
+  renderVals() {
+    const s = this.state;
+    const screen = s.screen;
+    const v = s.variant;
+    const isToday = screen === 'today';
+    const allDone = v === 'done';
+    const day1 = v === 'empty';
+    const frogDone = s.frogDone || allDone;
+
+    const confirmSets = {
+      normal: [
+        { id: 'c1', q: 'Voorstel Bureau Meridiaan verstuurd?', m: 'gisteren 16:40 · agendablok “voorstel afmaken”' },
+        { id: 'c2', q: 'Uren van dinsdag geboekt op Vlot?', m: 'gisteren · uit je urenblok' },
+        { id: 'c3', q: 'Joost teruggebeld?', m: 'gisteren 11:00 · toegezegd per mail' }
+      ],
+      degraded: [
+        { id: 'd1', q: 'Voorstel Bureau Meridiaan verstuurd?', m: 'gisteren 16:40 · agendablok' }
+      ],
+      empty: [],
+      done: []
+    };
+
+    const rawConfirms = (confirmSets[v] || []).filter(c => !s.gone[c.id]);
+    const confirms = rawConfirms.map(c => ({
+      ...c,
+      op: s.fading[c.id] ? 0 : 1,
+      tf: s.fading[c.id] ? 'translateX(-10px)' : 'translateX(0)',
+      yes: () => this.remove(c.id),
+      no: () => this.remove(c.id)
+    }));
+
+    const coach = day1
+      ? 'Je agenda is voor 78% gevuld en de open plekken staan na 16:00. Facturen zet je ’s ochtends klaar. Ik zou de ochtend vrijhouden en de middag laten volstromen.'
+      : allDone
+        ? 'Je frog was om 09:52 weg en de drie prioriteiten daarna. Wat er nog staat is één gesprek om 14:00. De rest van vandaag is van jou.'
+        : v === 'degraded'
+          ? 'Wat ik zie: drie facturen klaargezet, één verstuurd. Wat ik niet zie: of er vandaag antwoord kwam. Behandel de frog alsof er geen antwoord is.'
+          : 'Je zet facturen klaar en verstuurt ze niet — drie keer nu, elke keer op een dag met een klantgesprek erin. Vandaag staat dat gesprek om 14:00. Doe de factuur ervoor.';
+
+    const prioBase = day1
+      ? [
+          { id: 'p1', t: 'Bevestig dat dit je frog is', m: 'dag 1 · één tik' },
+          { id: 'p2', t: 'Zet quiet hours (nu: geen)', m: 'instellingen' },
+          { id: 'p3', t: 'Koppel je bank via Ponto', m: 'stap 3 van 7' }
+        ]
+      : [
+          { id: 'p1', t: 'Antwoord Sanne over de tweede ronde', m: 'vandaag · 6 dagen open' },
+          { id: 'p2', t: 'Uren juli afsluiten', m: 'voor vrijdag' },
+          { id: 'p3', t: 'Voorstel Meridiaan naar twee pagina’s' , m: 'deze week' }
+        ];
+
+    const prios = prioBase.map(p => {
+      const done = allDone || !!s.prioDone[p.id];
+      return {
+        ...p,
+        op: done ? 0.45 : 1,
+        deco: done ? 'line-through' : 'none',
+        boxBg: done ? '#ff563c' : 'transparent',
+        tickOp: done ? 1 : 0,
+        toggle: () => this.setState(st => ({ prioDone: { ...st.prioDone, [p.id]: !st.prioDone[p.id] } }))
+      };
+    });
+
+    const timeline = v === 'degraded'
+      ? [
+          { time: '09:30', t: 'Diepwerk — factuur en uren', m: '2 uur · thuis', clash: '' },
+          { time: '14:00', t: 'Vlot — tweede ronde', m: '45 min · online', clash: '' },
+          { time: '—', t: 'Mogelijk meer', m: 'mail was niet bereikbaar; nieuwe uitnodigingen van vandaag zie ik niet', clash: '' }
+        ]
+      : [
+          { time: '09:30', t: 'Diepwerk — factuur en uren', m: '2 uur · thuis', clash: '' },
+          { time: '14:00', t: 'Vlot — tweede ronde', m: '45 min · online', clash: '' },
+          { time: '17:30', t: 'Tess ophalen', m: 'zwembad, 10 min rijden', clash: '' },
+          { time: '19:00', t: 'Zwemles Tess', m: '45 min', clash: 'Botst met: Sanne terugbellen, 19:00' }
+        ];
+
+    const iOwe = [
+      { id: 'o1', p: 'Wessel Baart', w: 'Reactie op de doc van 8/7', d: '28 dagen open', s: 'mail · project Kadeloods' },
+      { id: 'o2', p: 'Sanne de Rooij', w: 'Tweede ronde inplannen', d: '6 dagen open', s: 'mail · project Vlot' },
+      { id: 'o3', p: 'Boekhouder', w: 'Uren juli aanleveren', d: '4 dagen open', s: 'chat · elke maand hetzelfde' }
+    ].filter(o => !s.gone[o.id]).map(o => this.item(o, 'owe'));
+
+    const theyOwe = [
+      { id: 't1', p: 'Tibbe Aarts', w: 'Opties voor een nieuwe afspraak', d: '26 dagen stil', s: 'chat 10/7' },
+      { id: 't2', p: 'Kade 12', w: 'Betaling factuur #204 · € 2.480', d: '19 dagen stil', s: 'bank · geen bevestiging' },
+      { id: 't3', p: 'Bureau Meridiaan', w: 'Go op het voorstel', d: '11 dagen stil', s: 'mail 25/7' }
+    ].filter(o => !s.gone[o.id]).map(o => this.item(o, 'wait'));
+
+    const uncat = UNCAT.map(t => {
+      const chosen = s.cats[t.id];
+      const st = (label) => chosen === label;
+      return {
+        ...t,
+        bg1: st(t.c1) ? '#f3f2f2' : 'transparent', fg1: st(t.c1) ? '#201e1d' : '#f3f2f2',
+        bg2: st(t.c2) ? '#f3f2f2' : 'transparent', fg2: st(t.c2) ? '#201e1d' : '#f3f2f2',
+        bg3: st(t.c3) ? '#f3f2f2' : 'transparent', fg3: st(t.c3) ? '#201e1d' : '#f3f2f2',
+        pick1: () => this.setState(x => ({ cats: { ...x.cats, [t.id]: t.c1 } })),
+        pick2: () => this.setState(x => ({ cats: { ...x.cats, [t.id]: t.c2 } })),
+        pick3: () => this.setState(x => ({ cats: { ...x.cats, [t.id]: t.c3 } }))
+      };
+    });
+
+    const ans = s.answerKey ? ANSWERS[s.answerKey] : null;
+
+    const suggestions = [
+      { q: 'Wie heb ik de afgelopen maand iets beloofd?', key: 'belofte' },
+      { q: 'Wat staat er open aan betalingen?', key: 'betaling' },
+      { q: 'Welke projecten hangen met Kade 12 samen?', key: 'project' }
+    ].map(x => ({ ...x, run: () => this.setState({ q: x.q, answerKey: x.key }) }));
+
+    const notes = {
+      today: {
+        empty: 'Staat 1 · dag 1. Geen historie, geen frog. De app stelt er zelf een voor uit wat hij in mail en bank vond, en vraagt bevestiging.',
+        normal: 'Staat 2 · normaal. Tik “Vink af” op de frog en maak “nog te bevestigen” leeg met ja/nee — het blok sluit zichzelf af.',
+        degraded: 'Staat 3 · degraded. Eerlijk over wat ontbreekt, in dezelfde kleur als de rest. Geen rood veld, geen waarschuwingsdriehoek.',
+        done: 'Staat 4 · alles afgehandeld. Beloning in type en witruimte, niet in confetti. Eén rustige actie: morgen klaarzetten.'
+      },
+      loose: 'Elk item heeft drie acties, en “laat vallen” staat even dicht bij je duim als “afgehandeld”. Tik ze weg; ze verdwijnen zichtbaar.',
+      onb: 'Stap 3 van 7 · direct na het koppelen iets teruggeven. Categorie kiezen mag, hoeft niet — de knop eronder werkt altijd.',
+      graph: 'Zoekbalk is ook bereikbaar vanaf Vandaag. Resultaat is kaartjes met de relatie eronder, nooit ruwe JSON.'
+    };
+
+    return {
+      isToday, isLoose: screen === 'loose', isOnb: screen === 'onb', isGraph: screen === 'graph',
+      showTabs: screen !== 'onb',
+      vEmpty: isToday && day1, vNormal: isToday && v === 'normal',
+      vDegraded: isToday && v === 'degraded', vDone: isToday && allDone,
+
+      frogKicker: day1 ? 'Voorstel · jouw frog' : allDone ? 'Frog · afgevinkt' : 'Frog · vandaag',
+      frogOpen: !frogDone,
+      frogDone,
+      frogTime: '09:52',
+      frogCta: day1 ? 'Ja, dit is m’n frog' : 'Vink af',
+      frogAlt: day1 ? 'Nee, kies iets anders' : 'Lukt niet vandaag',
+      frogOpacity: frogDone ? 0.5 : 1,
+      frogDeco: frogDone ? 'line-through' : 'none',
+
+      coach, prios, timeline, confirms,
+      prioCount: prios.filter(p => p.deco === 'none').length + ' van 3 open',
+      confirmsEmpty: confirms.length === 0,
+      confirmIntro: v === 'degraded'
+        ? 'Uit gisteren. Deze lijst kan onvolledig zijn — mail deed niet mee.'
+        : 'Uit gisteren. Eén tik per stuk; daarna is dit blok leeg.',
+      confirmsEmptyLine: allDone
+        ? 'Niets meer open uit gisteren, en niets meer voor vandaag.'
+        : 'Niets meer open uit gisteren.',
+      confirmsEmptySub: allDone
+        ? 'Om 14:00 heb je Vlot. Tot dan hoef je hier niet meer te kijken. Wil je dat ik morgen alvast klaarzet?'
+        : 'Morgen begint dit blok weer leeg. Dat is het hele doel.',
+
+      looseCount: (iOwe.length + theyOwe.length) + ' draden open',
+      looseCoach: theyOwe.length > 0
+        ? 'Vier van deze draden staan stil op hetzelfde punt: er is iets verstuurd en nooit nagevraagd. Niet één ervan kost je meer dan vijf minuten.'
+        : 'Je wacht nu op niemand meer. Wat er nog staat, staat bij jou — en dat is een ander soort stilte.',
+      iOwe, theyOwe,
+      fixed: FIXED, uncat,
+
+      q: s.q,
+      onQ: e => this.setState({ q: e.target.value }),
+      onQKey: e => { if (e.key === 'Enter') this.setState({ answerKey: this.pick(this.state.q) || 'betaling' }); },
+      runQ: () => this.setState({ answerKey: this.pick(this.state.q) || 'betaling' }),
+      suggestions,
+      hasAnswer: !!ans,
+      answer: ans ? ans.text : '',
+      answerLabel: ans ? ans.label : '',
+      nodes: ans ? ans.nodes : [],
+
+      goToday: () => this.setState({ screen: 'today' }),
+      goLoose: () => this.setState({ screen: 'loose' }),
+      goOnb: () => this.setState({ screen: 'onb' }),
+      goGraph: () => this.setState({ screen: 'graph' }),
+      goInbox: () => this.setState({ screen: 'today' }),
+      setEmpty: () => this.setState({ screen: 'today', variant: 'empty', frogDone: false, gone: {}, fading: {}, prioDone: {} }),
+      setNormal: () => this.setState({ screen: 'today', variant: 'normal', frogDone: false, gone: {}, fading: {}, prioDone: {} }),
+      setDegraded: () => this.setState({ screen: 'today', variant: 'degraded', frogDone: false, gone: {}, fading: {}, prioDone: {} }),
+      setDone: () => this.setState({ screen: 'today', variant: 'done', frogDone: true, gone: { c1: true, c2: true, c3: true }, fading: {}, prioDone: {} }),
+      reset: () => this.setState({ screen: 'today', variant: 'normal', frogDone: false, prioDone: {}, gone: {}, fading: {}, cats: {}, q: '', answerKey: null }),
+      tickFrog: () => this.setState({ frogDone: true }),
+
+      navTodayStyle: this.navBtn(isToday), navLooseStyle: this.navBtn(screen === 'loose'),
+      navOnbStyle: this.navBtn(screen === 'onb'), navGraphStyle: this.navBtn(screen === 'graph'),
+      vEmptyStyle: this.navBtn(isToday && day1), vNormalStyle: this.navBtn(isToday && v === 'normal'),
+      vDegradedStyle: this.navBtn(isToday && v === 'degraded'), vDoneStyle: this.navBtn(isToday && allDone),
+      tabTodayStyle: this.tabBtn(isToday), tabLooseStyle: this.tabBtn(screen === 'loose'),
+      tabGraphStyle: this.tabBtn(screen === 'graph'), tabInboxStyle: this.tabBtn(false),
+
+      frameNote: isToday ? notes.today[v] : notes[screen === 'loose' ? 'loose' : screen === 'onb' ? 'onb' : 'graph'],
+
+      colors: [
+        { n: 'Grond', v: '#201e1d' },
+        { n: 'Vlak', v: '#2d2b2b' },
+        { n: 'Inkt', v: '#f3f2f2' },
+        { n: 'Accent (alleen actie)', v: '#ff563c' },
+        { n: 'Accent gedrukt', v: '#ffc4b8' },
+        { n: 'Rule 2px / 1px', v: 'rgba(243,242,242,0.4)' }
+      ],
+      budgets: [
+        { n: 'Frog-titel', v: '40 tekens · 1 regel · hard' },
+        { n: 'Frog-subregel', v: '140 tekens · 2 regels · hard' },
+        { n: 'Coachregel', v: '260 tekens · 2–4 regels · hard' },
+        { n: 'Prioriteit-titel', v: '52 tekens · 2 regels · afkappen' },
+        { n: 'Bevestig-vraag', v: '60 tekens · 2 regels · hard' },
+        { n: 'Open-eindje: wat', v: '70 tekens · 2 regels · afkappen' },
+        { n: 'Transactie-naam', v: '32 tekens · 1 regel · afkappen' },
+        { n: 'Graaf-kaart body', v: '120 tekens · 3 regels · afkappen' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,257 @@
+// Wingman PA — datamodel
+//
+// Dev draait op SQLite (nul setup, seed-data). Productie is Postgres:
+// zet `provider = "postgresql"` en DATABASE_URL naar Neon/Supabase (EU-zone).
+// Verschil is bewust klein gehouden: geen String[]-kolommen, arrays gaan als
+// JSON-string het veld in (zie src/lib/db/json.ts). Zo migreert het schema
+// 1-op-1 mee zonder herschrijven van queries.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String   @id @default(cuid())
+  email      String   @unique
+  name       String?
+  timezone   String   @default("Europe/Amsterdam")
+  locale     String   @default("nl")
+  created_at DateTime @default(now())
+
+  connectors   Connector[]
+  events       Event[]
+  emails       Email[]
+  transactions Transaction[]
+  commitments  Commitment[]
+  people       Person[]
+  projects     Project[]
+  briefings    DailyBriefing[]
+  inbox        InboxItem[]
+  styleCards   StyleCard[]
+  settings     UserSetting[]
+}
+
+model Connector {
+  id                 String    @id @default(cuid())
+  user_id            String
+  provider           String // google | outlook | caldav | apple | gmail | imap | ponto | telegram
+  type               String // calendar | mail | bank | chat | push
+  label              String
+  account_id         String
+  access_token       String? // in productie: encrypted at rest (pgcrypto / KMS)
+  refresh_token      String?
+  expires_at         DateTime?
+  consent_expires_at DateTime? // PSD2/Ponto: 90 dagen
+  status             String    @default("active") // active | error | reauth_required | not_connected
+  permission         String    @default("propose") // propose | draft | act_and_report | silent
+  scopes             String    @default("[]") // JSON-array
+  last_sync_at       DateTime?
+  error_message      String?
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, provider, account_id])
+}
+
+model Event {
+  id           String   @id @default(cuid())
+  user_id      String
+  connector_id String?
+  external_id  String
+  title        String
+  description  String?
+  start_at     DateTime
+  end_at       DateTime
+  timezone     String   @default("Europe/Amsterdam")
+  attendees    String   @default("[]") // JSON
+  location     String?
+  meeting_url  String?
+  status       String   @default("confirmed")
+  transparency String   @default("opaque")
+  is_private   Boolean  @default(false)
+  confidence   Float    @default(1.0)
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, start_at])
+}
+
+model Email {
+  id           String   @id @default(cuid())
+  user_id      String
+  connector_id String?
+  external_id  String
+  thread_id    String
+  subject      String
+  from_addr    String
+  to_addrs     String   @default("[]") // JSON
+  sent_at      DateTime
+  body_text    String
+  is_sent      Boolean  @default(false)
+  is_unread    Boolean  @default(false)
+  labels       String   @default("[]") // JSON
+  processed    Boolean  @default(false)
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, thread_id])
+}
+
+model Transaction {
+  id                 String   @id @default(cuid())
+  user_id            String
+  connector_id       String?
+  external_id        String
+  account_iban       String
+  account_name       String
+  amount             Float // + = bij, - = af
+  currency           String   @default("EUR")
+  booked_at          DateTime
+  counterparty       String?
+  description        String?
+  category           String?
+  category_confidence Float?
+  transaction_type   String   @default("transfer")
+  needs_review       Boolean  @default(false)
+  status             String   @default("booked")
+  project_id         String?
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, booked_at])
+}
+
+model Commitment {
+  id            String    @id @default(cuid())
+  user_id       String
+  source        String // email | calendar | chat | manual | voice | inference
+  source_ref    String
+  source_label  String? // "mail 8/7", "WhatsApp 10/7"
+  direction     String // i_owe | they_owe | mutual | unknown
+  party         String
+  party_contact String?
+  what          String
+  context       String?
+  due_date      DateTime?
+  opened_at     DateTime  @default(now())
+  status        String    @default("open") // open | done | dismissed | delegated | snoozed
+  snooze_until  DateTime?
+  last_nudge_at DateTime?
+  nudge_count   Int       @default(0)
+  confidence    Float     @default(1.0)
+  project_id    String?
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, status, due_date])
+}
+
+model Person {
+  id              String    @id @default(cuid())
+  user_id         String
+  name            String
+  emails          String    @default("[]") // JSON
+  organizations   String    @default("[]") // JSON
+  roles           String    @default("[]") // JSON
+  frequency_score Float     @default(0)
+  last_contact_at DateTime?
+  notes           String?
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  user_id     String
+  name        String
+  description String?
+  status      String   @default("active") // active | on_hold | done | archived
+  status_line String? // één regel, max 120 tekens
+  created_at  DateTime @default(now())
+  updated_at  DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model DailyBriefing {
+  id             String   @id @default(cuid())
+  user_id        String
+  date           DateTime
+  frog_title     String // max 40
+  frog_sub       String? // max 140
+  frog_implement String? // max 200
+  frog_status    String   @default("open") // open | done | deferred
+  coach_text     String // max 250
+  priorities     String   @default("[]") // JSON: [{id,text,done}]
+  confirmations  String   @default("[]") // JSON: [{id,text,answered}]
+  degraded       String   @default("[]") // JSON: ["mail","ponto"]
+  schema_version Int      @default(1)
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, date])
+}
+
+model InboxItem {
+  id         String   @id @default(cuid())
+  user_id    String
+  text       String
+  source     String   @default("capture") // capture | siri | mail_forward | telegram
+  created_at DateTime @default(now())
+  status     String   @default("new") // new | triaged | dropped
+  routed_to  String? // frog | priority | commitment | dropped
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model StyleCard {
+  id          String   @id @default(cuid())
+  user_id     String
+  register    String // bekenden | zakelijk_eerste_contact | instanties
+  greeting    String
+  signoff     String
+  avg_words   Int
+  typical     String   @default("[]") // JSON: zinnen
+  edited_by_user Boolean @default(false)
+  updated_at  DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, register])
+}
+
+model UserSetting {
+  id      String @id @default(cuid())
+  user_id String
+  key     String
+  value   String
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, key])
+}
+
+model GraphNode {
+  id      String @id
+  user_id String
+  type    String // Person | Project | Commitment | Transaction | Event | EmailThread | Organization | Account | Category
+  label   String
+  summary String?
+  cluster String?
+}
+
+model GraphEdge {
+  id      String @id @default(cuid())
+  user_id String
+  from_id String
+  to_id   String
+  type    String // OWES | PART_OF | COMMUNICATES_WITH | HAS_TRANSACTION | ATTENDS | CATEGORIZED_AS | MENTIONS | NEXT_ACTION
+  label   String?
+
+  @@index([user_id, from_id])
+}
