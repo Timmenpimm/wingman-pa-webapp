@@ -1,3 +1,4 @@
+import { decryptOptional, encryptSecret } from "@/lib/crypto/secrets";
 import { withUser } from "@/lib/db/with-user";
 
 /**
@@ -109,17 +110,23 @@ export async function getValidGoogleAccessToken(
   connector: GoogleConnectorTokenState,
   now: Date = new Date(),
 ): Promise<string> {
-  if (connector.access_token && !needsRefresh(connector.expires_at, now)) {
-    return connector.access_token;
+  // De kolommen bevatten versleutelde waarden; hier is het enige punt waar ze
+  // weer leesbaar worden, en ze verlaten deze functie alleen als access_token
+  // richting Google. Het refresh_token gaat nooit verder dan deze regel.
+  const huidigAccessToken = decryptOptional(connector.access_token);
+  const refreshToken = decryptOptional(connector.refresh_token);
+
+  if (huidigAccessToken && !needsRefresh(connector.expires_at, now)) {
+    return huidigAccessToken;
   }
 
-  if (!connector.refresh_token) {
+  if (!refreshToken) {
     await markReauthRequired(connector);
     throw new ReauthRequiredError("Geen refresh_token beschikbaar — connector moet opnieuw gekoppeld worden.");
   }
 
   try {
-    const refreshed = await refreshGoogleAccessToken(connector.refresh_token, now);
+    const refreshed = await refreshGoogleAccessToken(refreshToken, now);
     await persistRefreshedToken(connector, refreshed);
     return refreshed.access_token;
   } catch (err) {
@@ -138,7 +145,7 @@ async function persistRefreshedToken(
     tx.connector.update({
       where: { id: connector.id },
       data: {
-        access_token: refreshed.access_token,
+        access_token: encryptSecret(refreshed.access_token),
         expires_at: refreshed.expires_at,
         status: "active",
         error_message: null,
