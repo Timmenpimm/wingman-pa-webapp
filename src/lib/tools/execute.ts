@@ -1,3 +1,4 @@
+import { decryptOptional } from "@/lib/crypto/secrets";
 import type { Connector, ToolCall } from "@prisma/client";
 import { withUser, type Tx } from "@/lib/db/with-user";
 import { clamp } from "@/lib/text";
@@ -297,7 +298,9 @@ async function accessTokenFor(
   connector: Connector,
 ): Promise<string | undefined> {
   const adapter = adapterFor(resolved.provider);
-  if (!adapter?.ensureAccessToken) return connector.access_token ?? undefined;
+  // Ontsleutelen op het laatste moment: de kolom bevat een versleutelde
+  // waarde, de adapter verwacht een bruikbaar token.
+  if (!adapter?.ensureAccessToken) return decryptOptional(connector.access_token);
   return adapter.ensureAccessToken(connector);
 }
 

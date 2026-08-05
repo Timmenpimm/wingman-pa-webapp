@@ -202,6 +202,7 @@ deployment-URL's, niet het productiedomein. Het oude gedeelde wachtwoord
 | `DATABASE_URL` | runtime, transaction pooler (6543) |
 | `DIRECT_URL` | migraties, session pooler (5432) |
 | `AUTH_SECRET` | ondertekent de sessiecookie — zonder dit werkt inloggen niet |
+| `TOKEN_ENCRYPTION_KEY` | versleutelt connector-tokens vóór opslag (32 bytes base64) |
 
 Optioneel: `AUTH_EMAIL_SERVER` + `AUTH_EMAIL_FROM` voor de inloglink. Zonder die
 twee blijft de knop staan maar meldt hij eerlijk dat mailen nog niet is
@@ -253,3 +254,30 @@ postgresql://app_user.<project-ref>:<wachtwoord>@<regio>.pooler.supabase.com:654
 ### Wat er nog niet is
 
 Geen registratie: accounts ontstaan alleen via de seed.
+
+
+## Connector-tokens
+
+In `Connector` staat na een Google-koppeling een `refresh_token`. Dat is geen
+wachtwoord dat je kunt resetten: het geeft doorlopend toegang tot iemands
+agenda én mail, en blijft geldig tot de gebruiker het intrekt. Row-level
+security houdt een fout in de app tegen, maar tegen een databasedump doet het
+niets — en juist daarin is dit het waardevolste wat er ligt.
+
+Daarom staan die kolommen versleuteld (AES-256-GCM, `src/lib/crypto/secrets.ts`).
+De sleutel komt uit `TOKEN_ENCRYPTION_KEY` en gaat nooit de database in; bij
+pgcrypto zou hij in de query en dus in de logs van Postgres en de pooler
+belanden, naast de data die hij moet beschermen.
+
+**Bij uitrollen:** de app leest onversleutelde waarden nog gewoon, dus bestaande
+koppelingen blijven werken. Zet ze daarna eenmalig om:
+
+```bash
+npm run tokens:encrypt          # laat zien wat er zou gebeuren
+npm run tokens:encrypt -- --doen
+```
+
+Idempotent — twee keer draaien kan geen kwaad.
+
+**Sleutel kwijt = koppelingen kwijt.** Er is geen herstelpad: elke gebruiker
+moet dan opnieuw koppelen. Bewaar de sleutel net zo zorgvuldig als de database.

@@ -1,3 +1,4 @@
+import { encryptOptional, encryptSecret } from "@/lib/crypto/secrets";
 import { ownerPrisma } from "@/lib/db/owner-prisma";
 import { withUser } from "@/lib/db/with-user";
 
@@ -83,16 +84,19 @@ export async function upsertGoogleConnectors(
           type: row.type,
           label: row.label,
           account_id: accountId,
-          access_token: tokens.access_token ?? null,
-          refresh_token: tokens.refresh_token ?? null,
+          // Versleuteld de database in: een refresh_token geeft doorlopend
+          // toegang tot agenda en mail en is niet te resetten zoals een
+          // wachtwoord. Zie src/lib/crypto/secrets.ts.
+          access_token: encryptOptional(tokens.access_token),
+          refresh_token: encryptOptional(tokens.refresh_token),
           expires_at: expiresAt,
           scopes,
           status: "active",
           error_message: null,
         },
         update: {
-          access_token: tokens.access_token ?? undefined,
-          refresh_token: tokens.refresh_token ?? undefined,
+          access_token: tokens.access_token ? encryptSecret(tokens.access_token) : undefined,
+          refresh_token: tokens.refresh_token ? encryptSecret(tokens.refresh_token) : undefined,
           expires_at: expiresAt ?? undefined,
           scopes,
           status: "active",

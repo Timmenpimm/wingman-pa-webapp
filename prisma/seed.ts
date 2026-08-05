@@ -18,6 +18,9 @@
  */
 
 import { PrismaClient } from "@prisma/client";
+// Ook de demo-tokens versleuteld: anders test de seed een pad dat in
+// productie niet bestaat.
+import { encryptSecret } from "../src/lib/crypto/secrets";
 import bcrypt from "bcryptjs";
 import { randomBytes } from "node:crypto";
 import { localDayStart, localDayRange } from "../src/lib/day";
@@ -94,7 +97,7 @@ async function main() {
         type: "calendar",
         label: "Agenda — werk",
         account_id: "nora@voorbeeld.nl",
-        access_token: "demo",
+        access_token: encryptSecret("demo"),
         status: "active",
         permission: "act_and_report",
         scopes: JSON.stringify(["calendar.events"]),
@@ -106,7 +109,7 @@ async function main() {
         type: "calendar",
         label: "Agenda — privé",
         account_id: "nora.prive@voorbeeld.nl",
-        access_token: "demo",
+        access_token: encryptSecret("demo"),
         status: "active",
         permission: "propose",
         scopes: JSON.stringify(["calendar.readonly"]),
@@ -118,7 +121,7 @@ async function main() {
         type: "mail",
         label: "Mail — studio",
         account_id: "nora@voorbeeld.nl",
-        access_token: "demo",
+        access_token: encryptSecret("demo"),
         status: "active",
         permission: "draft",
         scopes: JSON.stringify(["gmail.readonly"]),
@@ -130,7 +133,7 @@ async function main() {
         type: "bank",
         label: "Bank via Ponto",
         account_id: "acc_demo",
-        access_token: "demo",
+        access_token: encryptSecret("demo"),
         status: "reauth_required",
         permission: "propose",
         scopes: JSON.stringify(["ai:read"]),
