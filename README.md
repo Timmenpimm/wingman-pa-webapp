@@ -26,6 +26,27 @@ Er zijn geen API-keys nodig. De app draait volledig op seed-data uit
 `prisma/seed.ts` — één verzonnen dag, inclusief een connector die stuk is,
 want dat is de normale toestand van een PSD2-koppeling.
 
+## Parallel werken
+
+Twee mensen (of twee agents) in dezelfde map delen één werkmap, ook al hebben ze
+elk een eigen branch: `git checkout` verandert de bestanden onder de ander
+vandaan, en een `git add -A` sleept diens werk mee de commit in. Beide zijn hier
+gebeurd.
+
+Oplossing is één opdracht per extra werkplek:
+
+```bash
+git worktree add ../wingman-<naam> <branch>
+cp .env ../wingman-<naam>/.env          # .env staat in .gitignore, dus niet mee
+ln -s ../wingman-pa-webapp/node_modules ../wingman-<naam>/node_modules
+```
+
+Elke worktree heeft een eigen map, eigen branch en eigen `.next`. Draai de
+dev-server dan wel op een eigen poort (`npm run dev -- -p 3112`), anders vechten
+twee servers om 3111.
+
+`git worktree list` toont wie waar zit; `git worktree remove <pad>` ruimt op.
+
 ## Testen
 
 ```bash
