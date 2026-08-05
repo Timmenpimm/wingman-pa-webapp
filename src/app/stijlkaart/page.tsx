@@ -1,4 +1,5 @@
 import { prisma, currentUserId } from "@/lib/db/client";
+import { updateStyleCard } from "@/lib/actions";
 import { clamp } from "@/lib/text";
 
 export const dynamic = "force-dynamic";
@@ -35,22 +36,46 @@ export default async function StijlkaartPage() {
             <article key={c.id} className="card">
               <h2 className="card__title">{REGISTER_LABEL[c.register] ?? c.register}</h2>
               <p className="card__line">Gemiddeld {c.avg_words} woorden per bericht.</p>
-              <div className="stack" style={{ marginTop: "var(--s-3)" }}>
-                <p className="row__sub">
+              {/* Bewerkbaar, want hij zit er soms naast (§6.6). Geen aparte
+                  bewerkmodus: de velden staan er gewoon, opslaan is één klik. */}
+              <form
+                action={saveRegister.bind(null, c.register)}
+                className="stack"
+                style={{ marginTop: "var(--s-3)" }}
+              >
+                <label className="row__sub" htmlFor={`greeting-${c.id}`}>
                   <strong className="muted">Aanhef</strong>
-                  <br />
-                  {c.greeting}
-                </p>
-                <p className="row__sub">
+                </label>
+                <input
+                  id={`greeting-${c.id}`}
+                  name="greeting"
+                  className="input"
+                  defaultValue={c.greeting}
+                  maxLength={80}
+                />
+
+                <label className="row__sub" htmlFor={`signoff-${c.id}`}>
                   <strong className="muted">Afsluiting</strong>
-                  <br />
-                  {c.signoff.split("\n").map((line, i) => (
-                    <span key={i}>
-                      {line}
-                      <br />
-                    </span>
-                  ))}
-                </p>
+                </label>
+                <textarea
+                  id={`signoff-${c.id}`}
+                  name="signoff"
+                  className="input"
+                  rows={2}
+                  defaultValue={c.signoff}
+                  maxLength={160}
+                />
+
+                <button
+                  className="btn btn--quiet"
+                  type="submit"
+                  aria-label={`Opslaan: ${REGISTER_LABEL[c.register] ?? c.register}`}
+                >
+                  Opslaan
+                </button>
+              </form>
+
+              <div className="stack" style={{ marginTop: "var(--s-4)" }}>
                 <p className="row__sub">
                   <strong className="muted">Typische zinnen</strong>
                 </p>
@@ -75,4 +100,16 @@ export default async function StijlkaartPage() {
       </div>
     </>
   );
+}
+
+/**
+ * De correctie gaat via dezelfde functie als POST /api/v1/style-card, zodat
+ * scherm en API niet uit elkaar kunnen lopen.
+ */
+async function saveRegister(register: string, data: FormData) {
+  "use server";
+  await updateStyleCard(register, {
+    greeting: String(data.get("greeting") ?? ""),
+    signoff: String(data.get("signoff") ?? ""),
+  });
 }

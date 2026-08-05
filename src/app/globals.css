@@ -917,3 +917,10 @@ button {
   border-bottom: 2px solid var(--paper-raised);
   transform: rotate(-45deg) translateY(-1px);
 }
+
+/* Meerregelig veld (afsluiting in de stijlkaart) */
+textarea.input {
+  resize: vertical;
+  line-height: var(--lh-snug);
+  font-family: inherit;
+}
