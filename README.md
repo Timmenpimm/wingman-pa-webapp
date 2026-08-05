@@ -26,6 +26,28 @@ Er zijn geen API-keys nodig. De app draait volledig op seed-data uit
 `prisma/seed.ts` — één verzonnen dag, inclusief een connector die stuk is,
 want dat is de normale toestand van een PSD2-koppeling.
 
+## Geplande momenten
+
+Drie vaste momenten per gebruiker, in zijn eigen tijdzone:
+
+| Soort | Standaard | Doet | Meldt |
+|---|---|---|---|
+| ochtend | 08:00 | frog kiezen, top-3, agenda | altijd |
+| middag | 12:00 | alleen bijsturen bij een afwijking | alleen als er iets is |
+| avond | 20:00 | afsluiten, morgen voorbereiden | altijd |
+
+Tijdstip en aan/uit staan op `/instellingen`. De soorten liggen vast — een
+cron-editor levert acht runs per dag op, en dat is een meldingenfabriek in een
+app die rust belooft.
+
+Uitvoeren gebeurt door `POST /api/v1/runs/tick` met `x-runs-secret`. Wie eraan
+trekt is inwisselbaar; nu een GitHub Actions-cron elke 15 minuten
+(`.github/workflows/runs.yml`), later Inngest. Handmatig testen:
+
+```bash
+curl -X POST -H "x-runs-secret: $RUNS_SECRET" http://localhost:3111/api/v1/runs/tick
+```
+
 ## Parallel werken
 
 Twee mensen (of twee agents) in dezelfde map delen één werkmap, ook al hebben ze

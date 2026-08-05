@@ -28,6 +28,12 @@ Deze staan in code afgedwongen, niet in een review-checklist:
    route naar buiten; adapters worden alleen aangeroepen via
    `src/lib/tools/execute.ts`. Elke poging landt in `ToolCall`, ook de mislukte.
 
+7. **Een geplande run zonder nieuws stuurt niets.** Het middagmoment geeft dan
+   `null` terug (`src/brain/runs/midday.ts`) en de run logt "overgeslagen".
+   Zonder die regel worden drie momenten binnen een week drie meldingen die je
+   wegveegt. En: één run per soort per lokale dag, want een haperende planner
+   mag geen tweede bericht opleveren.
+
 ## Toon
 
 Nederlands, kort, direct. Geen uitroeptekens, geen emoji als aanmoediging, geen
@@ -50,6 +56,10 @@ Engelse. Ontwerp en test dus met de echte tekst.
 - **Eén gedrag, twee ingangen.** Alle mutaties staan in `src/lib/actions.ts`; de
   REST-routes roepen dezelfde functies aan als de knoppen. Nooit logica
   dupliceren in een route handler.
+- **Wie aan de beurt is, bepaalt de app.** De planner (GitHub Actions-cron)
+  tikt alleen `/api/v1/runs/tick` aan; welke runs moeten draaien wordt in
+  `src/lib/runs/schedule.ts` uitgerekend, in de tijdzone van de gebruiker.
+  Zou dat in een cron-expressie staan, dan klopt het twee keer per jaar niet.
 - **Geen LLM-calls tijdens een page load.** Tekst wordt in de nachtelijke run
   geschreven en opgeslagen; schermen lezen alleen.
 - **Server-rendered, werkt zonder client-JS.** Formulieren met server actions.
@@ -67,15 +77,18 @@ notificaties.
 ## Dev
 
 ```bash
-npm run db:reset   # schema + seed
+npm run db:up      # Postgres in Docker (poort 5433)
+npm run db:reset   # migraties + seed
 npm run dev        # :3111
+npm test           # eenheidstests
+npm run smoke      # tegen een draaiende app
 npx tsc --noEmit   # moet schoon zijn vóór commit
 ```
 
-Dev draait op SQLite en seed-data, zonder API-keys. Productie is Postgres
-(Supabase/Neon, EU-regio) — alleen de `provider` in `prisma/schema.prisma` en
-`DATABASE_URL` verschillen. Daarom staan er geen `String[]`-kolommen in het
-schema; arrays gaan als JSON-string het veld in.
+Dev draait op een eigen wegwerpdatabase in Docker, niet op productie — zie
+README. Arrays gaan als JSON-string het veld in in plaats van als `String[]`:
+dat hield het schema draagbaar toen dev nog op SQLite draaide, en de queries
+zijn er nu op gebouwd.
 
 ## Git
 

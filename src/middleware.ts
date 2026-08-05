@@ -34,10 +34,22 @@ const { auth } = NextAuth(authConfig);
 
 const PUBLIC_PATHS = ["/inloggen", "/api/auth"];
 
+/**
+ * Niet openbaar, maar wél zonder sessie: dit endpoint draait werk uit voor
+ * álle gebruikers en hoort dus bij geen enkele sessie. Het bewijst zichzelf
+ * met een gedeeld geheim (RUNS_SECRET) in de route zelf. Zonder dat geheim
+ * geconfigureerd geeft de route 501 en gebeurt er niets.
+ */
+const EIGEN_AUTHENTICATIE = ["/api/v1/runs/tick"];
+
 export default auth((req) => {
   const { pathname } = req.nextUrl;
 
   if (PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`))) {
+    return NextResponse.next();
+  }
+
+  if (EIGEN_AUTHENTICATIE.includes(pathname)) {
     return NextResponse.next();
   }
 

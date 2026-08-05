@@ -21,6 +21,7 @@ import { PrismaClient } from "@prisma/client";
 // Ook de demo-tokens versleuteld: anders test de seed een pad dat in
 // productie niet bestaat.
 import { encryptSecret } from "../src/lib/crypto/secrets";
+import { RUN_DEFAULTS } from "../src/lib/runs/schedule";
 import bcrypt from "bcryptjs";
 import { randomBytes } from "node:crypto";
 import { localDayStart, localDayRange } from "../src/lib/day";
@@ -69,6 +70,8 @@ async function main() {
     prisma.person.deleteMany(),
     prisma.project.deleteMany(),
     prisma.connector.deleteMany(),
+    prisma.runLog.deleteMany(),
+    prisma.scheduledRun.deleteMany(),
     prisma.userSetting.deleteMany(),
     prisma.user.deleteMany(),
   ]);
@@ -586,6 +589,12 @@ async function main() {
       { user_id: uid, from_id: "n:project:podcast", to_id: "n:commitment:iris", type: "NEXT_ACTION" },
       { user_id: uid, from_id: "n:person:deniz", to_id: "n:project:werkplek", type: "MENTIONS", label: "losse draad" },
     ],
+  });
+
+  // De drie momenten die deze app kent. Geen zelfgemaakte schema's: drie
+  // vaste soorten met een tijdstip dat je mag verzetten.
+  await prisma.scheduledRun.createMany({
+    data: RUN_DEFAULTS.map((r) => ({ user_id: uid, kind: r.kind, at: r.at })),
   });
 
   await prisma.userSetting.createMany({

@@ -11,6 +11,12 @@
  */
 
 :root {
+  /* Native formulierelementen (tijdveld, vinkvakje, keuzelijst) tekenen zichzelf
+     volgens dit signaal. Zonder deze regel blijft een <input type="time"> in het
+     donkere thema zwarte tekst op een zwart vlak — onleesbaar, terwijl de
+     waarde er wel degelijk staat. */
+  color-scheme: dark;
+
   /* --- Kleur: grond & inkt (donker, hoofdthema) ------------------------ */
   --paper: #080a09; /* grond */
   --paper-raised: #101312; /* kaarten, rijen, velden */
@@ -94,6 +100,7 @@
    papierwaarden in plaats van grond/inkt. */
 @media (prefers-color-scheme: light) {
   :root {
+    color-scheme: light;
     --paper: #f7f4ee;
     --paper-raised: #fffdf9;
     --paper-sunk: #f0ece3;
