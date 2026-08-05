@@ -241,7 +241,9 @@ async function perform(
       // "je koppeling is verlopen" is een uitkomst van deze aanroep en hoort in
       // dezelfde ToolCall-rij als elke andere mislukking.
       accessToken: await accessTokenFor(resolved, connector),
-      refreshToken: connector.refresh_token ?? undefined,
+      // Ook ontsleuteld: een adapter die hiernaar grijpt hoort een bruikbaar
+      // token te krijgen, geen cijfertekst die pas bij de bron stukloopt.
+      refreshToken: decryptOptional(connector.refresh_token),
     };
     const result = await withTimeout(
       resolved.tool.run(ctx, params),
