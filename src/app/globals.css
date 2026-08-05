@@ -1333,3 +1333,75 @@ textarea.input {
   color: var(--ink-faint);
   max-width: var(--measure);
 }
+
+
+/* ---------- Geplande momenten ------------------------------------------ */
+
+/* Het tijdveld is smal en talig: "08:00" hoeft geen halve regel te vullen.
+   Cijfers in tabelcijfers, zodat 08:00 en 20:00 even breed zijn en de rij
+   niet verspringt bij het wijzigen. */
+/* Naam boven, bediening eronder. Op 390px passen een tijdveld, een schakelaar
+   en een knop niet naast een label van drie woorden — dan wordt het tijdveld
+   platgedrukt tot een klokje zonder zichtbare tijd. */
+.run-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-4) 0;
+}
+
+.run-row__naam {
+  color: var(--ink);
+}
+
+.run-row__bediening {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  flex-wrap: wrap;
+}
+
+@media (min-width: 640px) {
+  .run-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.input--time {
+  flex: 0 0 auto;
+  width: 7.5rem;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  padding: var(--s-2) var(--s-3);
+}
+
+/* Het vinkvakje van een moment volgt de rest van de app in plaats van de
+   browser. Zonder appearance:none krijg je het blauwe systeemvakje, dat in
+   geen enkel thema van dit ontwerp thuishoort. */
+.run-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  white-space: nowrap;
+}
+
+.run-toggle .check {
+  margin-top: 0;
+  cursor: pointer;
+}
+
+.run-toggle .check:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.run-toggle .check:checked::after {
+  content: "";
+  width: 10px;
+  height: 5px;
+  border-left: 2px solid var(--accent-on-strong);
+  border-bottom: 2px solid var(--accent-on-strong);
+  transform: rotate(-45deg) translateY(-1px);
+}

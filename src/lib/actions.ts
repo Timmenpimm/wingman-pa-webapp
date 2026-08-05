@@ -252,3 +252,30 @@ export async function updateStyleCard(
   );
   revalidatePath("/stijlkaart");
 }
+
+/**
+ * Een moment verzetten of uitzetten.
+ *
+ * Alleen tijdstip en aan/uit: de soorten liggen vast. Een scherm waarin je zelf
+ * schema's samenklikt levert acht runs per dag op, en dan is er een
+ * meldingenfabriek gebouwd in een app die rust belooft (§3).
+ */
+export async function updateRun(kind: string, data: FormData) {
+  const userId = await currentUserId();
+  const at = String(data.get("at") ?? "").trim();
+  const enabled = data.get("enabled") === "on";
+
+  // Tijd valideren vóór opslag: een onleesbaar tijdstip zou de planner elke
+  // vijftien minuten laten struikelen op een fout die niemand ziet.
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(at)) return;
+
+  await withUser(userId, (tx) =>
+    tx.scheduledRun.updateMany({
+      where: { user_id: userId, kind },
+      // last_run_on wissen: zet je het moment naar later vandaag, dan hoort hij
+      // vandaag nog te kunnen draaien.
+      data: { at, enabled, last_run_on: null },
+    }),
+  );
+  revalidatePath("/instellingen");
+}

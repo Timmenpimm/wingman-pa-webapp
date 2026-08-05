@@ -1,0 +1,33 @@
+# Trekt elke vijftien minuten aan het touwtje.
+#
+# De planner weet niets van tijdzones of van wie aan de beurt is — dat bepaalt
+# de app zelf in /api/v1/runs/tick. Zo blijft de tijdzone-logica op één plek en
+# is deze planner inwisselbaar voor Inngest zonder dat de app verandert.
+#
+# GitHub loopt met cron soms enkele minuten achter. Dat mag: een briefing om
+# 08:07 is niet minder waard, en de app zorgt zelf dat er per dag één komt.
+name: Geplande runs
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch: # met de hand aftrappen om te testen
+
+jobs:
+  tik:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Tik
+        run: |
+          antwoord=$(curl -sS -X POST "$URL/api/v1/runs/tick" \
+            -H "x-runs-secret: $GEHEIM" \
+            -w "\n%{http_code}")
+          code=$(echo "$antwoord" | tail -1)
+          echo "$antwoord" | sed '$d'
+          if [ "$code" != "200" ]; then
+            echo "::error::tick gaf HTTP $code"
+            exit 1
+          fi
+        env:
+          URL: ${{ vars.APP_URL }}
+          GEHEIM: ${{ secrets.RUNS_SECRET }}

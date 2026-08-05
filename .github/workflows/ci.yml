@@ -30,6 +30,7 @@ jobs:
       DATABASE_URL: postgresql://app_user:ci@localhost:5433/wingman
       DIRECT_URL: postgresql://wingman:wingman@localhost:5433/wingman
       AUTH_SECRET: ci-alleen-voor-tests
+      RUNS_SECRET: ci-alleen-voor-tests
       # 32 bytes base64, alleen voor de pijplijn.
       TOKEN_ENCRYPTION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
       SEED_PASSWORD: lokaal

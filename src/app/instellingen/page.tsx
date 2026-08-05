@@ -1,5 +1,6 @@
+import { RUN_KINDS, RUN_LABELS } from "@/lib/runs/schedule";
 import { currentUserId, withUser } from "@/lib/db/client";
-import { decideTool, setConnectorPermission } from "@/lib/actions";
+import { decideTool, setConnectorPermission, updateRun } from "@/lib/actions";
 import { PERMISSION_LABELS } from "@/lib/types";
 import Link from "next/link";
 import { durationPhrase, formatDayShort, formatTime } from "@/lib/text";
@@ -17,6 +18,12 @@ const STATUS_TEXT: Record<string, string> = {
 };
 
 /** Toolnamen zijn voor de machine; hier staat wat het voor jou betekent. */
+const LOG_STATUS: Record<string, string> = {
+  done: "gedraaid",
+  skipped: "overgeslagen — niets te melden",
+  failed: "mislukt",
+};
+
 const TOOL_TEXT: Record<string, string> = {
   "gmail.draft_reply": "concept in Gmail",
   "calendar.create_event": "afspraak in je agenda",
@@ -39,10 +46,12 @@ const OUTCOME_TEXT: Record<string, string> = {
  */
 export default async function InstellingenPage() {
   const userId = await currentUserId();
-  const [connectors, settings] = await withUser(userId, (tx) =>
+  const [connectors, settings, runs, laatsteLogs] = await withUser(userId, (tx) =>
     Promise.all([
       tx.connector.findMany({ where: { user_id: userId }, orderBy: { type: "asc" } }),
       tx.userSetting.findMany({ where: { user_id: userId } }),
+      tx.scheduledRun.findMany({ where: { user_id: userId } }),
+      tx.runLog.findMany({ where: { user_id: userId }, orderBy: { ran_at: "desc" }, take: 6 }),
     ]),
   );
   const [pending, recent] = await Promise.all([
@@ -196,6 +205,65 @@ export default async function InstellingenPage() {
             Graaf verkennen
           </Link>
         </div>
+      </section>
+
+      <section className="section">
+        <div className="section__head">
+          <h2>Momenten</h2>
+          <span className="section__note">drie vaste, tijdstip mag je verzetten</span>
+        </div>
+        <p className="row__sub" style={{ maxWidth: "var(--measure)" }}>
+          Het middagmoment zwijgt op een dag zonder afwijking. Dat is geen storing: een
+          bijsturing zonder aanleiding is ruis.
+        </p>
+        <ul className="list" style={{ marginTop: "var(--s-3)" }}>
+          {RUN_KINDS.map((kind) => {
+            const run = runs.find((r) => r.kind === kind);
+            const log = laatsteLogs.find((l) => l.kind === kind);
+            return (
+              <li key={kind}>
+                <form action={updateRun.bind(null, kind)} className="run-row">
+                  <div className="run-row__naam">
+                    <div>{RUN_LABELS[kind]}</div>
+                    <div className="conn__status">
+                      {log
+                        ? `laatst ${LOG_STATUS[log.status] ?? log.status} op ${log.local_date}${log.notified ? " · gemeld" : ""}`
+                        : "nog niet gedraaid"}
+                    </div>
+                  </div>
+                  <div className="run-row__bediening">
+                  <label className="sr-only" htmlFor={`at-${kind}`}>
+                    Tijdstip voor {RUN_LABELS[kind]}
+                  </label>
+                  <input
+                    id={`at-${kind}`}
+                    className="input input--time"
+                    type="time"
+                    name="at"
+                    defaultValue={run?.at ?? "08:00"}
+                  />
+                  <label className="run-toggle">
+                    <input
+                      type="checkbox"
+                      className="check"
+                      name="enabled"
+                      defaultChecked={run?.enabled ?? true}
+                    />
+                    aan
+                  </label>
+                    <button
+                      className="btn btn--text"
+                      type="submit"
+                      aria-label={`Opslaan: ${RUN_LABELS[kind]}`}
+                    >
+                      Opslaan
+                    </button>
+                  </div>
+                </form>
+              </li>
+            );
+          })}
+        </ul>
       </section>
 
       <section className="section">

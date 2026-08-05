@@ -64,6 +64,18 @@ for (const pad of APIS) {
   check(`api ${pad}`, res.status === 401 && leeg, `HTTP ${res.status}`);
 }
 
+console.log("\nHet planner-endpoint hoort zich met een geheim te bewijzen:");
+{
+  const zonder = await haal("/api/v1/runs/tick", { method: "POST" });
+  // 501 = geen RUNS_SECRET gezet (dan gebeurt er sowieso niets), 401 = geweigerd.
+  check("tick zonder geheim", zonder.status === 401 || zonder.status === 501, `HTTP ${zonder.status}`);
+  const fout = await haal("/api/v1/runs/tick", {
+    method: "POST",
+    headers: { "x-runs-secret": "beslist-onjuist" },
+  });
+  check("tick met verkeerd geheim", fout.status === 401 || fout.status === 501, `HTTP ${fout.status}`);
+}
+
 console.log("\nHet inlogscherm moet juist wél open zijn:");
 check("/inloggen", (await haal("/inloggen")).status === 200);
 
