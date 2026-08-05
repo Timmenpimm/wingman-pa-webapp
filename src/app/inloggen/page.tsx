@@ -70,7 +70,7 @@ export default function InloggenPage({
  * precies de opzet van een phishing-flow, dus alles wat niet aantoonbaar een
  * eigen pad is, gaat naar de homepage.
  */
-function safeReturnPath(raw?: string): string {
+export function safeReturnPath(raw?: string): string {
   if (!raw) return "/";
   const decoded = (() => {
     try {

@@ -1,0 +1,53 @@
+# Draait op elke PR en op main. Houdt tegen wat we anders pas in productie zien.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  controle:
+    runs-on: ubuntu-latest
+
+    # De rooktest heeft een echte database nodig — dezelfde majorversie als
+    # productie, zodat migraties zich hier hetzelfde gedragen.
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: wingman
+          POSTGRES_PASSWORD: wingman
+          POSTGRES_DB: wingman
+        ports: ["5433:5432"]
+        options: >-
+          --health-cmd "pg_isready -U wingman -d wingman"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://wingman:wingman@localhost:5433/wingman
+      DIRECT_URL: postgresql://wingman:wingman@localhost:5433/wingman
+      AUTH_SECRET: ci-alleen-voor-tests
+      SEED_PASSWORD: lokaal
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npx tsc --noEmit
+      - run: npm test
+
+      - name: Database klaarzetten
+        run: npx prisma migrate deploy && npx tsx prisma/seed.ts
+
+      - name: Bouwen en de poort controleren
+        run: |
+          npm run build
+          npm start &
+          npx wait-on http://localhost:3111/inloggen -t 60000
+          npm run smoke
