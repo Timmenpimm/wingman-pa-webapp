@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-// @ts-expect-error — los scriptbestand zonder types; bewust geen build-stap voor scripts/.
 import { controleer, huidigeWaarde, zet } from "../scripts/env-bestand.mjs";
 
 const BESTAAND = `# Wingman — lokale omgeving
