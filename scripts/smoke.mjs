@@ -129,5 +129,12 @@ const briefing = res.status === 200 ? await res.json() : null;
 check("briefing komt terug", Boolean(briefing?.frog?.title), briefing?.frog?.title ?? "geen frog");
 check("maximaal drie prioriteiten", (briefing?.priorities?.length ?? 9) <= 3);
 
+// /onboarding is een wissel naar de eerste openstaande stap. Landt hij op
+// zichzelf of op een 404, dan is de wizard onbereikbaar zonder dat een van de
+// andere controles daar iets van merkt.
+res = await haal("/onboarding", { headers: { cookie: kop() } });
+const naarStap = (res.headers.get("location") ?? "").includes("/onboarding/");
+check("/onboarding stuurt door naar een stap", res.status === 307 && naarStap, `HTTP ${res.status}`);
+
 console.log(`\n${mislukt === 0 ? "Alles goed." : `${mislukt} controle(s) mislukt.`}\n`);
 process.exit(mislukt === 0 ? 0 : 1);

@@ -1,0 +1,197 @@
+import type { Permission, Provider } from "@/lib/types";
+
+/**
+ * De staat van de onboarding (§6.3).
+ *
+ * Eén bron per scherm, en de vraag "wat mag ik hiermee?" staat in dezelfde
+ * stap als de koppeling. Dat is het hele idee: direct nadat iemand ziet wát ik
+ * in zijn agenda vind, is het enige moment waarop die vraag ergens over gaat.
+ * Een aparte permissiestap achteraan is bureaucratie en wordt weggeklikt.
+ *
+ * De voortgang wordt nergens apart bijgehouden als stapnummer. Hij volgt uit
+ * wat er ís: een Connector-rij, of een markering in UserSetting dat iemand de
+ * stap bewust heeft overgeslagen of met de hand heeft afgevinkt. Een teller
+ * zou kunnen ontsporen ten opzichte van de werkelijkheid — dit niet, en
+ * hervatten na afhaken werkt er gratis mee.
+ */
+
+export type StepId = "agenda" | "mail" | "bank" | "meldingen";
+
+/** "done" = met de hand afgevinkt (meldingen), "skipped" = bewust overgeslagen. */
+export type StepMark = "done" | "skipped";
+
+export interface StepDefinition {
+  id: StepId;
+  /** Kop op het scherm zelf. */
+  title: string;
+  /** Naam in het spoor bovenaan — kort, past naast drie andere. */
+  short: string;
+  /** Welke connectors deze stap afronden. Leeg = geen bron (meldingen). */
+  providers: Provider[];
+  /**
+   * Vraagt deze stap een permissie? De bank niet: die is alleen-lezen (§6.7),
+   * en een keuzemenu dat toch niets mag doen belooft iets dat niet bestaat.
+   */
+  asksPermission: boolean;
+}
+
+export const STEPS: StepDefinition[] = [
+  {
+    id: "agenda",
+    title: "Agenda koppelen",
+    short: "Agenda",
+    providers: ["google", "caldav"],
+    asksPermission: true,
+  },
+  {
+    id: "mail",
+    title: "Mail koppelen",
+    short: "Mail",
+    providers: ["gmail", "imap"],
+    asksPermission: true,
+  },
+  {
+    id: "bank",
+    title: "Bank koppelen",
+    short: "Bank",
+    providers: ["ponto"],
+    asksPermission: false,
+  },
+  {
+    id: "meldingen",
+    title: "App installeren en meldingen aanzetten",
+    short: "Meldingen",
+    providers: [],
+    asksPermission: false,
+  },
+];
+
+export const STEP_IDS: StepId[] = STEPS.map((s) => s.id);
+
+export function isStepId(value: string | undefined): value is StepId {
+  return typeof value === "string" && STEP_IDS.includes(value as StepId);
+}
+
+export function stepDefinition(id: StepId): StepDefinition {
+  // STEPS is de bron; isStepId() garandeert dat dit bestaat.
+  return STEPS.find((s) => s.id === id)!;
+}
+
+export type StepStatus = "connected" | "confirmed" | "skipped" | "todo";
+
+export interface StepState {
+  id: StepId;
+  /** 1-gebaseerd, voor "stap 2 van 4". */
+  number: number;
+  title: string;
+  short: string;
+  status: StepStatus;
+  /** Klaar genoeg om door te lopen — gekoppeld, afgevinkt of overgeslagen. */
+  done: boolean;
+}
+
+export interface ConnectorFacts {
+  provider: string;
+  status: string;
+}
+
+/**
+ * Wat er nog open staat, puur uit gegevens afgeleid. Geen database, geen
+ * sessie — daarom te testen zonder er een van beide bij te halen.
+ *
+ * Een connector in `error` of `reauth_required` telt hier als gekoppeld. De
+ * koppeling zelf is gelegd; dat hij stukliep is een storing die de briefing
+ * zelf meldt (regel 2), geen reden om iemand opnieuw door de onboarding te
+ * sturen.
+ */
+export function deriveSteps(input: {
+  connectors: ConnectorFacts[];
+  marks: Partial<Record<StepId, StepMark>>;
+}): StepState[] {
+  return STEPS.map((step, index) => {
+    const connected = input.connectors.some(
+      (c) => step.providers.includes(c.provider as Provider) && c.status !== "not_connected",
+    );
+    const mark = input.marks[step.id];
+
+    const status: StepStatus = connected
+      ? "connected"
+      : mark === "done"
+        ? "confirmed"
+        : mark === "skipped"
+          ? "skipped"
+          : "todo";
+
+    return {
+      id: step.id,
+      number: index + 1,
+      title: step.title,
+      short: step.short,
+      status,
+      done: status !== "todo",
+    };
+  });
+}
+
+/** De eerste stap die nog aandacht vraagt, of null als alles langs is geweest. */
+export function firstOpenStep(steps: StepState[]): StepId | null {
+  return steps.find((s) => !s.done)?.id ?? null;
+}
+
+/** De stap ná deze — waar "Volgende" heen gaat. Null betekent: naar het slot. */
+export function nextStep(current: StepId): StepId | null {
+  const index = STEP_IDS.indexOf(current);
+  return STEP_IDS[index + 1] ?? null;
+}
+
+/**
+ * Van "vraagt het meest" naar "doet het meest op eigen houtje". Deze volgorde
+ * is de enige plek waar de gradiënt uit §6.7 een ránde krijgt, en hij bestaat
+ * voor één doel: weten wat de voorzichtigste keuze is.
+ */
+const PERMISSION_ORDER: Permission[] = ["propose", "draft", "act_and_report", "silent"];
+
+/**
+ * De voorzichtigste permissie uit een rij.
+ *
+ * Eén stap kan meer dan één connector bevatten — "agenda" is bij een gekoppelde
+ * Google-account al gauw een werk- én een privéagenda, met verschillende
+ * rechten. De wizard stelt de vraag één keer voor de hele stap, en dan mag de
+ * voorselectie nooit de ruimste van de twee zijn: wie op "Volgende" drukt
+ * zonder te kiezen, hoort niets weg te geven dat hij nog niet had gegeven.
+ */
+export function mostRestrictive(permissions: string[]): Permission {
+  let chosen = PERMISSION_ORDER.length - 1;
+  for (const p of permissions) {
+    const index = PERMISSION_ORDER.indexOf(p as Permission);
+    if (index >= 0 && index < chosen) chosen = index;
+  }
+  return PERMISSION_ORDER[permissions.length === 0 ? 0 : chosen];
+}
+
+/** UserSetting-sleutel voor de markering van één stap. */
+export function markKey(id: StepId): string {
+  return `onboarding:${id}`;
+}
+
+/** UserSetting-sleutel voor het moment waarop iemand de onboarding uitliep. */
+export const FINISHED_KEY = "onboarding:klaar_op";
+
+/** Leest de markeringen uit losse UserSetting-rijen. */
+export function marksFromSettings(
+  settings: Array<{ key: string; value: string }>,
+): Partial<Record<StepId, StepMark>> {
+  const marks: Partial<Record<StepId, StepMark>> = {};
+  for (const id of STEP_IDS) {
+    const value = settings.find((s) => s.key === markKey(id))?.value;
+    if (value === "done" || value === "skipped") marks[id] = value;
+  }
+  return marks;
+}
+
+/** Pad naar een stap. Op één plek, zodat een hernoeming niet door de app lekt. */
+export function stepPath(id: StepId): string {
+  return `/onboarding/${id}`;
+}
+
+export const FINISH_PATH = "/onboarding/klaar";
