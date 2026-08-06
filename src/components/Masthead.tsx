@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { MagnifyingGlass } from "@phosphor-icons/react";
 
 /**
  * De loupe is de ingang naar de graaf vanaf elk scherm (§6.9).
@@ -21,10 +22,7 @@ export function Masthead() {
           wingman
         </Link>
         <Link href="/graaf" className="masthead__search" aria-label="Vraag je graaf">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="11" cy="11" r="5.5" />
-            <path d="m16 16 4 4" />
-          </svg>
+          <MagnifyingGlass weight="regular" aria-hidden="true" />
           <span className="sr-only">Vraag je graaf</span>
         </Link>
       </div>
