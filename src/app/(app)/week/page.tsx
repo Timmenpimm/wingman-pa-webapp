@@ -29,18 +29,41 @@ export default async function WeekPage() {
     .sort((a, b) => a.opened_at.localeCompare(b.opened_at))
     .slice(0, 4);
 
+  const weekdays = ["MA", "DI", "WO", "DO", "VR", "ZA", "ZO"];
+  const todayIndex = (new Date().getDay() + 6) % 7;
+
   return (
     <>
       <p className="eyebrow">Deze week</p>
-      <h1 style={{ fontSize: "var(--t-xl)" }}>Wat er terugkomt</h1>
+      <h1 className="screen-title">Je week in beweging.</h1>
+      <p className="lede screen-lede">Geen score. Wel een paar patronen om mee te nemen.</p>
 
-      <p className="coach" style={{ marginTop: "var(--s-5)" }}>
-        {langstlopend.length > 0
-          ? `"${langstlopend[0].what}" hangt nu ${durationPhrase(
-              langstlopend[0].opened_at,
-            )}. Dat is geen tijdgebrek — het is een taak die telkens net niet aan de beurt komt. Zet hem één keer als frog, dan is hij weg.`
-          : "Niets schuift door deze week."}
-      </p>
+      <div className="week-days" aria-label="Dagen van deze week">
+        {weekdays.map((day, index) => (
+          <span key={day} className="week-day" data-current={index === todayIndex}>
+            {day}
+          </span>
+        ))}
+      </div>
+
+      <div className="week-insights">
+        <article className="week-insight">
+          <h2>{langstlopend.length > 0 ? "Een ding schuift door" : "Er schuift niets door"}</h2>
+          <p>
+            {langstlopend.length > 0
+              ? `“${langstlopend[0].what}” hangt ${durationPhrase(langstlopend[0].opened_at)}.`
+              : "Je open eindjes hebben deze week geen nieuwe laag gekregen."}
+          </p>
+        </article>
+        <article className="week-insight">
+          <h2>{briefings.length > 0 ? "Je dag kreeg richting" : "Je ritme begint hier"}</h2>
+          <p>
+            {briefings.length > 0
+              ? `${briefings.length} dag${briefings.length === 1 ? "" : "en"} heeft een bewaarde focus.`
+              : "Zodra je eerste briefing klaarstaat, zie je hier wat terugkomt."}
+          </p>
+        </article>
+      </div>
 
       <section className="section">
         <div className="section__head">
