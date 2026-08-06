@@ -1,3 +1,4 @@
+import { EmailForm } from "./EmailForm";
 import { RUN_KINDS, RUN_LABELS } from "@/lib/runs/schedule";
 import { currentUserId, withUser } from "@/lib/db/client";
 import { decideTool, setConnectorPermission, updateRun } from "@/lib/actions";
@@ -46,12 +47,13 @@ const OUTCOME_TEXT: Record<string, string> = {
  */
 export default async function InstellingenPage() {
   const userId = await currentUserId();
-  const [connectors, settings, runs, laatsteLogs] = await withUser(userId, (tx) =>
+  const [connectors, settings, runs, laatsteLogs, gebruiker] = await withUser(userId, (tx) =>
     Promise.all([
       tx.connector.findMany({ where: { user_id: userId }, orderBy: { type: "asc" } }),
       tx.userSetting.findMany({ where: { user_id: userId } }),
       tx.scheduledRun.findMany({ where: { user_id: userId } }),
       tx.runLog.findMany({ where: { user_id: userId }, orderBy: { ran_at: "desc" }, take: 6 }),
+          tx.user.findUnique({ where: { id: userId }, select: { email: true } }),
     ]),
   );
   const [pending, recent] = await Promise.all([
@@ -270,6 +272,11 @@ export default async function InstellingenPage() {
         <div className="section__head">
           <h2>Meldingen</h2>
         </div>
+
+        {/* Het adres staat hier en niet onder "je gegevens": het bepaalt waar
+            de briefing van 08:00 heen gaat, en dat is wat je hier komt doen. */}
+        <EmailForm huidig={gebruiker?.email ?? ""} />
+
         <ul className="list">
           <li>
             <div className="row">
@@ -346,3 +353,4 @@ async function logout() {
   "use server";
   await signOut({ redirectTo: "/inloggen" });
 }
+
