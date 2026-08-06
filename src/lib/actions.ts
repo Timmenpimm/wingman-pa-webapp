@@ -4,6 +4,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { currentUserId } from "@/lib/db/client";
 import { withUser, type Tx } from "@/lib/db/with-user";
+// Het adres moet uniek zijn over álle gebruikers heen; die controle kan per
+// definitie niet achter RLS langs.
+import { ownerPrisma } from "@/lib/db/owner-prisma";
 import { localDayStart } from "@/lib/day";
 import { clamp } from "@/lib/text";
 import { decideToolCall, requestTool } from "@/lib/tools/execute";
@@ -376,4 +379,37 @@ export async function updateRun(kind: string, data: FormData) {
     }),
   );
   revalidatePath("/instellingen");
+}
+
+/**
+ * Je eigen e-mailadres wijzigen.
+ *
+ * Dit bestond niet, en dat was een echt gat: het adres bepaalt waar de
+ * geplande momenten heen gaan én waarmee je inlogt. Zonder dit scherm kon
+ * alleen iemand met databasetoegang het veranderen — voor een app die om
+ * 08:00 een briefing stuurt is dat geen randgeval maar de eerste stap.
+ *
+ * De sessie blijft geldig: die hangt aan het gebruikers-id, niet aan het
+ * adres. Je hoeft dus niet opnieuw in te loggen, maar de volgende keer doe je
+ * dat wel met het nieuwe adres.
+ */
+export async function updateEmail(data: FormData): Promise<{ fout?: string }> {
+  const userId = await currentUserId();
+  const nieuw = String(data.get("email") ?? "").trim().toLowerCase();
+
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(nieuw)) {
+    return { fout: "Dat ziet er niet uit als een e-mailadres." };
+  }
+
+  const bezet = await ownerPrisma.user.findUnique({ where: { email: nieuw } });
+  if (bezet && bezet.id !== userId) {
+    // Niet verklappen van wie: dat zou een manier zijn om te achterhalen wie
+    // er een account heeft.
+    return { fout: "Dit adres kan niet gebruikt worden." };
+  }
+
+  await withUser(userId, (tx) => tx.user.update({ where: { id: userId }, data: { email: nieuw } }));
+
+  revalidatePath("/instellingen");
+  return {};
 }
