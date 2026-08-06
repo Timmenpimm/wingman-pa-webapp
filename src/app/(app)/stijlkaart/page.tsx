@@ -23,26 +23,19 @@ export default async function StijlkaartPage() {
   return (
     <>
       <p className="eyebrow">Uit je verzonden mail</p>
-      <h1 style={{ fontSize: "var(--t-xl)" }}>Zo schrijf jij</h1>
-      <p className="lede" style={{ marginTop: "var(--s-3)" }}>
-        Ik verstuur niets. Ik lees alleen mee hoe jij schrijft, zodat een concept straks
-        klinkt als jij en niet als een assistent.
-      </p>
+      <h1 className="screen-title">Jouw stijlkaart</h1>
+      <p className="lede screen-lede">Drie registers die je vanzelf inzet, afhankelijk van de situatie.</p>
 
-      <div className="cards" style={{ marginTop: "var(--s-5)" }}>
-        {cards.map((c) => {
+      <div className="style-registers">
+        {cards.map((c, index) => {
           const typical = JSON.parse(c.typical) as string[];
           return (
-            <article key={c.id} className="card">
-              <h2 className="card__title">{REGISTER_LABEL[c.register] ?? c.register}</h2>
-              <p className="card__line">Gemiddeld {c.avg_words} woorden per bericht.</p>
-              {/* Bewerkbaar, want hij zit er soms naast (§6.6). Geen aparte
-                  bewerkmodus: de velden staan er gewoon, opslaan is één klik. */}
-              <form
-                action={saveRegister.bind(null, c.register)}
-                className="stack"
-                style={{ marginTop: "var(--s-3)" }}
-              >
+            <article key={c.id} className="style-register" data-tone={index % 3}>
+              <h2>{REGISTER_LABEL[c.register] ?? c.register}</h2>
+              <p className="style-register__quote">“{clamp(typical[0] ?? c.greeting, "styleCardLine")}”</p>
+              <details className="style-register__edit">
+                <summary>Bijstellen</summary>
+                <form action={saveRegister.bind(null, c.register)} className="stack">
                 <label className="row__sub" htmlFor={`greeting-${c.id}`}>
                   <strong className="muted">Aanhef</strong>
                 </label>
@@ -73,27 +66,8 @@ export default async function StijlkaartPage() {
                 >
                   Opslaan
                 </button>
-              </form>
-
-              <div className="stack" style={{ marginTop: "var(--s-4)" }}>
-                <p className="row__sub">
-                  <strong className="muted">Typische zinnen</strong>
-                </p>
-                <ul className="list">
-                  {typical.map((t) => (
-                    <li key={t}>
-                      <div className="row">
-                        <span className="row__title" style={{ fontSize: "var(--t-sm)" }}>
-                          {clamp(t, "styleCardLine")}
-                        </span>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="chips">
-                <span className="chip">{c.edited_by_user ? "door jou aangepast" : "afgeleid"}</span>
-              </div>
+                </form>
+              </details>
             </article>
           );
         })}

@@ -750,6 +750,50 @@ button {
   font-size: var(--t-sm);
 }
 
+.style-registers {
+  display: grid;
+  gap: var(--s-3);
+  margin-top: var(--s-5);
+}
+
+.style-register {
+  padding: var(--s-5);
+  border: 1px solid var(--rule-strong);
+  border-left: 0.35rem solid var(--accent);
+  border-radius: var(--r-lg);
+  background: var(--paper-raised);
+}
+
+.style-register[data-tone="1"] { border-left-color: #9c8df1; }
+.style-register[data-tone="2"] { border-left-color: #63d5ae; }
+
+.style-register h2 {
+  font-family: var(--font-sans);
+  font-size: var(--t-md);
+  font-weight: var(--w-semi);
+}
+
+.style-register__quote {
+  margin-top: var(--s-2);
+  color: var(--ink-body);
+  font-size: var(--t-sm);
+}
+
+.style-register__edit {
+  margin-top: var(--s-3);
+}
+
+.style-register__edit summary {
+  color: var(--accent-ink);
+  cursor: pointer;
+  font-size: var(--t-xs);
+  font-weight: var(--w-semi);
+}
+
+.style-register__edit form {
+  margin-top: var(--s-4);
+}
+
 @media (min-width: 700px) {
   .cards--2 {
     grid-template-columns: 1fr 1fr;
