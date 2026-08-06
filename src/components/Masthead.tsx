@@ -18,10 +18,14 @@ export function Masthead() {
     <header className="masthead">
       <div className="masthead__inner">
         <Link href="/" className="wordmark">
-          Wingman<span>werktitel</span>
+          wingman
         </Link>
-        <Link href="/graaf" className="masthead__search">
-          Vraag je graaf
+        <Link href="/graaf" className="masthead__search" aria-label="Vraag je graaf">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="11" cy="11" r="5.5" />
+            <path d="m16 16 4 4" />
+          </svg>
+          <span className="sr-only">Vraag je graaf</span>
         </Link>
       </div>
     </header>

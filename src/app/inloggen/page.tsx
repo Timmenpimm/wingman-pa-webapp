@@ -28,25 +28,11 @@ export default function InloggenPage({
 
   return (
     <div className="login">
-      <span className="login__mark" aria-hidden="true">
-        <svg
-          width="23"
-          height="23"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <circle cx="12" cy="12" r="9" />
-          <circle cx="12" cy="12" r="4" />
-        </svg>
-      </span>
-
-      <h1 className="login__title">Wingman</h1>
+      <div className="login__brand"><span>wingman</span><small>welkom</small></div>
+      <p className="eyebrow login__eyebrow">Je dag, op jouw ritme</p>
+      <h1 className="login__title">Goed dat je er bent.</h1>
       <p className="lede login__lede">
-        Je hoeft niet alles zelf te onthouden. Log in en ik zet de dag voor je klaar.
+        Wingman helpt je kiezen wat vandaag werkelijk aandacht verdient.
       </p>
 
       {linkExpired && (
@@ -70,4 +56,3 @@ export default function InloggenPage({
     </div>
   );
 }
-
