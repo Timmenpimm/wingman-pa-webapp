@@ -81,7 +81,7 @@ export default async function OnboardingStepPage({ params }: { params: { stap: s
 
       {state.status === "connected" ? (
         <>
-          <PayoffBlock payoff={payoff} />
+        <PayoffBlock payoff={payoff} connected />
 
           <ul className="list" style={{ marginTop: "var(--s-4)" }}>
             {connectors.map((c) => (
@@ -232,7 +232,7 @@ function ConnectBlock({
           Eén flow voor alle Europese banken. De toestemming verloopt na 90 dagen; dat zie je
           terug bij Instellingen.
         </p>
-        <PayoffBlock payoff={payoff} />
+        <PayoffBlock payoff={payoff} connected={false} />
       </>
     );
   }
@@ -267,10 +267,12 @@ function ConnectBlock({
 /**
  * Wat ik in deze bron vind, in gewone taal. Er is nog geen sync die agenda en
  * mail binnenhaalt, dus staat er voorlopig vaak nog niets — en dan zegt het
- * scherm wat de volgende stap is in plaats van iets te verzinnen.
+ * scherm wat de volgende stap is in plaats van iets te verzinnen. Is de bron
+ * al gekoppeld maar nog leeg, dan hoort daar een andere zin bij dan "koppel
+ * nu": dat commando heeft de gebruiker net uitgevoerd.
  */
-function PayoffBlock({ payoff }: { payoff: Payoff }) {
-  const text = payoffText(payoff);
+function PayoffBlock({ payoff, connected }: { payoff: Payoff; connected: boolean }) {
+  const text = payoffText(payoff, connected);
   if (!text) return null;
   return (
     <p className="step__payoff" style={{ marginTop: "var(--s-5)" }}>
@@ -288,10 +290,12 @@ function PayoffBlock({ payoff }: { payoff: Payoff }) {
  * te lezen wat hij nú kan doen, niet waarom er niets staat.
  */
 const NOG_NIETS = "Start met koppelen van je accounts.";
+const NOG_NIETS_GEKOPPELD = "Zodra ik er iets in zie, zeg ik het hier.";
 
-function payoffText(payoff: Payoff): string | null {
+function payoffText(payoff: Payoff, connected: boolean): string | null {
   if (payoff.kind === "agenda") {
-    if (payoff.events === 0 && !payoff.next) return NOG_NIETS;
+    if (payoff.events === 0 && !payoff.next)
+      return connected ? `Je agenda is gekoppeld. ${NOG_NIETS_GEKOPPELD}` : NOG_NIETS;
     const eerste = payoff.next
       ? ` De eerstvolgende is ${payoff.next.title}, ${formatDayLong(payoff.next.start_at)} om ${formatTime(payoff.next.start_at)}.`
       : "";
@@ -299,7 +303,8 @@ function payoffText(payoff: Payoff): string | null {
   }
 
   if (payoff.kind === "mail") {
-    if (payoff.people === 0 && payoff.open === 0) return NOG_NIETS;
+    if (payoff.people === 0 && payoff.open === 0)
+      return connected ? `Je mail is gekoppeld. ${NOG_NIETS_GEKOPPELD}` : NOG_NIETS;
     return `Ik ken ${telwoord(payoff.people, "persoon", "mensen")} uit je mail en zie ${telwoord(payoff.open, "open eindje", "open eindjes")}.`;
   }
 
