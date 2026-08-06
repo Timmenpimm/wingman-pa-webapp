@@ -66,13 +66,16 @@ button {
   width: 100%;
   max-width: 24rem;
   margin: 0 auto;
-  padding: var(--s-5) var(--s-4) calc(var(--s-8) + 5.25rem + env(safe-area-inset-bottom));
+  /* Onderruimte = navigatiehoogte (3.75rem) + zweefmarge (0.75rem) + adem.
+     Compacter dan voorheen: de referentie toont frog + drie prio's + agenda
+     in één viewport, dus elke centimeter lucht moet verdiend zijn. */
+  padding: var(--s-4) var(--s-4) calc(var(--s-6) + 4.5rem + env(safe-area-inset-bottom));
   flex: 1;
 }
 
 @media (min-width: 900px) {
   .page {
-    padding: var(--s-7) var(--s-5) var(--s-8);
+    padding: var(--s-6) var(--s-5) var(--s-8);
   }
 }
 
@@ -88,17 +91,18 @@ button {
 .masthead__inner {
   max-width: 24rem;
   margin: 0 auto;
-  padding: calc(var(--s-4) + env(safe-area-inset-top)) var(--s-4) var(--s-3);
+  padding: calc(var(--s-3) + env(safe-area-inset-top)) var(--s-4) var(--s-2);
   display: flex;
   align-items: center;
   gap: var(--s-4);
 }
 
+/* Klein wordmark: de kop van het scherm draagt de hiërarchie, niet het merk. */
 .wordmark {
   font-family: var(--font-serif);
   font-weight: var(--w-bold);
-  font-size: 1.9rem;
-  letter-spacing: -0.04em;
+  font-size: var(--t-lg);
+  letter-spacing: -0.03em;
   color: var(--ink);
   text-decoration: none;
 }
@@ -109,22 +113,25 @@ button {
   color: var(--ink-muted);
 }
 
+/* Eén vierkant-afgerond icoonknopje rechts, zoals in de referentie. */
 .masthead__search {
   margin-left: auto;
   display: inline-flex;
   align-items: center;
   border: 1px solid var(--rule);
   background: var(--paper-raised);
-  border-radius: 10px;
-  width: 2rem;
-  height: 2rem;
+  border-radius: var(--r-sm);
+  width: 2.5rem;
+  height: 2.5rem;
   justify-content: center;
   color: var(--ink-muted);
   text-decoration: none;
   transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 
-.masthead__search svg { width: 1rem; height: 1rem; fill: none; stroke: currentColor; stroke-width: 1.7; }
+/* Phosphor tekent met fill, niet met strokes — een stroke-override maakt het
+   icoon onzichtbaar. Alleen de maat (±20px) hoort hier. */
+.masthead__search svg { width: 1.25rem; height: 1.25rem; }
 
 .masthead__search:hover {
   color: var(--ink);
@@ -143,7 +150,7 @@ button {
   right: auto;
   bottom: max(0.75rem, env(safe-area-inset-bottom));
   transform: translateX(-50%);
-  border: 1px solid var(--rule-strong);
+  border: 1px solid var(--rule);
   border-radius: var(--r-lg);
   background: var(--paper-raised);
   position: fixed;
@@ -173,7 +180,7 @@ button {
   font-weight: var(--w-medium);
   font-size: var(--t-xs);
   letter-spacing: 0.02em;
-  color: var(--ink-muted);
+  color: var(--ink-faint);
   text-decoration: none;
   border: 0;
   transition: color var(--dur) var(--ease), background var(--dur) var(--ease), transform var(--dur) var(--ease);
@@ -188,13 +195,21 @@ button {
   background: transparent;
 }
 
+/* Actief = accent mét zachte gloed: het enige lichtpunt in de balk. */
+.nav a[aria-current="page"] .nav__icon {
+  filter: drop-shadow(var(--glow-accent));
+}
+
 .nav a:active { transform: scale(0.94); }
-.nav__icon { width: 1.25rem; height: 1.25rem; fill: none; stroke: currentColor; stroke-width: 1.65; stroke-linecap: round; stroke-linejoin: round; }
+/* Phosphor-iconen zijn fill-tekeningen; stroke-overrides maken ze onzichtbaar. */
+.nav__icon { width: 1.375rem; height: 1.375rem; }
 
 /* ---------- Tekstblokken ---------------------------------------------- */
 
+/* Overline op 11px: klein genoeg om label te blijven, spatiëring doet de rest. */
 .eyebrow {
-  font-size: var(--t-xs);
+  font-size: 0.6875rem;
+  font-weight: var(--w-semi);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--accent-ink);
@@ -202,7 +217,7 @@ button {
 }
 
 .section {
-  margin-top: var(--s-6);
+  margin-top: var(--s-5);
 }
 
 .section__head {
@@ -231,10 +246,12 @@ button {
   max-width: var(--measure);
 }
 
+/* Schermkop: overline + serif-titel van één regel + subregel. Op 28px vreet
+   de kop geen half scherm meer — de inhoud eronder is het scherm. */
 .screen-title {
   margin-top: var(--s-1);
-  font-size: clamp(2.25rem, 10vw, 2.6rem);
-  letter-spacing: -0.045em;
+  font-size: var(--t-xl);
+  letter-spacing: -0.02em;
 }
 
 .screen-lede {
@@ -243,8 +260,8 @@ button {
 
 .day-title {
   margin-top: var(--s-1);
-  font-size: clamp(2.25rem, 10vw, 2.6rem);
-  letter-spacing: -0.045em;
+  font-size: var(--t-xl);
+  letter-spacing: -0.02em;
 }
 
 .day-title__lede {
@@ -257,20 +274,22 @@ button {
   background: transparent;
 }
 
+/* Checkboxrijen met dunne dividers (8.png): geen kaart per prio, één lijst
+   met haarlijnen ertussen. */
 .today-priorities .list > li {
-  border-color: var(--rule-strong);
+  border-color: var(--rule);
 }
 
 .today-priorities .row--button {
-  padding: var(--s-4) 0;
+  padding: var(--s-3) 0;
 }
 
 .today-agenda .timeline {
-  border-top: 1px solid var(--rule-strong);
+  border-top: 1px solid var(--rule);
 }
 
 .today-agenda .timeline li {
-  padding: var(--s-4) 0;
+  padding: var(--s-3) 0;
 }
 
 .muted {
@@ -284,34 +303,37 @@ button {
 
 /* ---------- Frog -------------------------------------------------------- */
 
+/* De enige blauwgetinte kaart van de app: accent-soft grond + accentrand.
+   De kaart wint op tint, niet op corpsgrootte — de titel is sans en bescheiden. */
 .frog {
-  background: var(--paper-sunk);
-  border: 1px solid var(--accent);
-  border-radius: var(--r-lg);
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, var(--rule-strong));
+  border-radius: var(--r-md);
   box-shadow: none;
-  padding: var(--s-5);
+  padding: var(--s-4);
   margin-top: var(--s-4);
 }
 
 @media (min-width: 700px) {
   .frog {
-    padding: var(--s-7) var(--s-6);
+    padding: var(--s-5);
   }
 }
 
 .frog__label {
-  font-size: var(--t-xs);
+  font-size: 0.6875rem;
+  font-weight: var(--w-semi);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--accent);
-  margin: 0 0 var(--s-4);
+  margin: 0 0 var(--s-3);
 }
 
 .frog__title {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-weight: var(--w-medium);
-  font-size: clamp(2rem, 9vw, var(--t-xl));
-  line-height: var(--lh-tight);
+  font-size: var(--t-frog);
+  line-height: var(--lh-snug);
   color: var(--ink);
   margin: 0;
   text-wrap: balance;
@@ -319,13 +341,13 @@ button {
 
 @media (min-width: 700px) {
   .frog__title {
-    font-size: var(--t-2xl);
+    font-size: 1.375rem;
   }
 }
 
 .frog__sub {
-  margin-top: var(--s-3);
-  font-size: var(--t-base);
+  margin-top: var(--s-2);
+  font-size: var(--t-sm);
   color: var(--ink-body);
   max-width: 46ch;
 }
@@ -340,7 +362,7 @@ button {
 }
 
 .frog__actions {
-  margin-top: var(--s-5);
+  margin-top: var(--s-4);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -365,7 +387,7 @@ button {
   align-items: center;
   justify-content: center;
   gap: var(--s-2);
-  border-radius: 10px;
+  border-radius: var(--r-sm);
   border: 1px solid transparent;
   padding: var(--s-3) var(--s-5);
   font-size: var(--t-sm);
@@ -376,9 +398,11 @@ button {
     color var(--dur) var(--ease), transform var(--dur) var(--ease);
 }
 
+/* Primair: vol accent, donkere tekst, 44px hoog — het besluit van het scherm. */
 .btn--primary {
   background: var(--accent-strong);
   color: var(--accent-on-strong);
+  min-height: 2.75rem;
 }
 
 /* Grote, duidelijke keuzes horen op telefoonbreedte thuis. Compacte primaire
@@ -388,7 +412,7 @@ button {
 .wizard__actions .btn--primary,
 .wizard__connect .btn--primary {
   width: 100%;
-  min-height: 3.25rem;
+  min-height: 2.75rem;
 }
 
 .btn--primary:active { transform: scale(0.98); }
@@ -401,17 +425,35 @@ button {
   background: var(--accent-strong-active);
 }
 
+/* Secundair: kaartknop — raised vlak met rand, geen vol accent. */
 .btn--quiet {
-  background: transparent;
-  color: var(--ink-muted);
+  background: var(--paper-raised);
+  color: var(--ink-body);
   border-color: var(--rule-strong);
   padding: var(--s-3) var(--s-4);
 }
 
 .btn--quiet:hover {
-  color: var(--ink-body);
+  color: var(--ink);
   border-color: var(--ink-faint);
   background: var(--paper-sunk);
+}
+
+/* Chipknop: de compacte triage-knop op inboxkaarten (Frog / Prioriteit /
+   Open eindje / Verwijder). Klein corps, kleine radius, kaartachtige rand. */
+.btn--chip {
+  padding: var(--s-2) var(--s-3);
+  font-size: var(--t-xs);
+  font-weight: var(--w-medium);
+  border-radius: 10px;
+  border-color: var(--rule-strong);
+  background: var(--paper-raised);
+  color: var(--ink-body);
+}
+
+.btn--chip:hover {
+  color: var(--ink);
+  border-color: var(--ink-faint);
 }
 
 .btn--text {
@@ -443,7 +485,7 @@ button {
    markup hier heeft geen icoonslot, dus alleen de kaartbehandeling. */
 
 .coach {
-  margin-top: var(--s-6);
+  margin-top: var(--s-5);
   font-family: var(--font-sans);
   font-size: var(--t-base);
   line-height: var(--lh-body);
@@ -482,7 +524,7 @@ button {
   display: flex;
   gap: var(--s-3);
   align-items: flex-start;
-  padding: var(--s-4);
+  padding: var(--s-3) var(--s-4);
 }
 
 .row__body {
@@ -600,20 +642,21 @@ button {
 
 /* ---------- Kaarten ---------------------------------------------------- */
 
+/* Generieke kaart (SPEC §2): raised grond, 1px rule-rand, radius 14–16,
+   padding 14–16 — alles wat los op het scherm staat is zo'n kaart. */
 .card {
   background: var(--paper-raised);
-  border: 1px solid var(--rule-strong);
+  border: 1px solid var(--rule);
   border-radius: var(--r-md);
   padding: var(--s-4);
   box-shadow: var(--shadow-card);
 }
 
-/* De referenties gebruiken vooral losstaande panelen. De generieke kaart
-   krijgt daarom hetzelfde rustige ritme als de grotere schermkaarten. */
 .cards > .card {
-  padding: var(--s-5);
+  padding: var(--s-4);
 }
 
+/* Gap 10–12px tussen kaarten: dicht genoeg om één lijst te lezen. */
 .cards {
   display: grid;
   gap: var(--s-3);
@@ -630,10 +673,10 @@ button {
 }
 
 .action-card {
-  padding: var(--s-5);
+  padding: var(--s-4);
   background: var(--paper-raised);
-  border: 1px solid var(--rule-strong);
-  border-radius: var(--r-lg);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-md);
 }
 
 .action-card .row__actions {
@@ -641,7 +684,7 @@ button {
 }
 
 .action-card .btn--quiet {
-  min-height: 2.85rem;
+  min-height: 2.5rem;
 }
 
 .project-panel {
@@ -1008,7 +1051,7 @@ button {
 }
 
 .day-empty {
-  margin-top: var(--s-7);
+  margin-top: var(--s-6);
   text-align: center;
 }
 
@@ -1101,8 +1144,8 @@ button {
 
 /* Alles afgehandeld — beloning zonder confetti (§9.4) */
 .rest {
-  margin-top: var(--s-6);
-  padding: var(--s-7) var(--s-5);
+  margin-top: var(--s-5);
+  padding: var(--s-6) var(--s-4);
   border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--rule));
   border-radius: var(--r-lg);
   background: var(--accent-soft);
@@ -1734,9 +1777,9 @@ textarea.input {
 
 .login__brand span {
   font-family: var(--font-serif);
-  font-size: 2rem;
+  font-size: var(--t-lg);
   font-weight: var(--w-bold);
-  letter-spacing: -0.04em;
+  letter-spacing: -0.03em;
 }
 
 .login__brand small {
@@ -1753,8 +1796,8 @@ textarea.input {
 }
 
 .login__title {
-  font-size: clamp(2rem, 9vw, 2.5rem);
-  letter-spacing: -0.045em;
+  font-size: var(--t-xl);
+  letter-spacing: -0.02em;
   margin-bottom: var(--s-2);
 }
 
