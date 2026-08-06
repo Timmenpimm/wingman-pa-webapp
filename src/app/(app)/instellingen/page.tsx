@@ -66,7 +66,7 @@ export default async function InstellingenPage() {
 
   return (
     <>
-      <p className="eyebrow">Wat mag ik, en werkt het nog</p>
+      <p className="eyebrow">Zeggenschap</p>
       <h1 className="screen-title">Instellingen</h1>
 
       <section className="section">

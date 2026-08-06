@@ -53,7 +53,7 @@ export default async function OpenEindjesPage() {
 
   return (
     <>
-      <p className="eyebrow">Losse draden over alle bronnen heen</p>
+      <p className="eyebrow">Ruimte maken</p>
       <h1 className="screen-title">Open eindjes</h1>
       <p className="lede screen-lede">Niet alles hoeft een taak te worden. Geef elk los draadje een plek.</p>
 

@@ -33,7 +33,7 @@ export default async function ProjectenPage() {
 
   return (
     <>
-      <p className="eyebrow">Wat er loopt</p>
+      <p className="eyebrow">Waar je aandacht woont</p>
       <h1 className="screen-title">Projecten</h1>
 
       <div className="project-panel">
