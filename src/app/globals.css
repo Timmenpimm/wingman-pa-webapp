@@ -909,6 +909,61 @@ button {
   font-size: var(--t-sm);
 }
 
+.state-orb {
+  display: grid;
+  width: 8.5rem;
+  height: 8.5rem;
+  place-items: center;
+  margin: 0 auto var(--s-5);
+  border: 1.2rem solid color-mix(in srgb, var(--accent) 12%, transparent);
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 28%, #75bfff 0, #174a79 58%, #0b213b 100%);
+  color: var(--ink);
+}
+
+.state-orb svg {
+  width: 3.25rem;
+  height: 3.25rem;
+}
+
+.state-orb--done {
+  width: 5.5rem;
+  height: 5.5rem;
+  margin-bottom: var(--s-4);
+  border-width: 0.75rem;
+  background: radial-gradient(circle at 34% 28%, #63d5ae 0, #1f765b 58%, #12392f 100%);
+}
+
+.state-orb--done svg {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.day-empty {
+  margin-top: var(--s-7);
+  text-align: center;
+}
+
+.day-empty h2 {
+  font-size: var(--t-xl);
+  letter-spacing: -0.045em;
+}
+
+.day-empty > p:not(.eyebrow) {
+  margin: var(--s-3) auto 0;
+  max-width: 22rem;
+  color: var(--ink-body);
+}
+
+.day-empty__actions {
+  margin-top: var(--s-6);
+}
+
+.day-empty__actions .btn {
+  width: 100%;
+  min-height: 3.25rem;
+}
+
 @media (min-width: 700px) {
   .cards--2 {
     grid-template-columns: 1fr 1fr;

@@ -3,6 +3,7 @@ import { currentUserId, withUser } from "@/lib/db/client";
 import { finishOnboarding } from "@/lib/actions";
 import { onboardingStatus } from "@/lib/onboarding/status";
 import { stepPath } from "@/lib/onboarding/steps";
+import { Check } from "@phosphor-icons/react";
 
 export const dynamic = "force-dynamic";
 
@@ -33,8 +34,10 @@ export default async function OnboardingKlaarPage() {
 
   return (
     <>
-      <p className="eyebrow">Klaar</p>
-      <h1 style={{ fontSize: "var(--t-xl)" }}>
+      <section className="onboarding-complete">
+      <span className="state-orb state-orb--done" aria-hidden="true"><Check weight="bold" /></span>
+      <p className="eyebrow">Alles op z’n plek</p>
+      <h1 className="screen-title">
         {gekoppeld.length === 0
           ? "Ik heb nog geen bron — dan blijft Vandaag voorlopig leeg."
           : "Dit is wat ik nu mag lezen."}
@@ -89,6 +92,7 @@ export default async function OnboardingKlaarPage() {
         </Link>
         .
       </p>
+      </section>
     </>
   );
 }
