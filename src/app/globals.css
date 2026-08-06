@@ -64,9 +64,9 @@ button {
 
 .page {
   width: 100%;
-  max-width: 26rem;
+  max-width: 24rem;
   margin: 0 auto;
-  padding: var(--s-5) var(--s-4) calc(var(--s-8) + 4.75rem + env(safe-area-inset-bottom));
+  padding: var(--s-5) var(--s-4) calc(var(--s-8) + 5.25rem + env(safe-area-inset-bottom));
   flex: 1;
 }
 
@@ -79,15 +79,14 @@ button {
 /* Header ---------------------------------------------------------------- */
 
 .masthead {
-  background: color-mix(in srgb, var(--paper) 92%, transparent);
-  backdrop-filter: blur(10px);
+  background: var(--paper);
   position: sticky;
   top: 0;
   z-index: 10;
 }
 
 .masthead__inner {
-  max-width: 26rem;
+  max-width: 24rem;
   margin: 0 auto;
   padding: calc(var(--s-4) + env(safe-area-inset-top)) var(--s-4) var(--s-3);
   display: flex;
@@ -98,7 +97,7 @@ button {
 .wordmark {
   font-family: var(--font-serif);
   font-weight: var(--w-bold);
-  font-size: 2rem;
+  font-size: 1.9rem;
   letter-spacing: -0.04em;
   color: var(--ink);
   text-decoration: none;
@@ -115,7 +114,7 @@ button {
   display: inline-flex;
   align-items: center;
   border: 1px solid var(--rule);
-  background: color-mix(in srgb, var(--paper-raised) 88%, transparent);
+  background: var(--paper-raised);
   border-radius: 10px;
   width: 2rem;
   height: 2rem;
@@ -139,18 +138,17 @@ button {
      (zie .loose-actions) hebben deze waarde nodig, en twee losse getallen
      lopen bij de eerste wijziging uit elkaar. */
   --nav-h: calc(3.75rem + env(safe-area-inset-bottom));
-  width: min(calc(100% - 2rem), 24rem);
+  width: min(calc(100% - 2rem), 21.5rem);
   left: 50%;
   right: auto;
   bottom: max(0.75rem, env(safe-area-inset-bottom));
   transform: translateX(-50%);
   border: 1px solid var(--rule-strong);
   border-radius: var(--r-lg);
-  background: color-mix(in srgb, var(--paper-raised) 92%, transparent);
-  backdrop-filter: blur(12px);
+  background: var(--paper-raised);
   position: fixed;
   z-index: 10;
-  box-shadow: 0 18px 44px rgba(0, 9, 21, 0.3);
+  box-shadow: none;
 }
 
 .nav__inner {
@@ -169,7 +167,7 @@ button {
   flex: 1;
   display: grid;
   place-items: center;
-  min-height: 4.25rem;
+  min-height: 3.75rem;
   padding: var(--s-3);
   font-family: var(--font-sans);
   font-weight: var(--w-medium);
@@ -199,7 +197,7 @@ button {
   font-size: var(--t-xs);
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--ink-faint);
+  color: var(--accent-ink);
   margin: 0 0 var(--s-2);
 }
 
@@ -235,7 +233,7 @@ button {
 
 .screen-title {
   margin-top: var(--s-1);
-  font-size: var(--t-xl);
+  font-size: clamp(2.25rem, 10vw, 2.6rem);
   letter-spacing: -0.045em;
 }
 
@@ -245,7 +243,7 @@ button {
 
 .day-title {
   margin-top: var(--s-1);
-  font-size: var(--t-xl);
+  font-size: clamp(2.25rem, 10vw, 2.6rem);
   letter-spacing: -0.045em;
 }
 
@@ -287,10 +285,10 @@ button {
 /* ---------- Frog -------------------------------------------------------- */
 
 .frog {
-  background: color-mix(in srgb, var(--accent) 14%, var(--paper-raised));
-  border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--rule));
+  background: var(--paper-sunk);
+  border: 1px solid var(--accent);
   border-radius: var(--r-lg);
-  box-shadow: var(--shadow-frog);
+  box-shadow: none;
   padding: var(--s-5);
   margin-top: var(--s-4);
 }
@@ -350,8 +348,8 @@ button {
 }
 
 .frog--done {
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--rule));
-  background: color-mix(in srgb, var(--accent) 14%, var(--paper-raised));
+  border-color: var(--rule-strong);
+  background: var(--paper-sunk);
 }
 
 .frog--done .frog__title {
@@ -375,7 +373,7 @@ button {
   line-height: 1;
   text-decoration: none;
   transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease),
-    color var(--dur) var(--ease);
+    color var(--dur) var(--ease), transform var(--dur) var(--ease);
 }
 
 .btn--primary {
@@ -413,7 +411,7 @@ button {
 .btn--quiet:hover {
   color: var(--ink-body);
   border-color: var(--ink-faint);
-  background: color-mix(in srgb, var(--ink) 5%, transparent);
+  background: var(--paper-sunk);
 }
 
 .btn--text {
@@ -467,7 +465,7 @@ button {
   margin: 0;
   padding: 0;
   background: var(--paper-raised);
-  border: 1px solid var(--rule);
+  border: 1px solid var(--rule-strong);
   border-radius: var(--r-md);
   overflow: hidden;
 }
@@ -604,7 +602,7 @@ button {
 
 .card {
   background: var(--paper-raised);
-  border: 1px solid var(--rule);
+  border: 1px solid var(--rule-strong);
   border-radius: var(--r-md);
   padding: var(--s-4);
   box-shadow: var(--shadow-card);
@@ -675,9 +673,9 @@ button {
   background: var(--accent);
 }
 
-.project-row__dot[data-tone="1"] { background: #9c8df1; }
-.project-row__dot[data-tone="2"] { background: #63d5ae; }
-.project-row__dot[data-tone="3"] { background: #f3bd64; }
+.project-row__dot[data-tone="1"],
+.project-row__dot[data-tone="2"],
+.project-row__dot[data-tone="3"] { background: var(--accent); }
 
 .project-row__body {
   min-width: 0;
@@ -714,15 +712,17 @@ button {
   place-items: center;
   min-height: 4.5rem;
   border-radius: var(--r-md);
-  background: color-mix(in srgb, var(--paper-raised) 76%, transparent);
+  border: 1px solid transparent;
+  background: var(--paper-raised);
   color: var(--ink-muted);
   font-size: var(--t-xs);
   font-weight: var(--w-semi);
 }
 
 .week-day[data-current="true"] {
-  background: color-mix(in srgb, var(--accent) 38%, var(--paper-raised));
-  color: var(--ink);
+  background: var(--paper-sunk);
+  border-color: var(--accent);
+  color: var(--accent-ink);
 }
 
 .week-insights {
@@ -759,13 +759,13 @@ button {
 .style-register {
   padding: var(--s-5);
   border: 1px solid var(--rule-strong);
-  border-left: 0.35rem solid var(--accent);
+  border-left: 0.25rem solid var(--accent);
   border-radius: var(--r-lg);
   background: var(--paper-raised);
 }
 
-.style-register[data-tone="1"] { border-left-color: #9c8df1; }
-.style-register[data-tone="2"] { border-left-color: #63d5ae; }
+.style-register[data-tone="1"],
+.style-register[data-tone="2"] { border-left-color: var(--accent); }
 
 .style-register h2 {
   font-family: var(--font-sans);
@@ -831,11 +831,23 @@ button {
   overflow: hidden;
   border: 1px solid var(--rule-strong);
   border-radius: var(--r-lg);
-  background:
-    linear-gradient(34deg, transparent 49.6%, var(--rule-strong) 50%, transparent 50.4%),
-    linear-gradient(146deg, transparent 49.6%, var(--rule-strong) 50%, transparent 50.4%),
-    var(--paper-raised);
+  background: var(--paper-raised);
 }
+
+.graph-network::before,
+.graph-network::after {
+  content: "";
+  position: absolute;
+  left: 10%;
+  top: 50%;
+  width: 80%;
+  height: 1px;
+  background: var(--rule-strong);
+  transform: rotate(32deg);
+  transform-origin: center;
+}
+
+.graph-network::after { transform: rotate(-28deg); }
 
 .graph-network__node {
   position: absolute;
@@ -915,10 +927,11 @@ button {
   height: 8.5rem;
   place-items: center;
   margin: 0 auto var(--s-5);
-  border: 1.2rem solid color-mix(in srgb, var(--accent) 12%, transparent);
+  border: 1.2rem solid #102b48;
   border-radius: 50%;
-  background: radial-gradient(circle at 34% 28%, #75bfff 0, #174a79 58%, #0b213b 100%);
+  background: #174a79;
   color: var(--ink);
+  box-shadow: 0 0 2.5rem rgba(102, 185, 247, 0.16);
 }
 
 .state-orb svg {
@@ -931,7 +944,8 @@ button {
   height: 5.5rem;
   margin-bottom: var(--s-4);
   border-width: 0.75rem;
-  background: radial-gradient(circle at 34% 28%, #63d5ae 0, #1f765b 58%, #12392f 100%);
+  background: #1f765b;
+  box-shadow: 0 0 2.5rem rgba(99, 213, 174, 0.14);
 }
 
 .state-orb--done svg {
@@ -1501,12 +1515,12 @@ textarea.input {
   flex: 1 1 0;
   height: 3px;
   border-radius: var(--r-pill);
-  background: color-mix(in srgb, var(--ink) 12%, transparent);
+  background: var(--rule-strong);
   transition: background var(--dur) var(--ease);
 }
 
 .loose-progress__seg[data-state="current"] {
-  background: color-mix(in srgb, var(--accent) 45%, transparent);
+  background: var(--accent-ink);
 }
 
 .loose-progress__seg[data-state="done"] {
@@ -1618,11 +1632,8 @@ textarea.input {
   padding: var(--s-3) 0 var(--s-4);
   width: 100%;
   flex-wrap: wrap;
-  background: linear-gradient(
-    to top,
-    var(--paper) 65%,
-    color-mix(in srgb, var(--paper) 0%, transparent)
-  );
+  background: var(--paper);
+  border-top: 1px solid var(--rule);
 }
 
 .loose-counter {
@@ -1656,14 +1667,14 @@ textarea.input {
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  padding-top: clamp(2.5rem, 11vh, 6.5rem);
+  padding-top: clamp(2.5rem, 8vh, 5rem);
 }
 
 .login__brand {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  margin-bottom: var(--s-8);
+  margin-bottom: var(--s-7);
   color: var(--ink);
 }
 
@@ -1753,6 +1764,12 @@ textarea.input {
 
 .login__submit {
   width: 100%;
+}
+
+.login__submit svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: 0 0 auto;
 }
 
 .login__divider {

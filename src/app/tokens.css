@@ -20,7 +20,7 @@
   /* --- Kleur: grond & inkt (donker, hoofdthema) ------------------------ */
   --paper: #071321; /* grond */
   --paper-raised: #0b1b30; /* kaarten, rijen, velden */
-  --paper-sunk: #0d2139; /* coach, notice */
+  --paper-sunk: #102b48; /* coach, nadrukkaart */
   --ink: #e9f3fc;
   --ink-body: #a8bdd0;
   --ink-muted: #6e849b;
@@ -86,7 +86,7 @@
   /* Kaarten op donker zijn vlak (rand, geen glow) — zo staat het ook in het
      bronbestand: alleen het telefoonframe zelf heeft een schaduw. */
   --shadow-card: none;
-  --shadow-frog: 0 20px 48px rgba(0, 12, 29, 0.28);
+  --shadow-frog: none;
 
   --measure: 62ch; /* leesbreedte */
   --page-max: 40rem;
