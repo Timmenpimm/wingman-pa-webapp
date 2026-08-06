@@ -794,6 +794,36 @@ button {
   margin-top: var(--s-4);
 }
 
+/* Open eindjes blijven naast elkaar leesbaar: de bronkaart toont meerdere
+   losse draden tegelijk in plaats van één grote swipe-stapel. */
+.loose-cards .loose-card {
+  width: auto;
+  padding: var(--s-5);
+  text-align: left;
+  box-shadow: none;
+  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+
+.loose-card__title {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--t-md);
+  font-weight: var(--w-semi);
+  line-height: var(--lh-snug);
+  color: var(--ink);
+}
+
+.loose-cards .loose-card__meta {
+  margin: var(--s-2) 0 0;
+  color: var(--ink-muted);
+  font-size: var(--t-xs);
+  font-weight: var(--w-normal);
+}
+
+.loose-cards .row__actions {
+  margin-top: var(--s-4);
+}
+
 @media (min-width: 700px) {
   .cards--2 {
     grid-template-columns: 1fr 1fr;
