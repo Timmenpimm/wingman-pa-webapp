@@ -6,7 +6,7 @@ import { midday } from "@/brain/runs/midday";
 import { evening } from "@/brain/runs/evening";
 import type { Recipe, RunResult } from "@/brain/runs/types";
 import { isDue, isRunKind, parseDays, type RunKind } from "./schedule";
-import { stuurRunBericht } from "./notify";
+import { stuurRunBericht, type Meldresultaat } from "./notify";
 
 /**
  * Voert geplande momenten uit.
@@ -75,7 +75,9 @@ async function voerUit(
   try {
     const resultaat = await withUser(userId, (tx) => RECEPTEN[kind](tx, userId, localDate, now));
 
-    const bericht = resultaat ? await meld(userId, kind, resultaat, channel) : false;
+    const bericht = resultaat
+      ? await meld(userId, kind, resultaat, channel)
+      : { verstuurd: false, reden: "niets te melden" };
 
     await withUser(userId, async (tx) => {
       await tx.runLog.create({
@@ -84,8 +86,10 @@ async function voerUit(
           kind,
           local_date: localDate,
           status: resultaat ? "done" : "skipped",
-          reason: resultaat ? null : "niets te melden",
-          notified: bericht,
+          // Waarom er niets gemeld is, hoort hier te staan: anders zoek je
+          // later in code naar de reden dat je niets kreeg.
+          reason: bericht.reden ?? null,
+          notified: bericht.verstuurd,
           duration_ms: Date.now() - start,
         },
       });
@@ -121,7 +125,7 @@ async function meld(
   kind: RunKind,
   resultaat: RunResult,
   channel: string,
-): Promise<boolean> {
-  if (channel === "none") return false;
+): Promise<Meldresultaat> {
+  if (channel === "none") return { verstuurd: false, reden: "kanaal staat uit" };
   return stuurRunBericht(userId, kind, resultaat);
 }

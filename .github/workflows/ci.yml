@@ -44,15 +44,20 @@ jobs:
 
       - run: npm ci
       - run: npx prisma generate
-      - run: npx tsc --noEmit
-      - run: npm test
 
+      # Vóór de tests, niet erna: een deel van de suite bevraagt de database
+      # zelf (tests/rls-dekking.test.ts controleert of elke tabel met user_id
+      # afgeschermd is). Zonder migraties vindt die nul tabellen en faalt hij
+      # om de verkeerde reden.
       - name: Database klaarzetten
         run: |
           PGPASSWORD=wingman psql -h localhost -p 5433 -U wingman -d wingman \
             -c "CREATE ROLE app_user WITH LOGIN PASSWORD 'ci';"
           npx prisma migrate deploy
           npx tsx prisma/seed.ts
+
+      - run: npx tsc --noEmit
+      - run: npm test
 
       - name: Schermt row-level security echt af?
         run: node scripts/rls-bewijs.mjs
