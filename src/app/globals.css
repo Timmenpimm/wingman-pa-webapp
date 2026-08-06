@@ -702,6 +702,54 @@ button {
   font-size: var(--t-sm);
 }
 
+.week-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--s-2);
+  margin-top: var(--s-5);
+}
+
+.week-day {
+  display: grid;
+  place-items: center;
+  min-height: 4.5rem;
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--paper-raised) 76%, transparent);
+  color: var(--ink-muted);
+  font-size: var(--t-xs);
+  font-weight: var(--w-semi);
+}
+
+.week-day[data-current="true"] {
+  background: color-mix(in srgb, var(--accent) 38%, var(--paper-raised));
+  color: var(--ink);
+}
+
+.week-insights {
+  display: grid;
+  gap: var(--s-3);
+  margin-top: var(--s-5);
+}
+
+.week-insight {
+  padding: var(--s-5);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-lg);
+  background: var(--paper-raised);
+}
+
+.week-insight h2 {
+  font-family: var(--font-sans);
+  font-size: var(--t-md);
+  font-weight: var(--w-semi);
+}
+
+.week-insight p {
+  margin-top: var(--s-2);
+  color: var(--ink-muted);
+  font-size: var(--t-sm);
+}
+
 @media (min-width: 700px) {
   .cards--2 {
     grid-template-columns: 1fr 1fr;
