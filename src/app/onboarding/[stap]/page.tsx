@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Bank, BellRinging, CalendarBlank, CheckCircle, EnvelopeSimple } from "@phosphor-icons/react/dist/ssr";
 import { currentUserId } from "@/lib/db/client";
 import { connectGoogle, continueOnboarding } from "@/lib/actions";
 import { authUrlFor } from "@/connectors";
@@ -8,6 +9,7 @@ import { isStepId, mostRestrictive, stepDefinition, type StepId } from "@/lib/on
 import { formatAmount, formatDayLong, formatTime } from "@/lib/text";
 import { PERMISSION_LABELS, type Permission } from "@/lib/types";
 import { Trail } from "../Trail";
+import "../onboarding.css";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +26,36 @@ export const dynamic = "force-dynamic";
  * scherm dat — het vorige onboardingscherm had de payoff-zinnen hardgecodeerd
  * en beweerde dus ook bij een lege agenda dat het "drie vaste blokken" zag.
  */
+
+/**
+ * Presentatie-laag over de stapdefinities (referentie 3–6.png): overline +
+ * serif-vraagtitel. De functionele titels uit steps.ts blijven de waarheid in
+ * het spoor en op het klaar-scherm; hier stelt de kop de vraag waar de stap
+ * over gaat. "Waar komt je werk binnen?" en "Wanneer mag ik even aankloppen?"
+ * komen letterlijk uit de referentie; agenda en bank hebben daar geen eigen
+ * scherm en volgen hetzelfde patroon.
+ */
+const OVERLINE: Record<StepId, string> = {
+  agenda: "Jouw agenda",
+  mail: "Jouw bronnen",
+  bank: "Jouw bank",
+  meldingen: "Jouw momenten",
+};
+
+const QUESTION: Record<StepId, string> = {
+  agenda: "Hoe ziet je dag eruit?",
+  mail: "Waar komt je werk binnen?",
+  bank: "Wat komt er binnen?",
+  meldingen: "Wanneer mag ik even aankloppen?",
+};
+
+/** Dun lijnwerk-icoon per stap, links op de bronkaarten (zie 4.png/5.png). */
+const STEP_ICON: Record<StepId, typeof CalendarBlank> = {
+  agenda: CalendarBlank,
+  mail: EnvelopeSimple,
+  bank: Bank,
+  meldingen: BellRinging,
+};
 
 const LEDE: Record<StepId, string> = {
   agenda:
@@ -67,31 +99,35 @@ export default async function OnboardingStepPage({ params }: { params: { stap: s
   const pontoUrl = authUrlFor("ponto");
   const permission = mostRestrictive(connectors.map((c) => c.permission));
 
+  const StepIcon = STEP_ICON[step];
+
   return (
-    <>
+    <div className="ob-step">
       <Trail steps={steps} current={step} />
 
       <p className="eyebrow wizard__eyebrow">
-        {definition.short}
+        {OVERLINE[step]}
       </p>
-      <h1 className="screen-title">{definition.title}</h1>
+      <h1 className="screen-title">{QUESTION[step]}</h1>
       <p className="lede screen-lede">{LEDE[step]}</p>
 
       {state.status === "connected" ? (
         <>
         <PayoffBlock payoff={payoff} connected />
 
-          <ul className="list" style={{ marginTop: "var(--s-4)" }}>
+          <ul className="ob-cards">
             {connectors.map((c) => (
-              <li key={c.id}>
-                <div className="row">
-                  <div className="row__body">
-                    <span className="row__title">{c.label}</span>
-                    <span className="row__sub">
-                      {c.status === "active" ? "gekoppeld" : "gekoppeld, maar hapert"}
-                    </span>
-                  </div>
+              <li key={c.id} className="ob-card">
+                <StepIcon className="ob-card__icon" aria-hidden="true" />
+                <div className="ob-card__body">
+                  <span className="ob-card__title">{c.label}</span>
+                  <span className="ob-card__sub">
+                    {c.status === "active" ? "Gekoppeld" : "Gekoppeld, maar hapert"}
+                  </span>
                 </div>
+                <span className="ob-card__state" aria-hidden="true">
+                  <CheckCircle weight="regular" />
+                </span>
               </li>
             ))}
           </ul>
@@ -156,7 +192,7 @@ export default async function OnboardingStepPage({ params }: { params: { stap: s
             </>
           ) : state.status === "connected" ? (
             <button className="btn btn--primary" type="submit" name="markeer" value="">
-              Volgende
+              Ga verder
             </button>
           ) : (
             <button className="btn btn--text" type="submit" name="markeer" value="skipped">
@@ -175,7 +211,7 @@ export default async function OnboardingStepPage({ params }: { params: { stap: s
           .
         </p>
       )}
-    </>
+    </div>
   );
 }
 

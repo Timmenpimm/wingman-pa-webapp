@@ -1113,13 +1113,12 @@ button {
   border-color: color-mix(in srgb, var(--signal) 30%, var(--rule));
 }
 
+/* Inline vet label ("Incompleet.") in plaats van een caps-kolom: de referentie
+   (9.png) toont meldingen als één doorlopende compacte zin met vet begin. */
 .notice__mark {
   color: var(--signal);
-  font-size: var(--t-xs);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-weight: var(--w-semi);
   flex: 0 0 auto;
-  padding-top: 2px;
 }
 
 .empty {

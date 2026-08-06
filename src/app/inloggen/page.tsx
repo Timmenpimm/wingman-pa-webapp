@@ -1,5 +1,6 @@
 import { safeReturnPath } from "@/lib/return-path";
 import { LoginForm } from "./LoginForm";
+import "./login.css";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +29,7 @@ export default function InloggenPage({
 
   return (
     <div className="login">
-      <div className="login__brand"><span>wingman</span><small>welkom</small></div>
+      <div className="login__brand"><span>wingman</span><small>Welkom</small></div>
       <p className="eyebrow login__eyebrow">Je dag, op jouw ritme</p>
       <h1 className="login__title">Goed dat je er bent.</h1>
       <p className="lede login__lede">

@@ -1,0 +1,35 @@
+/* Inloggen — schermspecifieke opmaak (referentie: design-reference/screens/1.png).
+ * Prefix .lg-; kleuren en maten komen uit tokens.css, de basisknoppen uit
+ * globals.css. Hier staat alleen wat dit scherm anders doet: grote volle
+ * knoppen op telefoonbreedte, de Google-knop als primaire actie bovenaan.
+ */
+
+.lg-btn {
+  width: 100%;
+  min-height: 3.25rem;
+  border-radius: var(--r-md);
+  font-size: var(--t-base);
+}
+
+.lg-btn svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: 0 0 auto;
+}
+
+/* Secundaire kaartknoppen (e-mailflow) — iets lichtere tekst dan de primaire,
+   maar wel leesbaar als knop, niet als bijschrift. */
+.lg-btn.btn--quiet {
+  color: var(--ink);
+}
+
+/* De e-mailflow als één rustig blok onder de divider. */
+.lg-mailflow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.lg-mailflow .login__form {
+  gap: var(--s-3);
+}

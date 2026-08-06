@@ -1,6 +1,7 @@
 import { currentUserId, withUser } from "@/lib/db/client";
 import { updateStyleCard } from "@/lib/actions";
 import { clamp } from "@/lib/text";
+import "./screen.css";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +12,9 @@ const REGISTER_LABEL: Record<string, string> = {
 };
 
 /**
- * Stijlkaart (§6.6) — "zo schrijf jij", uit verzonden mail.
+ * Stijlkaart (§6.6, design-reference/screens/16.png) — "zo schrijf jij", uit
+ * verzonden mail. Per register een kaart met eigen tint en de voorbeeldzin
+ * cursief als quote.
  *
  * Voelt als een profielkaart, niet als instellingen. Alles is bewerkbaar, want
  * hij zit er soms naast en dan moet je dat kunnen rechtzetten zonder gedoe.
@@ -26,14 +29,14 @@ export default async function StijlkaartPage() {
       <h1 className="screen-title">Jouw stijlkaart</h1>
       <p className="lede screen-lede">Drie registers die je vanzelf inzet, afhankelijk van de situatie.</p>
 
-      <div className="style-registers">
+      <div className="sk-registers">
         {cards.map((c, index) => {
           const typical = JSON.parse(c.typical) as string[];
           return (
-            <article key={c.id} className="style-register" data-tone={index % 3}>
+            <article key={c.id} className="sk-register" data-tone={index % 3}>
               <h2>{REGISTER_LABEL[c.register] ?? c.register}</h2>
-              <p className="style-register__quote">“{clamp(typical[0] ?? c.greeting, "styleCardLine")}”</p>
-              <details className="style-register__edit">
+              <p className="sk-register__quote">“{clamp(typical[0] ?? c.greeting, "styleCardLine")}”</p>
+              <details className="sk-register__edit">
                 <summary>Bijstellen</summary>
                 <form action={saveRegister.bind(null, c.register)} className="stack">
                 <label className="row__sub" htmlFor={`greeting-${c.id}`}>

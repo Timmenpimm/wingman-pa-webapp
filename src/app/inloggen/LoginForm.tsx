@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { GoogleLogo, WarningCircle } from "@phosphor-icons/react";
+import { GoogleLogo, Sparkle, WarningCircle } from "@phosphor-icons/react";
 
 const EMPTY_FIELDS_ERROR = "Vul je e-mail en wachtwoord in — dan zet ik je dag klaar.";
 const INVALID_CREDENTIALS_ERROR = "Dat e-mailadres en wachtwoord ken ik niet samen.";
@@ -125,7 +125,7 @@ export function LoginForm({
         <>
           <button
             type="button"
-            className="btn btn--quiet login__submit"
+            className="btn btn--primary lg-btn"
             onClick={handleGoogleLogin}
             disabled={googleLoading}
           >
@@ -134,7 +134,7 @@ export function LoginForm({
             ) : (
               <>
                 <GoogleLogo weight="regular" aria-hidden="true" />
-                Inloggen met Google
+                Doorgaan met Google
               </>
             )}
           </button>
@@ -150,15 +150,16 @@ export function LoginForm({
         </>
       )}
 
+      <div className="lg-mailflow">
       <form className="login__form" onSubmit={handleSubmit} noValidate>
         <label className="login__label">
-          <span className="eyebrow">E-mail</span>
+          <span className="eyebrow">E-mailadres</span>
           <input
             className="input"
             type="email"
             name="email"
             autoComplete="username"
-            placeholder="nora@studio.nl"
+            placeholder="jij@voorbeeld.nl"
             value={email}
             onChange={(event) => {
               setEmail(event.target.value);
@@ -200,24 +201,28 @@ export function LoginForm({
           </p>
         )}
 
-        <button className="btn btn--primary login__submit" type="submit" disabled={loading}>
-          {loading ? "Even je dag ophalen…" : "Inloggen"}
+        <button className="btn btn--quiet lg-btn" type="submit" disabled={loading}>
+          {loading ? "Even je dag ophalen…" : "Doorgaan met e-mail"}
         </button>
       </form>
 
-      <div className="login__divider" role="presentation">
-        of
-      </div>
-
       <button
         type="button"
-        className="btn btn--quiet login__submit"
+        className="btn btn--quiet lg-btn"
         onClick={handleMagicLink}
         disabled={linkSent || linkSending}
       >
-        {linkSent ? "Link verstuurd — check je mail" : "Stuur me een inloglink"}
+        {linkSent ? (
+          "Link verstuurd — check je mail"
+        ) : (
+          <>
+            <Sparkle weight="regular" aria-hidden="true" />
+            Stuur mij een magic link
+          </>
+        )}
       </button>
       {linkHint && <p className="login__hint">{linkHint}</p>}
+      </div>
     </>
   );
 }

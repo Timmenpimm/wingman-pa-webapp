@@ -1,11 +1,20 @@
 import Link from "next/link";
-import { currentUserId } from "@/lib/db/client";
+import "./vandaag.css";
+import { currentUserId, prisma } from "@/lib/db/client";
 import { getBriefingToday } from "@/brain/briefing-engine";
 import { getOpenCommitments } from "@/lib/commitments";
 import { answerConfirmation, setFrogStatus, togglePriority } from "@/lib/actions";
 import { formatDayLong, formatTime } from "@/lib/text";
 import { CaptureField } from "@/components/CaptureField";
-import { Check, Sun } from "@phosphor-icons/react/dist/ssr";
+import {
+  ArrowsClockwise,
+  Checks,
+  CloudSlash,
+  ListChecks,
+  Moon,
+  Sun,
+  Warning,
+} from "@phosphor-icons/react/dist/ssr";
 import { onboardingStatus } from "@/lib/onboarding/status";
 import { firstOpenStep, stepPath } from "@/lib/onboarding/steps";
 import type { BriefingToday } from "@/lib/types";
@@ -13,11 +22,11 @@ import type { BriefingToday } from "@/lib/types";
 export const dynamic = "force-dynamic";
 
 /**
- * Vandaag — de homepage (§6.1).
+ * Vandaag — de homepage (§6.1), visueel naar design-reference/screens/8–11.png.
  *
- * Volgorde is bewust: frog, coachregel, top-3, tijdlijn, nog te bevestigen.
- * Alles wat daarbuiten valt (alle projecten, alle open eindjes, statistiek)
- * hoort hier nadrukkelijk niet.
+ * Volgorde is bewust: datum-overline, serif-begroeting, één subregel, frog,
+ * drie prioriteiten als checkboxrijen, agenda. Alles wat daarbuiten valt
+ * (alle projecten, alle open eindjes, statistiek) hoort hier nadrukkelijk niet.
  *
  * De vier staten uit §9 zijn met ?state= te bekijken. De echte staat is
  * "degraded": in de seed-data is de Ponto-toestemming bijna verlopen, en dat is
@@ -34,235 +43,319 @@ export default async function VandaagPage({
   const briefing = applyPreview(raw, searchParams.state);
   const onboarding = await onboardingStatus(userId);
   const openStap = onboarding.finishedAt ? null : firstOpenStep(onboarding.steps);
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { name: true },
+  });
+  const voornaam = user?.name?.trim().split(/\s+/)[0];
+
+  if (briefing.state === "clear") {
+    return (
+      <>
+        <EveningDone briefing={briefing} />
+        <StateSwitch current={briefing.state} />
+      </>
+    );
+  }
+
+  if (briefing.state === "empty") {
+    return (
+      <>
+        {openStap && <OnboardingNotice stap={openStap} />}
+        <FirstMorning />
+        <StateSwitch current={briefing.state} />
+      </>
+    );
+  }
+
+  if (briefing.state === "degraded") {
+    return (
+      <>
+        <p className="eyebrow">{formatDayLong(new Date())}</p>
+        <h1 className="vd-greeting">Vandaag, zonder volle context.</h1>
+
+        {openStap && <OnboardingNotice stap={openStap} />}
+
+        {briefing.degraded.map((d) => (
+          <div className="vd-alert" key={d.connector}>
+            <Warning weight="regular" />
+            <span>
+              <strong>Bron tijdelijk niet bereikbaar.</strong> {d.message} We laten
+              alleen zien wat er zeker is.
+            </span>
+          </div>
+        ))}
+
+        {briefing.timeline.length === 0 ? (
+          <div className="vd-empty-card">
+            <CloudSlash weight="light" />
+            <h2>Geen afspraken gevonden</h2>
+            <p>Probeer straks opnieuw of werk vanuit je eigen richting.</p>
+          </div>
+        ) : (
+          <Agenda timeline={briefing.timeline} />
+        )}
+
+        {briefing.frog && (
+          <section className="frog" style={{ marginTop: "var(--s-5)" }}>
+            <p className="frog__label">Wat wel overeind blijft</p>
+            <p className="frog__title">{briefing.frog.title}</p>
+            {briefing.frog.sub && <p className="frog__sub">{briefing.frog.sub}</p>}
+          </section>
+        )}
+
+        <Link href="/instellingen" className="btn btn--quiet vd-wide-btn">
+          <ArrowsClockwise weight="bold" />
+          Opnieuw verbinden
+        </Link>
+
+        <StateSwitch current={briefing.state} />
+      </>
+    );
+  }
+
+  const eersteAfspraak = briefing.timeline.find((e) => new Date(e.start) > new Date());
 
   return (
     <>
       <p className="eyebrow">{formatDayLong(new Date())}</p>
 
-      <h1 className="day-title">Goedemorgen.</h1>
-      <p className="lede day-title__lede">Begin klein; kies wat vandaag echt verschil maakt.</p>
+      <h1 className="vd-greeting">
+        {dagdeelGroet()}
+        {voornaam ? `, ${voornaam}` : ""}.
+      </h1>
+      <p className="lede vd-lede">
+        {eersteAfspraak
+          ? `Je hebt ruimte tot ${formatTime(eersteAfspraak.start)}. Begin klein, maar echt.`
+          : "Begin klein; kies wat vandaag echt verschil maakt."}
+      </p>
 
       {/* Wie de poort voorbij is maar de reeks niet uitliep, ziet hier één
           regel — geen tweede onboarding, alleen de weg terug. Hij verdwijnt
           zodra je op "Naar vandaag" hebt gedrukt, ook als je stappen oversloeg:
           overslaan is een antwoord, geen uitstel. */}
-      {openStap && (
-        <div className="notice" style={{ marginTop: "var(--s-4)" }}>
-          <span className="notice__mark">Onaf</span>
-          <span>
-            Je bent de bronnen nog niet langsgelopen.{" "}
-            <Link href={stepPath(openStap)} className="btn--text">
-              Afmaken
-            </Link>
-          </span>
-        </div>
+      {openStap && <OnboardingNotice stap={openStap} />}
+
+      {briefing.frog && (
+        <section className={`frog${briefing.frog.status === "done" ? " frog--done" : ""}`}>
+          <p className="frog__label">Je frog</p>
+          <p className="frog__title">{briefing.frog.title}</p>
+          {briefing.frog.sub && <p className="frog__sub">{briefing.frog.sub}</p>}
+          {briefing.frog.implement && (
+            <p className="frog__implement">{briefing.frog.implement}</p>
+          )}
+
+          <div className="frog__actions">
+            {briefing.frog.status === "done" ? (
+              <>
+                <span className="chip chip--accent">Gedaan</span>
+                <form action={setFrogStatus.bind(null, "open")}>
+                  <button className="btn btn--text" type="submit">
+                    Toch weer openzetten
+                  </button>
+                </form>
+              </>
+            ) : (
+              <>
+                <form action={setFrogStatus.bind(null, "done")}>
+                  <button className="btn btn--primary" type="submit">
+                    Afvinken
+                  </button>
+                </form>
+                <form action={setFrogStatus.bind(null, "deferred")}>
+                  <button className="btn btn--text" type="submit">
+                    Lukt niet vandaag
+                  </button>
+                </form>
+              </>
+            )}
+          </div>
+        </section>
       )}
 
-      {briefing.state === "empty" ? (
-        <EmptyDay />
-      ) : (
-        <>
-          {briefing.degraded.length > 0 && (
-            <div className="notice notice--signal" style={{ marginTop: "var(--s-4)" }}>
-              <span className="notice__mark">Incompleet</span>
-              <span>
-                {briefing.degraded.map((d) => d.message).join(" ")}{" "}
-                <Link href="/instellingen" className="btn--text">
-                  Herstellen
-                </Link>
-              </span>
-            </div>
-          )}
+      {briefing.coach_text && <p className="coach">{briefing.coach_text}</p>}
 
-          {briefing.frog && (
-            <section className={`frog${briefing.frog.status === "done" ? " frog--done" : ""}`}>
-              <p className="frog__label">Vandaag één ding</p>
-              <p className="frog__title">{briefing.frog.title}</p>
-              {briefing.frog.sub && <p className="frog__sub">{briefing.frog.sub}</p>}
-              {briefing.frog.implement && (
-                <p className="frog__implement">{briefing.frog.implement}</p>
-              )}
+      <section className="vd-section">
+        <h2>Drie prioriteiten</h2>
+        <ul className="list">
+          {briefing.priorities.map((p) => (
+            <li key={p.id}>
+              {/* Eén doelwit: de hele regel is de knop. Op 390px is een los
+                  vinkvakje van 20px te klein om betrouwbaar te raken. */}
+              <form action={togglePriority.bind(null, p.id)}>
+                <button type="submit" className="row row--button">
+                  <span className="check" data-checked={p.done} aria-hidden="true" />
+                  <span className="row__body">
+                    <span className={`row__title${p.done ? " row__title--done" : ""}`}>
+                      {p.text}
+                    </span>
+                  </span>
+                  <span className="sr-only">{p.done ? "Terugzetten" : "Afvinken"}</span>
+                </button>
+              </form>
+            </li>
+          ))}
+        </ul>
+      </section>
 
-              <div className="frog__actions">
-                {briefing.frog.status === "done" ? (
-                  <>
-                    <span className="chip chip--accent">Gedaan</span>
-                    <form action={setFrogStatus.bind(null, "open")}>
-                      <button className="btn btn--text" type="submit">
-                        Toch weer openzetten
-                      </button>
-                    </form>
-                  </>
-                ) : (
-                  <>
-                    <form action={setFrogStatus.bind(null, "done")}>
-                      <button className="btn btn--primary" type="submit">
-                        Afvinken
-                      </button>
-                    </form>
-                    <form action={setFrogStatus.bind(null, "deferred")}>
-                      <button className="btn btn--text" type="submit">
-                        Lukt niet vandaag
-                      </button>
-                    </form>
-                  </>
-                )}
-              </div>
-            </section>
-          )}
+      <Agenda timeline={briefing.timeline} />
 
-          {briefing.coach_text && <p className="coach">{briefing.coach_text}</p>}
-
-          {briefing.state === "clear" && (
-            <div className="rest">
-              <span className="state-orb state-orb--done" aria-hidden="true"><Check weight="bold" /></span>
-              <h2>Alles is afgehandeld.</h2>
-              <p>
-                Niets meer te bevestigen, geen open prioriteiten. De rest van de dag is van
-                jou — niet van de lijst.
-              </p>
-            </div>
-          )}
-
-          <section className="section today-priorities">
-            <div className="section__head">
-              <h2>Prioriteiten</h2>
-              <span className="section__note">drie prioriteiten</span>
-            </div>
-            <ul className="list">
-              {briefing.priorities.map((p) => (
-                <li key={p.id}>
-                  {/* Eén doelwit: de hele regel is de knop. Op 390px is een los
-                      vinkvakje van 20px te klein om betrouwbaar te raken. */}
-                  <form action={togglePriority.bind(null, p.id)}>
-                    <button type="submit" className="row row--button">
-                      <span className="check" data-checked={p.done} aria-hidden="true" />
-                      <span className="row__body">
-                        <span className={`row__title${p.done ? " row__title--done" : ""}`}>
-                          {p.text}
-                        </span>
-                      </span>
-                      <span className="sr-only">
-                        {p.done ? "Terugzetten" : "Afvinken"}
-                      </span>
-                    </button>
-                  </form>
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          <section className="section today-agenda">
-            <div className="section__head">
-              <h2>Vandaag in de agenda</h2>
-              <span className="section__note">{briefing.timeline.length} blokken</span>
-            </div>
-            <ul className="timeline">
-              {briefing.timeline.map((e) => (
-                <li key={e.id}>
-                  <time dateTime={e.start}>
-                    {formatTime(e.start)}–{formatTime(e.end)}
-                  </time>
-                  <div>
-                    <span className="timeline__title">{e.title}</span>
-                    {e.conflict_with && (
-                      <div className="timeline__conflict">
-                        {e.conflict_with.startsWith("er staat")
-                          ? e.conflict_with
-                          : `tegelijk met ${e.conflict_with}`}
+      {briefing.confirmations.some((c) => !c.answered) && (
+        <section className="vd-section">
+          <h2>Nog te bevestigen</h2>
+          <ul className="list">
+            {briefing.confirmations
+              .filter((c) => !c.answered)
+              .map((c) => (
+                <li key={c.id}>
+                  <div className="row" style={{ paddingInline: 0 }}>
+                    <div className="row__body">
+                      <span className="row__title">{c.text}</span>
+                      <div className="row__actions">
+                        <form action={answerConfirmation.bind(null, c.id, "yes")}>
+                          <button
+                            className="btn btn--quiet"
+                            type="submit"
+                            aria-label={`Ja: ${c.text}`}
+                          >
+                            Ja
+                          </button>
+                        </form>
+                        <form action={answerConfirmation.bind(null, c.id, "no")}>
+                          <button
+                            className="btn btn--quiet"
+                            type="submit"
+                            aria-label={`Nee: ${c.text}`}
+                          >
+                            Nee
+                          </button>
+                        </form>
                       </div>
-                    )}
+                    </div>
                   </div>
                 </li>
               ))}
-            </ul>
-          </section>
-
-          {briefing.confirmations.some((c) => !c.answered) && (
-            <section className="section">
-              <div className="section__head">
-                <h2>Nog te bevestigen</h2>
-                <span className="section__note">uit gisteren</span>
-              </div>
-              <ul className="list">
-                {briefing.confirmations
-                  .filter((c) => !c.answered)
-                  .map((c) => (
-                    <li key={c.id}>
-                      <div className="row">
-                        <div className="row__body">
-                          <span className="row__title">{c.text}</span>
-                          <div className="row__actions">
-                            <form action={answerConfirmation.bind(null, c.id, "yes")}>
-                              <button
-                                className="btn btn--quiet"
-                                type="submit"
-                                aria-label={`Ja: ${c.text}`}
-                              >
-                                Ja
-                              </button>
-                            </form>
-                            <form action={answerConfirmation.bind(null, c.id, "no")}>
-                              <button
-                                className="btn btn--quiet"
-                                type="submit"
-                                aria-label={`Nee: ${c.text}`}
-                              >
-                                Nee
-                              </button>
-                            </form>
-                          </div>
-                        </div>
-                      </div>
-                    </li>
-                  ))}
-              </ul>
-            </section>
-          )}
-
-          <section className="section">
-            <div className="section__head">
-              <h2>Open eindjes</h2>
-              <Link href="/open-eindjes" className="section__note">
-                alle {looseEnds.total} bekijken
-              </Link>
-            </div>
-            <p className="muted" style={{ fontSize: "var(--t-sm)" }}>
-              {looseEnds.i_owe.length} keer wacht iemand op jou, {looseEnds.they_owe.length}{" "}
-              keer wacht jij op iemand.
-            </p>
-          </section>
-
-          <CaptureField />
-        </>
+          </ul>
+        </section>
       )}
+
+      <section className="vd-section">
+        <h2>Open eindjes</h2>
+        <p className="muted" style={{ fontSize: "var(--t-sm)" }}>
+          {looseEnds.i_owe.length} keer wacht iemand op jou, {looseEnds.they_owe.length}{" "}
+          keer wacht jij op iemand.{" "}
+          <Link href="/open-eindjes" className="btn--text">
+            Alle {looseEnds.total} bekijken
+          </Link>
+        </p>
+      </section>
+
+      <section className="vd-section">
+        <h2>Iets kwijt?</h2>
+        <CaptureField variant="bare" />
+      </section>
 
       <StateSwitch current={briefing.state} />
     </>
   );
 }
 
-function EmptyDay() {
+/** Agenda als tijd + titel-rijen met dunne dividers (8.png). */
+function Agenda({ timeline }: { timeline: BriefingToday["timeline"] }) {
+  if (timeline.length === 0) return null;
+  return (
+    <section className="vd-section">
+      <h2>Agenda</h2>
+      <ul className="vd-agenda">
+        {timeline.map((e) => (
+          <li key={e.id}>
+            <time dateTime={e.start}>{formatTime(e.start)}</time>
+            <div>
+              <span className="vd-agenda__title">{e.title}</span>
+              <span className="vd-agenda__sub">{duur(e.start, e.end)}</span>
+              {e.conflict_with && (
+                <span className="vd-agenda__conflict">
+                  {e.conflict_with.startsWith("er staat")
+                    ? e.conflict_with
+                    : `tegelijk met ${e.conflict_with}`}
+                </span>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+/** Onboarding-onaf: compact, één zin met klein icoon (stijl van 9.png). */
+function OnboardingNotice({ stap }: { stap: Parameters<typeof stepPath>[0] }) {
+  return (
+    <div className="vd-alert">
+      <ListChecks weight="regular" />
+      <span>
+        <strong>Onboarding onaf.</strong> Je bent de bronnen nog niet langsgelopen.{" "}
+        <Link href={stepPath(stap)}>Afmaken</Link>
+      </span>
+    </div>
+  );
+}
+
+/** Dag 1 (10.png): feature-icoon met gloed, richtingkaart, capture-invoer. */
+function FirstMorning() {
   return (
     <>
-      <section className="day-empty">
-        <span className="state-orb" aria-hidden="true"><Sun weight="regular" /></span>
+      <section className="vd-hero">
+        <span className="state-orb" aria-hidden="true">
+          <Sun weight="regular" />
+        </span>
         <p className="eyebrow">Je eerste ochtend</p>
         <h2>Begin met één ding.</h2>
-        <p>
-          Er hoeft nog niets ingehaald. Kies alleen wat vandaag een verschil maakt.
-        </p>
-        <div className="day-empty__actions">
-          <Link className="btn btn--primary" href="/onboarding">
-            Accounts koppelen
-          </Link>
-        </div>
+        <p>Er hoeft nog niets ingehaald. Kies alleen wat vandaag een verschil maakt.</p>
       </section>
-      <div className="empty" style={{ marginTop: "var(--s-5)" }}>
-        <strong>Wat er straks staat</strong>
-        Eén taak groot bovenaan, een paar regels over wat opvalt, maximaal drie prioriteiten
-        en je agenda van vandaag. Meer niet.
+
+      <section className="frog vd-direction">
+        <p className="frog__label">Eerste richting</p>
+        <p className="frog__title">Wat wil je aan het eind van vandaag voelen?</p>
+        <p className="frog__sub">Schrijf het in één korte zin op.</p>
+      </section>
+
+      <CaptureField variant="bare" placeholder="Vandaag wil ik…" />
+    </>
+  );
+}
+
+/** Avond / alles af (11.png): groene check met gloed, "Je mag stoppen." */
+function EveningDone({ briefing }: { briefing: BriefingToday }) {
+  const afgerond = [
+    ...(briefing.frog && briefing.frog.status === "done" ? [briefing.frog.title] : []),
+    ...briefing.priorities.filter((p) => p.done).map((p) => p.text),
+  ];
+
+  return (
+    <>
+      <section className="vd-hero">
+        <span className="state-orb state-orb--done" aria-hidden="true">
+          <Checks weight="bold" />
+        </span>
+        <p className="eyebrow">Voor vandaag genoeg</p>
+        <h2>Je mag stoppen.</h2>
+        <p>Je belangrijkste dingen hebben aandacht gekregen. Morgen is er weer ruimte.</p>
+      </section>
+
+      <div className="card vd-done-card">
+        <h2>Vandaag afgerond</h2>
+        <p>
+          {afgerond.length > 0
+            ? afgerond.join(" · ")
+            : "Niets meer te bevestigen, geen open prioriteiten."}
+        </p>
       </div>
+
+      <Link href="/" className="btn btn--quiet vd-wide-btn">
+        <Moon weight="regular" />
+        Sluit mijn dag
+      </Link>
     </>
   );
 }
@@ -286,6 +379,14 @@ function StateSwitch({ current }: { current: BriefingToday["state"] }) {
   );
 }
 
+/** "45 min" onder de agendatitel — puur presentatie, uit start/eind gerekend. */
+function duur(start: string, end: string): string {
+  const min = Math.max(0, Math.round((+new Date(end) - +new Date(start)) / 60000));
+  if (min >= 60 && min % 60 === 0) return `${min / 60} uur`;
+  if (min >= 60) return `${Math.floor(min / 60)} uur ${min % 60} min`;
+  return `${min} min`;
+}
+
 /**
  * Alleen voor de vier-staten-demo: dit verzint geen data, het toont dezelfde
  * briefing zoals hij eruitziet als een bron wegvalt of als alles af is.
@@ -305,4 +406,13 @@ function applyPreview(b: BriefingToday, state?: string): BriefingToday {
   }
   if (state === "degraded") return { ...b, state: "degraded" };
   return b;
+}
+
+/** Serif-begroeting volgt het dagdeel — de PNG toont de ochtend. */
+function dagdeelGroet(): string {
+  const uur = new Date().getHours();
+  if (uur < 6) return "Goedenacht";
+  if (uur < 12) return "Goedemorgen";
+  if (uur < 18) return "Goedemiddag";
+  return "Goedenavond";
 }

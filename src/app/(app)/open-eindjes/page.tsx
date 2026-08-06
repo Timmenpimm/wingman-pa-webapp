@@ -1,10 +1,12 @@
 import Link from "next/link";
+import { FadersHorizontal } from "@phosphor-icons/react/dist/ssr";
 import { currentUserId } from "@/lib/db/client";
 import { withUser } from "@/lib/db/with-user";
 import { getOpenCommitments, type LooseEnd } from "@/lib/commitments";
 import { resolveCommitment } from "@/lib/actions";
 import { durationPhrase } from "@/lib/text";
 import { Stapel } from "./Stapel";
+import "./screen.css";
 
 export const dynamic = "force-dynamic";
 
@@ -49,12 +51,20 @@ export default async function OpenEindjesPage() {
   const items: LooseEnd[] = [...i_owe, ...they_owe].sort((a, b) =>
     a.opened_at.localeCompare(b.opened_at),
   );
-  const oldest = items[0]?.opened_at ?? null;
 
   return (
     <>
-      <p className="eyebrow">Ruimte maken</p>
-      <h1 className="screen-title">Open eindjes</h1>
+      <header className="oe-head">
+        <div>
+          <p className="eyebrow">Ruimte maken</p>
+          <h1 className="screen-title">Open eindjes</h1>
+        </div>
+        {/* Referentie 12.png: klein filter-icoonknopje rechts in de kop.
+            Nog zonder gedrag — er is geen filterfunctie om aan te roepen. */}
+        <button type="button" className="oe-head__icon" aria-label="Filter">
+          <FadersHorizontal weight="regular" aria-hidden="true" />
+        </button>
+      </header>
       <p className="lede screen-lede">Niet alles hoeft een taak te worden. Geef elk los draadje een plek.</p>
 
       {state === "empty" ? (
@@ -71,15 +81,7 @@ export default async function OpenEindjesPage() {
             en dat is het nu.
           </p>
         </div>
-      ) : (
-        // Bij één kaart tegelijk zegt de teller "1 van 6" hetzelfde als deze
-        // regel, en de kaart zelf toont de leeftijd. Twee keer hetzelfde kost
-        // hier de ruimte die de drie actieknoppen nodig hebben om zonder
-        // scrollen in beeld te staan — dat is het scherm belangrijker.
-        <p className="meta" style={{ marginTop: "var(--s-2)" }}>
-          De oudste hangt {durationPhrase(oldest!)}.
-        </p>
-      )}
+      ) : null}
 
       {degraded.length > 0 && (
         <div className="notice notice--signal" style={{ marginTop: "var(--s-4)" }}>
@@ -108,7 +110,7 @@ export default async function OpenEindjesPage() {
               style-regel de stapel en komt de gewone lijst met formulieren
               (die zonder JS al werkt via server actions) in beeld. */}
           <noscript>
-            <style>{".loose-stack{display:none}"}</style>
+            <style>{".oe-list{display:none}"}</style>
             <FallbackList i_owe={i_owe} they_owe={they_owe} />
           </noscript>
         </>
@@ -187,7 +189,7 @@ function FallbackGroup({
                   <div className="row__actions">
                     <form action={resolveCommitment.bind(null, item.id, "done", 0)}>
                       <button
-                        className="btn btn--quiet"
+                        className="btn btn--chip"
                         type="submit"
                         aria-label={`${doneLabel}: ${item.party} — ${item.what}`}
                       >
@@ -198,7 +200,7 @@ function FallbackGroup({
                       action={resolveCommitment.bind(null, item.id, "snoozed", SNOOZE_DAYS)}
                     >
                       <button
-                        className="btn btn--quiet"
+                        className="btn btn--chip"
                         type="submit"
                         aria-label={`Later: ${item.party} — ${item.what}`}
                       >
@@ -207,7 +209,7 @@ function FallbackGroup({
                     </form>
                     <form action={resolveCommitment.bind(null, item.id, "dismissed", 0)}>
                       <button
-                        className="btn btn--text"
+                        className="btn btn--chip"
                         type="submit"
                         aria-label={`Laat vallen: ${item.party} — ${item.what}`}
                       >

@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { currentUserId, withUser } from "@/lib/db/client";
 import { getOpenCommitments } from "@/lib/commitments";
+import "./screen.css";
 
 export const dynamic = "force-dynamic";
 
 /**
- * Projecten (§6.4) — bewust laag in de hiërarchie. De agenda is het overzicht,
- * dit scherm niet. Eén statusregel per project, klaar.
+ * Projecten (§6.4, design-reference/screens/14.png) — bewust laag in de
+ * hiërarchie. De agenda is het overzicht, dit scherm niet. Eén kaart met
+ * compacte rijen: statuspunt, naam, één statusregel.
  */
 export default async function ProjectenPage() {
   const userId = await currentUserId();
@@ -36,22 +38,30 @@ export default async function ProjectenPage() {
       <p className="eyebrow">Waar je aandacht woont</p>
       <h1 className="screen-title">Projecten</h1>
 
-      <div className="project-panel">
+      <div className="pj-panel">
         {projects.map((p, index) => (
-          <article key={p.id} className="project-row">
-            <span className="project-row__dot" data-tone={index % 4} aria-hidden="true" />
-            <div className="project-row__body">
+          <article key={p.id} className="pj-row">
+            <span className="pj-row__dot" data-tone={index % 4} aria-hidden="true" />
+            <div className="pj-row__body">
               <h2>
                 <Link href={`/projecten/${p.id}`}>{p.name}</Link>
               </h2>
-              <p>{p.status_line ?? STATUS[p.status]}</p>
+              <p className="pj-row__status">{p.status_line ?? STATUS[p.status]}</p>
               {openPer.get(p.name) ? (
-                <span className="project-row__meta">{openPer.get(p.name)} open eindje(s)</span>
+                <span className="pj-row__meta">
+                  {openPer.get(p.name) === 1
+                    ? "1 open eindje"
+                    : `${openPer.get(p.name)} open eindjes`}
+                </span>
               ) : null}
             </div>
           </article>
         ))}
       </div>
+
+      <p className="pj-rest">
+        Een project blijft klein genoeg om te bewegen, groot genoeg om richting te geven.
+      </p>
     </>
   );
 }

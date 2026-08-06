@@ -1,0 +1,269 @@
+/* Onboarding — schermspecifieke opmaak (referentie: design-reference/screens/2–7.png).
+ * Prefix .ob-; kleuren en maten uit tokens.css, basisknoppen en het
+ * voortgangsspoor (.trail) uit globals.css. Hier staat wat de wizard anders
+ * doet: teller rechtsboven, optiekaarten, het grote feature-icoon en het
+ * groene klaar-orb.
+ */
+
+/* ---------- Voortgang: dunne balkjes + "1 VAN 4" rechts ----------------- */
+
+.ob-progress {
+  margin-bottom: var(--s-6);
+}
+
+.ob-progress__count {
+  display: block;
+  text-align: right;
+  color: var(--accent-ink);
+  margin: 0 0 var(--s-3);
+}
+
+.ob-progress .trail {
+  margin: 0;
+}
+
+/* ---------- Optiekaarten ------------------------------------------------ */
+
+.ob-cards {
+  list-style: none;
+  margin: var(--s-5) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--s-3);
+}
+
+.ob-card {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-md);
+  padding: var(--s-4);
+}
+
+.ob-card__icon {
+  flex: 0 0 auto;
+  width: 1.5rem;
+  height: 1.5rem;
+  color: var(--accent);
+}
+
+.ob-card__body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.ob-card__title {
+  display: block;
+  font-weight: var(--w-semi);
+  color: var(--ink);
+}
+
+.ob-card__title a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.ob-card__title a:hover {
+  color: var(--accent-ink);
+}
+
+.ob-card__sub {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--t-sm);
+  color: var(--ink-muted);
+}
+
+.ob-card__state {
+  flex: 0 0 auto;
+  color: var(--accent);
+}
+
+.ob-card__state svg {
+  display: block;
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+/* ---------- Permissievraag als optiekaarten -----------------------------
+   De markup (.choices/.choice) blijft die van globals.css; hier wint de
+   kaartbehandeling uit de referentie: raised kaart, geselecteerd = accentrand
+   op accent-soft grond met een vinkje rechts. */
+
+.ob-step .choices .choice:first-of-type {
+  border-top: 1px solid var(--rule);
+}
+
+.ob-step .choice {
+  display: block;
+  position: relative;
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-md);
+  padding: var(--s-4);
+  padding-right: 3.25rem;
+  margin-top: var(--s-3);
+}
+
+.ob-step .choice input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ob-step .choice:hover {
+  border-color: var(--ink-faint);
+}
+
+.ob-step .choice:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.ob-step .choice:has(input:checked)::after {
+  content: "✓";
+  position: absolute;
+  top: 50%;
+  right: var(--s-4);
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: var(--w-bold);
+}
+
+.ob-step .choice:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---------- Intro (2.png): feature-icoon + genummerde stappen ----------- */
+
+.ob-intro {
+  text-align: center;
+}
+
+.ob-feature {
+  display: grid;
+  place-items: center;
+  width: 6.5rem;
+  height: 6.5rem;
+  margin: var(--s-6) auto;
+  border-radius: 50%;
+  color: var(--accent-ink);
+  background: radial-gradient(circle at 35% 30%, #2c67a5, #123356 72%);
+  box-shadow:
+    0 0 3.5rem rgba(102, 185, 247, 0.25),
+    0 0 0 1.25rem rgba(102, 185, 247, 0.06);
+}
+
+.ob-feature svg {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.ob-intro__lede {
+  margin: var(--s-2) auto 0;
+  max-width: 32ch;
+}
+
+.ob-introlist {
+  list-style: none;
+  margin: var(--s-6) 0 0;
+  padding: 0;
+  text-align: left;
+}
+
+.ob-introlist li {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  padding: var(--s-4) 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.ob-num {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: 50%;
+  color: var(--ink-muted);
+  font-size: var(--t-xs);
+  font-weight: var(--w-semi);
+}
+
+.ob-introlist li[data-active="true"] .ob-num {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-on-strong);
+}
+
+.ob-intro .wizard__actions {
+  margin-top: var(--s-6);
+}
+
+/* ---------- Klaar (7.png): groene check-cirkel met gloed ---------------- */
+
+.ob-done {
+  text-align: center;
+}
+
+.ob-done__badge {
+  display: block;
+  text-align: right;
+  color: var(--accent-ink);
+  margin: 0 0 var(--s-5);
+}
+
+.ob-orb {
+  display: grid;
+  place-items: center;
+  width: 7.5rem;
+  height: 7.5rem;
+  margin: var(--s-6) auto;
+  border-radius: 50%;
+  color: #b9f0d2;
+  background: radial-gradient(circle at 35% 30%, #3d8a68, #1f5c44 75%);
+  box-shadow:
+    0 0 3.5rem rgba(99, 213, 174, 0.22),
+    0 0 0 1.25rem rgba(99, 213, 174, 0.05);
+}
+
+.ob-orb svg {
+  width: 3rem;
+  height: 3rem;
+}
+
+.ob-done .lede {
+  margin: var(--s-2) auto 0;
+  max-width: 36ch;
+}
+
+.ob-done .ob-cards,
+.ob-done .section {
+  text-align: left;
+}
+
+.ob-done__card {
+  margin-top: var(--s-6);
+  text-align: left;
+}
+
+.ob-done .btn-row {
+  justify-content: center;
+}
+
+.ob-done .btn-row .btn--primary {
+  width: 100%;
+  min-height: 2.75rem;
+}

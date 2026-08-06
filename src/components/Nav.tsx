@@ -18,8 +18,9 @@ const ITEMS = [
 
 export function Nav() {
   const path = usePathname();
-  // Geen navigatie op het inlogscherm — zie Masthead.tsx.
-  if (path === "/inloggen") return null;
+  // Geen navigatie op inloggen én tijdens de onboarding (referentie 2–7:
+  // de wizard heeft alleen de voortgangsbalk, geen ontsnappingsroutes onderin).
+  if (path === "/inloggen" || path.startsWith("/onboarding")) return null;
 
   return (
     <nav className="nav" aria-label="Hoofdnavigatie">
