@@ -5,6 +5,7 @@ import { getOpenCommitments } from "@/lib/commitments";
 import { answerConfirmation, setFrogStatus, togglePriority } from "@/lib/actions";
 import { formatDayLong, formatTime } from "@/lib/text";
 import { CaptureField } from "@/components/CaptureField";
+import { Check, Sun } from "@phosphor-icons/react/dist/ssr";
 import { onboardingStatus } from "@/lib/onboarding/status";
 import { firstOpenStep, stepPath } from "@/lib/onboarding/steps";
 import type { BriefingToday } from "@/lib/types";
@@ -114,6 +115,7 @@ export default async function VandaagPage({
 
           {briefing.state === "clear" && (
             <div className="rest">
+              <span className="state-orb state-orb--done" aria-hidden="true"><Check weight="bold" /></span>
               <h2>Alles is afgehandeld.</h2>
               <p>
                 Niets meer te bevestigen, geen open prioriteiten. De rest van de dag is van
@@ -243,20 +245,20 @@ export default async function VandaagPage({
 function EmptyDay() {
   return (
     <>
-      <section className="frog">
-        <p className="frog__label">Dag 1</p>
-        <h1 className="frog__title">Nog geen briefing — ik ken je dag nog niet.</h1>
-        <p className="frog__sub">
-          Koppel een agenda en je mail, dan stel ik morgenochtend zelf een frog voor uit wat
-          ik vind. Bevestigen mag je doen.
+      <section className="day-empty">
+        <span className="state-orb" aria-hidden="true"><Sun weight="regular" /></span>
+        <p className="eyebrow">Je eerste ochtend</p>
+        <h2>Begin met één ding.</h2>
+        <p>
+          Er hoeft nog niets ingehaald. Kies alleen wat vandaag een verschil maakt.
         </p>
-        <div className="frog__actions">
+        <div className="day-empty__actions">
           <Link className="btn btn--primary" href="/onboarding">
             Accounts koppelen
           </Link>
         </div>
       </section>
-      <div className="empty" style={{ marginTop: "var(--s-6)" }}>
+      <div className="empty" style={{ marginTop: "var(--s-5)" }}>
         <strong>Wat er straks staat</strong>
         Eén taak groot bovenaan, een paar regels over wat opvalt, maximaal drie prioriteiten
         en je agenda van vandaag. Meer niet.
