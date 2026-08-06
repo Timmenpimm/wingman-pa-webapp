@@ -57,9 +57,11 @@ de onboarding sturen is daar het verkeerde antwoord op.
 
 ## Eerlijk over wat er niet is
 
-- **Payoff komt uit de tabellen.** Staat er niets, dan zegt het scherm dat:
-  "Je agenda is gekoppeld, maar ik heb er nog niets uit gelezen." Er is nog
-  geen sync die `fetchDelta` aanroept, dus dat is voorlopig de normale tekst.
+- **Payoff komt uit de tabellen**, nooit uit een vaste zin. Staat er niets, dan
+  wijst het scherm vooruit: "Start met koppelen van je accounts." Er is nog geen
+  sync die `fetchDelta` aanroept, dus dat is voorlopig de normale tekst. Eerder
+  stond daar een uitleg wáárom het leeg was; dat klopt, maar het is een excuus
+  op de plek waar de gebruiker vooruit wil.
 - **Geen knop die 501 teruggeeft.** Google loopt via `signIn("google")` (agenda
   én mail in één consentscherm), Ponto via Nango. Staat een van beide niet aan
   in deze omgeving, dan staat er een "nog niet"-melding in plaats van een knop.

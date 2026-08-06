@@ -265,9 +265,9 @@ function ConnectBlock({
 }
 
 /**
- * Wat ik in deze bron vind, in gewone taal. Leeg is een geldig antwoord: er is
- * nog geen sync die agenda en mail binnenhaalt, dus tot het eerstvolgende
- * ochtendmoment staat er niets — en dan is dát wat er staat.
+ * Wat ik in deze bron vind, in gewone taal. Er is nog geen sync die agenda en
+ * mail binnenhaalt, dus staat er voorlopig vaak nog niets — en dan zegt het
+ * scherm wat de volgende stap is in plaats van iets te verzinnen.
  */
 function PayoffBlock({ payoff }: { payoff: Payoff }) {
   const text = payoffText(payoff);
@@ -279,11 +279,19 @@ function PayoffBlock({ payoff }: { payoff: Payoff }) {
   );
 }
 
+/**
+ * Wat er staat als er nog niets te melden is.
+ *
+ * Eerder stond hier een uitleg waarom het scherm leeg was ("ik heb er nog
+ * niets uit gelezen, dat doe ik bij het eerstvolgende ochtendmoment"). Klopt,
+ * maar het is een excuus op de plek waar de gebruiker vooruit wil: hij hoort
+ * te lezen wat hij nú kan doen, niet waarom er niets staat.
+ */
+const NOG_NIETS = "Start met koppelen van je accounts.";
+
 function payoffText(payoff: Payoff): string | null {
   if (payoff.kind === "agenda") {
-    if (payoff.events === 0 && !payoff.next) {
-      return "Je agenda is gekoppeld, maar ik heb er nog niets uit gelezen. Dat doe ik bij het eerstvolgende ochtendmoment.";
-    }
+    if (payoff.events === 0 && !payoff.next) return NOG_NIETS;
     const eerste = payoff.next
       ? ` De eerstvolgende is ${payoff.next.title}, ${formatDayLong(payoff.next.start_at)} om ${formatTime(payoff.next.start_at)}.`
       : "";
@@ -291,9 +299,7 @@ function payoffText(payoff: Payoff): string | null {
   }
 
   if (payoff.kind === "mail") {
-    if (payoff.people === 0 && payoff.open === 0) {
-      return "Je mail is gekoppeld. Ik heb er nog niets uit gelezen — dat doe ik bij het eerstvolgende ochtendmoment.";
-    }
+    if (payoff.people === 0 && payoff.open === 0) return NOG_NIETS;
     return `Ik ken ${telwoord(payoff.people, "persoon", "mensen")} uit je mail en zie ${telwoord(payoff.open, "open eindje", "open eindjes")}.`;
   }
 
