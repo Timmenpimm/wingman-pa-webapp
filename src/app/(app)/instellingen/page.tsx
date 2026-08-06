@@ -192,11 +192,11 @@ export default async function InstellingenPage() {
 
       <section className="section">
         <div className="section__head">
-          <h2>Kennisgraaf</h2>
+          <h2>Inzicht</h2>
           <span className="section__note">privé, EU, versleuteld</span>
         </div>
         <p className="row__sub" style={{ maxWidth: "var(--measure)" }}>
-          Alles wat ik lees komt samen in één graaf: mensen, projecten, beloftes,
+          Alles wat ik lees komt samen in één datakoppeling: mensen, projecten, beloftes,
           transacties. Die kun je in gewone taal bevragen.
         </p>
         <ul className="list" style={{ marginTop: "var(--s-3)" }}>
