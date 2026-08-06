@@ -21,9 +21,9 @@ export function Masthead() {
         <Link href="/" className="wordmark">
           wingman
         </Link>
-        <Link href="/graaf" className="masthead__search" aria-label="Vraag je graaf">
+        <Link href="/inzicht" className="masthead__search" aria-label="Vraag je verbindingen">
           <MagnifyingGlass weight="regular" aria-hidden="true" />
-          <span className="sr-only">Vraag je graaf</span>
+          <span className="sr-only">Vraag je verbindingen</span>
         </Link>
       </div>
     </header>

@@ -204,7 +204,7 @@ export default async function InstellingenPage() {
             <li key={q}>
               <div className="row">
                 <div className="row__body">
-                  <Link className="row__title" href={`/graaf?q=${encodeURIComponent(q)}`}>
+                  <Link className="row__title" href={`/inzicht?q=${encodeURIComponent(q)}`}>
                     {q}
                   </Link>
                 </div>
@@ -213,7 +213,7 @@ export default async function InstellingenPage() {
           ))}
         </ul>
         <div className="btn-row" style={{ marginTop: "var(--s-4)" }}>
-          <Link className="btn btn--quiet" href="/graaf">
+          <Link className="btn btn--quiet" href="/inzicht">
             Graaf verkennen
           </Link>
         </div>
