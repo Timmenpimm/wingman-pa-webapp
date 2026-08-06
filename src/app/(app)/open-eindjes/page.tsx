@@ -54,7 +54,8 @@ export default async function OpenEindjesPage() {
   return (
     <>
       <p className="eyebrow">Losse draden over alle bronnen heen</p>
-      <h1 style={{ fontSize: "var(--t-xl)" }}>Open eindjes</h1>
+      <h1 className="screen-title">Open eindjes</h1>
+      <p className="lede screen-lede">Niet alles hoeft een taak te worden. Geef elk los draadje een plek.</p>
 
       {state === "empty" ? (
         <div className="empty" style={{ marginTop: "var(--s-5)" }}>
