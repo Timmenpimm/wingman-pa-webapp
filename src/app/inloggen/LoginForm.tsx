@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
+import { WarningCircle } from "@phosphor-icons/react";
 
 const EMPTY_FIELDS_ERROR = "Vul je e-mail en wachtwoord in — dan zet ik je dag klaar.";
 const INVALID_CREDENTIALS_ERROR = "Dat e-mailadres en wachtwoord ken ik niet samen.";
@@ -132,20 +133,7 @@ export function LoginForm({
           </button>
           {googleError && (
             <p className="login__error" role="alert">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                aria-hidden="true"
-              >
-                <path d="M12 8v5" />
-                <circle cx="12" cy="16.5" r="0.6" fill="currentColor" />
-                <circle cx="12" cy="12" r="9" />
-              </svg>
+              <WarningCircle size={16} weight="regular" aria-hidden="true" />
               <span>{googleError}</span>
             </p>
           )}
@@ -200,20 +188,7 @@ export function LoginForm({
 
         {formError && (
           <p className="login__error" role="alert">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              aria-hidden="true"
-            >
-              <path d="M12 8v5" />
-              <circle cx="12" cy="16.5" r="0.6" fill="currentColor" />
-              <circle cx="12" cy="12" r="9" />
-            </svg>
+            <WarningCircle size={16} weight="regular" aria-hidden="true" />
             <span>{formError}</span>
           </p>
         )}
