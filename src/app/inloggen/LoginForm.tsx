@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { WarningCircle } from "@phosphor-icons/react";
+import { GoogleLogo, WarningCircle } from "@phosphor-icons/react";
 
 const EMPTY_FIELDS_ERROR = "Vul je e-mail en wachtwoord in — dan zet ik je dag klaar.";
 const INVALID_CREDENTIALS_ERROR = "Dat e-mailadres en wachtwoord ken ik niet samen.";
@@ -129,7 +129,14 @@ export function LoginForm({
             onClick={handleGoogleLogin}
             disabled={googleLoading}
           >
-            {googleLoading ? "Even doorsturen naar Google…" : "Inloggen met Google"}
+            {googleLoading ? (
+              "Even doorsturen naar Google…"
+            ) : (
+              <>
+                <GoogleLogo weight="regular" aria-hidden="true" />
+                Inloggen met Google
+              </>
+            )}
           </button>
           {googleError && (
             <p className="login__error" role="alert">

@@ -43,7 +43,7 @@ export default async function ProjectDetail({ params }: { params: { id: string }
       <p className="eyebrow">
         <Link href="/projecten">Projecten</Link>
       </p>
-      <h1 style={{ fontSize: "var(--t-xl)" }}>{project.name}</h1>
+      <h1 className="screen-title">{project.name}</h1>
       {project.status_line && (
         <p className="lede" style={{ marginTop: "var(--s-3)" }}>{project.status_line}</p>
       )}
