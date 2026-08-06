@@ -3,7 +3,7 @@ import { currentUserId, withUser } from "@/lib/db/client";
 import { finishOnboarding } from "@/lib/actions";
 import { onboardingStatus } from "@/lib/onboarding/status";
 import { stepPath } from "@/lib/onboarding/steps";
-import { Check } from "@phosphor-icons/react";
+import { Check } from "@phosphor-icons/react/dist/ssr";
 
 export const dynamic = "force-dynamic";
 
