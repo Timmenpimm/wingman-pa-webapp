@@ -38,9 +38,8 @@ export default async function VandaagPage({
     <>
       <p className="eyebrow">{formatDayLong(new Date())}</p>
 
-      {/* De frog-titel is de grootste tekst, maar niet de paginatitel: op een
-          dag zonder frog zou de pagina dan helemaal geen h1 hebben. */}
-      <h1 className="sr-only">Vandaag</h1>
+      <h1 className="day-title">Goedemorgen.</h1>
+      <p className="lede day-title__lede">Begin klein; kies wat vandaag echt verschil maakt.</p>
 
       {/* Wie de poort voorbij is maar de reeks niet uitliep, ziet hier één
           regel — geen tweede onboarding, alleen de weg terug. Hij verdwijnt

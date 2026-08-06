@@ -1,7 +1,7 @@
 /* Wingman — design tokens
  *
- * Bron: design-reference/Wingman-v2.dc.html. Donker is het hoofdthema:
- * grond #080a09, tekst #eceae6, één accentgroen (#8ed081, hover #b3e0a8),
+ * Bron: DESIGN_REFERENCE.md. Donker marineblauw is het enige thema:
+ * grond #071321, tekst #e9f3fc, één hemelblauw accent (#66b9f7),
  * amber als enige tweede signaalkleur — nooit rood-alarm over de UI.
  * Newsreader (serif, koppen) + Archivo (sans, interface), basis 15px/1.55.
  *
@@ -18,29 +18,29 @@
   color-scheme: dark;
 
   /* --- Kleur: grond & inkt (donker, hoofdthema) ------------------------ */
-  --paper: #080a09; /* grond */
-  --paper-raised: #101312; /* kaarten, rijen, velden */
-  --paper-sunk: #141a17; /* warme kaart: notice, coach */
-  --ink: #eceae6;
-  --ink-body: rgba(236, 234, 230, 0.85);
-  --ink-muted: rgba(236, 234, 230, 0.6);
-  --ink-faint: rgba(236, 234, 230, 0.45);
-  --rule: rgba(236, 234, 230, 0.09);
-  --rule-strong: rgba(236, 234, 230, 0.16);
+  --paper: #071321; /* grond */
+  --paper-raised: #0b1b30; /* kaarten, rijen, velden */
+  --paper-sunk: #0d2139; /* coach, notice */
+  --ink: #e9f3fc;
+  --ink-body: #a8bdd0;
+  --ink-muted: #6e849b;
+  --ink-faint: #506982;
+  --rule: rgba(104, 157, 201, 0.2);
+  --rule-strong: #244765;
 
-  /* Eén accent. Groen alleen op de primaire actie en op bevestiging. */
-  --accent: #8ed081; /* label, link, checkmark, focus */
-  --accent-hover: #b3e0a8;
-  --accent-ink: #b3e0a8; /* tekst op een zachte accent-vlak */
-  --accent-strong: #8ab377; /* vulling primaire knop */
-  --accent-strong-hover: #9cc389;
-  --accent-strong-active: #78a066;
-  --accent-on-strong: #0b0d0c; /* tekst op de gevulde primaire knop */
-  --accent-soft: rgba(142, 208, 129, 0.14);
+  /* Eén accent. Blauw alleen op primaire actie, selectie en bevestiging. */
+  --accent: #66b9f7;
+  --accent-hover: #8dceff;
+  --accent-ink: #bce3ff;
+  --accent-strong: #66b9f7;
+  --accent-strong-hover: #8dceff;
+  --accent-strong-active: #4aa5e9;
+  --accent-on-strong: #062039;
+  --accent-soft: rgba(102, 185, 247, 0.14);
 
   /* Signaal — amber, bewust niet rood. "Dit vraagt aandacht", nooit alarm. */
-  --signal: #d9a441;
-  --signal-soft: rgba(217, 164, 65, 0.12);
+  --signal: #d7a850;
+  --signal-soft: rgba(215, 168, 80, 0.12);
 
   /* --- Typografie ------------------------------------------------------ */
   --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
@@ -52,8 +52,8 @@
   --t-base: 0.9375rem; /* 15 — lopende tekst */
   --t-md: 1rem; /* 16 — invoer, intro-tekst, coach */
   --t-lg: 1.375rem; /* 22 — sectiekop */
-  --t-xl: 1.75rem; /* 28 — frog mobiel */
-  --t-2xl: 2.125rem; /* 34 — frog desktop */
+  --t-xl: 2.375rem; /* 38 — schermtitels en frog mobiel */
+  --t-2xl: 3rem; /* 48 — frog desktop */
 
   --lh-tight: 1.15;
   --lh-snug: 1.35;
@@ -86,7 +86,7 @@
   /* Kaarten op donker zijn vlak (rand, geen glow) — zo staat het ook in het
      bronbestand: alleen het telefoonframe zelf heeft een schaduw. */
   --shadow-card: none;
-  --shadow-frog: 0 20px 48px rgba(0, 0, 0, 0.35);
+  --shadow-frog: 0 20px 48px rgba(0, 12, 29, 0.28);
 
   --measure: 62ch; /* leesbreedte */
   --page-max: 40rem;
@@ -94,38 +94,6 @@
   /* Beweging: alleen functioneel (§7) */
   --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
   --dur: 220ms;
-}
-
-/* Licht is de tweede variant, niet het hoofdthema — zelfde tokens, warme
-   papierwaarden in plaats van grond/inkt. */
-@media (prefers-color-scheme: light) {
-  :root {
-    color-scheme: light;
-    --paper: #f7f4ee;
-    --paper-raised: #fffdf9;
-    --paper-sunk: #f0ece3;
-    --ink: #1c1a17;
-    --ink-body: #35312b;
-    --ink-muted: #6f6a61;
-    --ink-faint: #a09a90;
-    --rule: #e2dcd1;
-    --rule-strong: #cfc7b8;
-
-    --accent: #1f5f56;
-    --accent-hover: #16443d;
-    --accent-ink: #143f39;
-    --accent-strong: #1f5f56;
-    --accent-strong-hover: #16443d;
-    --accent-strong-active: #123330;
-    --accent-on-strong: #fff;
-    --accent-soft: #e4efec;
-
-    --signal: #8a6a2f;
-    --signal-soft: #f3ece0;
-
-    --shadow-card: 0 1px 2px rgba(28, 26, 23, 0.04), 0 8px 24px rgba(28, 26, 23, 0.05);
-    --shadow-frog: 0 2px 4px rgba(28, 26, 23, 0.05), 0 16px 40px rgba(28, 26, 23, 0.07);
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
