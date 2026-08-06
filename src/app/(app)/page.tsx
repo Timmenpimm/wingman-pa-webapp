@@ -122,10 +122,10 @@ export default async function VandaagPage({
             </div>
           )}
 
-          <section className="section">
+          <section className="section today-priorities">
             <div className="section__head">
               <h2>Prioriteiten</h2>
-              <span className="section__note">maximaal drie, ook als er meer zijn</span>
+              <span className="section__note">drie prioriteiten</span>
             </div>
             <ul className="list">
               {briefing.priorities.map((p) => (
@@ -150,7 +150,7 @@ export default async function VandaagPage({
             </ul>
           </section>
 
-          <section className="section">
+          <section className="section today-agenda">
             <div className="section__head">
               <h2>Vandaag in de agenda</h2>
               <span className="section__note">{briefing.timeline.length} blokken</span>

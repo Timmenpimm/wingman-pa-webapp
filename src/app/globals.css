@@ -233,6 +233,16 @@ button {
   max-width: var(--measure);
 }
 
+.screen-title {
+  margin-top: var(--s-1);
+  font-size: var(--t-xl);
+  letter-spacing: -0.045em;
+}
+
+.screen-lede {
+  margin-top: var(--s-2);
+}
+
 .day-title {
   margin-top: var(--s-1);
   font-size: var(--t-xl);
@@ -241,6 +251,28 @@ button {
 
 .day-title__lede {
   margin-top: var(--s-2);
+}
+
+.today-priorities .list {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.today-priorities .list > li {
+  border-color: var(--rule-strong);
+}
+
+.today-priorities .row--button {
+  padding: var(--s-4) 0;
+}
+
+.today-agenda .timeline {
+  border-top: 1px solid var(--rule-strong);
+}
+
+.today-agenda .timeline li {
+  padding: var(--s-4) 0;
 }
 
 .muted {
@@ -589,6 +621,87 @@ button {
   gap: var(--s-3);
 }
 
+/* Losse inbox- en besliskaarten volgen de referentie: elk signaal krijgt een
+   eigen vlak en acties leven binnen die context, niet in één lange tabel. */
+.action-cards {
+  display: grid;
+  gap: var(--s-3);
+  list-style: none;
+  padding: 0;
+  margin: var(--s-5) 0 0;
+}
+
+.action-card {
+  padding: var(--s-5);
+  background: var(--paper-raised);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-lg);
+}
+
+.action-card .row__actions {
+  gap: var(--s-2);
+}
+
+.action-card .btn--quiet {
+  min-height: 2.85rem;
+}
+
+.project-panel {
+  margin-top: var(--s-5);
+  overflow: hidden;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-lg);
+  background: var(--paper-raised);
+}
+
+.project-row {
+  display: flex;
+  gap: var(--s-4);
+  align-items: flex-start;
+  padding: var(--s-5) var(--s-4);
+  border-bottom: 1px solid var(--rule);
+}
+
+.project-row:last-child {
+  border-bottom: 0;
+}
+
+.project-row__dot {
+  width: 0.75rem;
+  height: 0.75rem;
+  flex: 0 0 auto;
+  margin-top: 0.38rem;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.project-row__dot[data-tone="1"] { background: #9c8df1; }
+.project-row__dot[data-tone="2"] { background: #63d5ae; }
+.project-row__dot[data-tone="3"] { background: #f3bd64; }
+
+.project-row__body {
+  min-width: 0;
+}
+
+.project-row h2 {
+  font-family: var(--font-sans);
+  font-size: var(--t-md);
+  font-weight: var(--w-semi);
+  line-height: var(--lh-snug);
+}
+
+.project-row h2 a {
+  text-decoration: none;
+}
+
+.project-row p,
+.project-row__meta {
+  display: block;
+  margin-top: var(--s-1);
+  color: var(--ink-muted);
+  font-size: var(--t-sm);
+}
+
 @media (min-width: 700px) {
   .cards--2 {
     grid-template-columns: 1fr 1fr;
@@ -807,7 +920,7 @@ button {
   grid-template-columns: repeat(4, 1fr);
   gap: var(--s-2);
   list-style: none;
-  margin: var(--s-5) 0 0;
+  margin: var(--s-1) 0 var(--s-7);
   padding: 0;
   border: 0;
   font-size: 0;
@@ -822,6 +935,10 @@ button {
 .trail__item[data-done="true"],
 .trail__item[data-current="true"] { background: var(--accent); }
 
+.wizard__eyebrow {
+  color: var(--accent);
+}
+
 /* De permissievraag. Radio's en geen keuzemenu: alle vier de opties horen
    tegelijk zichtbaar te zijn met wat ze betekenen, want de vraag "wat mag ik
    hiermee" beantwoord je niet uit vier losse woorden. */
@@ -830,6 +947,10 @@ button {
   margin: var(--s-6) 0 0;
   padding: 0;
   max-width: var(--measure);
+}
+
+.choices .choice:first-of-type {
+  border-top: 1px solid var(--rule-strong);
 }
 
 .choice {
