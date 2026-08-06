@@ -60,6 +60,11 @@ Engelse. Ontwerp en test dus met de echte tekst.
   tikt alleen `/api/v1/runs/tick` aan; welke runs moeten draaien wordt in
   `src/lib/runs/schedule.ts` uitgerekend, in de tijdzone van de gebruiker.
   Zou dat in een cron-expressie staan, dan klopt het twee keer per jaar niet.
+- **Een scherm dat een bron nodig heeft, staat in `src/app/(app)/`.** Het layout
+  van die route-groep draait `gateOnboarding()`: zolang er geen enkele bron
+  gekoppeld of overgeslagen is, gaat alles naar de onboarding. Een nieuw scherm
+  buiten die groep zetten betekent dus dat het aan een nieuwe gebruiker leeg
+  getoond wordt — dat is alleen goed voor /inloggen, /onboarding en /api.
 - **Geen LLM-calls tijdens een page load.** Tekst wordt in de nachtelijke run
   geschreven en opgeslagen; schermen lezen alleen.
 - **Server-rendered, werkt zonder client-JS.** Formulieren met server actions.

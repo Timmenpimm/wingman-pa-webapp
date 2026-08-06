@@ -6,7 +6,7 @@ import Link from "next/link";
 import { durationPhrase, formatDayShort, formatTime } from "@/lib/text";
 import { pendingToolCalls, recentToolCalls } from "@/lib/tools/execute";
 import { SUGGESTED_QUERIES } from "@/lib/graphify/query";
-import { signOut } from "../../../auth";
+import { signOut } from "../../../../auth";
 
 export const dynamic = "force-dynamic";
 

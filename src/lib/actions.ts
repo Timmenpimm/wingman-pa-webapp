@@ -1,11 +1,24 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { currentUserId } from "@/lib/db/client";
 import { withUser, type Tx } from "@/lib/db/with-user";
 import { localDayStart } from "@/lib/day";
 import { clamp } from "@/lib/text";
 import { decideToolCall, requestTool } from "@/lib/tools/execute";
+import {
+  FINISHED_KEY,
+  FINISH_PATH,
+  isStepId,
+  markKey,
+  nextStep,
+  stepDefinition,
+  stepPath,
+  type StepId,
+} from "@/lib/onboarding/steps";
+import { PERMISSION_LABELS } from "@/lib/types";
+import { signIn } from "../../auth";
 
 /**
  * Alle mutaties op één plek. De REST-routes onder /api/v1 roepen dezelfde
@@ -216,6 +229,91 @@ export async function setConnectorPermission(id: string, permission: string) {
     }),
   );
   revalidatePath("/instellingen");
+}
+
+/**
+ * Google koppelen vanuit de onboarding.
+ *
+ * Niet via /api/v1/connect/google: die route gaat over Nango, en agenda + mail
+ * lopen sinds de Google-provider in auth.ts juist niet meer via Nango. Hij gaf
+ * daar 501 terug, wat in de onboarding een knop opleverde die alleen een
+ * foutmelding in beeld zette. Dit is dezelfde flow als "Inloggen met Google"
+ * op /inloggen: één consentscherm voor agenda én mail, en de signIn-callback
+ * schrijft beide Connector-rijen weg.
+ *
+ * `redirectTo` komt niet rechtstreeks uit de aanroep maar uit stepPath() na
+ * een controle op een bekende stap-id — een pad dat van buiten komt zou hier
+ * anders een open redirect zijn.
+ *
+ * Wie zich met een ánder Google-account aanmeldt dan waarmee hij is ingelogd,
+ * komt in dat andere account terecht. Dat is bestaand gedrag van de
+ * signIn-callback (koppelen op e-mailadres), niet iets dat hier ontstaat.
+ */
+export async function connectGoogle(step: string) {
+  await signIn("google", { redirectTo: isStepId(step) ? stepPath(step) : "/onboarding" });
+}
+
+/**
+ * Eén stap van de onboarding afronden: permissie vastleggen als die gevraagd
+ * is, de stap markeren als hij overgeslagen of met de hand afgevinkt wordt, en
+ * doorlopen naar de volgende.
+ *
+ * Drie knoppen ("Volgende", "Overslaan", "Staat erop") delen deze ene actie —
+ * ze verschillen alleen in het verborgen veld `markeer`. Dat scheelt drie
+ * bijna-identieke server actions die uit elkaar kunnen gaan lopen.
+ *
+ * De permissie gaat naar álle connectors van deze stap tegelijk. Een inlog met
+ * Google levert twee rijen op (agenda + gmail) en die vallen in verschillende
+ * stappen; binnen één stap is het altijd dezelfde bron, dus dezelfde vraag.
+ */
+export async function continueOnboarding(step: StepId, data: FormData) {
+  const userId = await currentUserId();
+  const mark = String(data.get("markeer") ?? "");
+  const permission = String(data.get("permission") ?? "");
+  const providers = stepDefinition(step).providers;
+
+  await withUser(userId, async (tx) => {
+    if (mark === "skipped" || mark === "done") {
+      const key = markKey(step);
+      await tx.userSetting.upsert({
+        where: { user_id_key: { user_id: userId, key } },
+        create: { user_id: userId, key, value: mark },
+        update: { value: mark },
+      });
+    }
+
+    if (permission in PERMISSION_LABELS && providers.length > 0) {
+      await tx.connector.updateMany({
+        where: { user_id: userId, provider: { in: providers } },
+        data: { permission },
+      });
+    }
+  });
+
+  revalidatePath("/onboarding", "layout");
+  revalidatePath("/instellingen");
+
+  const next = nextStep(step);
+  redirect(next ? stepPath(next) : FINISH_PATH);
+}
+
+/**
+ * De onboarding uitlopen. Zet alleen een tijdstempel: wélke stappen je
+ * oversloeg blijft leesbaar in dezelfde tabel, zodat Instellingen later kan
+ * laten zien wat er nog open ligt zonder opnieuw te gaan zeuren.
+ */
+export async function finishOnboarding() {
+  const userId = await currentUserId();
+  await withUser(userId, (tx) =>
+    tx.userSetting.upsert({
+      where: { user_id_key: { user_id: userId, key: FINISHED_KEY } },
+      create: { user_id: userId, key: FINISHED_KEY, value: new Date().toISOString() },
+      update: { value: new Date().toISOString() },
+    }),
+  );
+  revalidatePath("/onboarding", "layout");
+  revalidatePath("/");
+  redirect("/");
 }
 
 /**

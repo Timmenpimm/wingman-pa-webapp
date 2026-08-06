@@ -93,7 +93,7 @@ Beide draaien automatisch op elke pull request (`.github/workflows/ci.yml`).
 | Vandaag | `/` | frog afvinken/uitstellen, prioriteiten omzetten, bevestigingen leegmaken, capture |
 | Open eindjes | `/open-eindjes` | afgehandeld / herinner later / laat vallen |
 | Inbox | `/inbox` | triëren naar frog, prioriteit, open eindje of weg |
-| Onboarding | `/onboarding` | zeven stappen, elke koppeling geeft meteen iets terug |
+| Onboarding | `/onboarding` | wizard van vier stappen: koppelen, zien wat ik vind, en per bron de permissie |
 | Projecten | `/projecten` | één statusregel per project |
 | Week | `/week` | patronen, geen score |
 | Stijlkaart | `/stijlkaart` | drie registers uit verzonden mail |
