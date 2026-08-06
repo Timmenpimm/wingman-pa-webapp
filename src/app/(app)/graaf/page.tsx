@@ -24,8 +24,8 @@ export default async function GraafPage({
 
   return (
     <>
-      <p className="eyebrow">Privé · alleen van jou</p>
-      <h1 style={{ fontSize: "var(--t-xl)" }}>Vraag je graaf</h1>
+      <p className="eyebrow">Verbanden zien</p>
+      <h1 className="screen-title">{q ? `Waar hangt ${q} mee samen?` : "Vraag je graaf"}</h1>
 
       <form className="field" method="get" role="search">
         <input
@@ -79,7 +79,18 @@ export default async function GraafPage({
               organisatie.
             </div>
           ) : (
-            <div className="cards">
+            <>
+            <div className="graph-network" aria-label={`Verbanden rond ${q}`}>
+              {result.nodes.slice(0, 5).map((n, index) => (
+                <span key={n.id} className="graph-network__node" data-index={index} data-primary={index === 0}>
+                  {n.label}
+                </span>
+              ))}
+            </div>
+            <p className="graph-network__caption">
+              Deze verbanden komen samen in je eigen context. Open een resultaat voor de details.
+            </p>
+            <div className="cards graph-results">
               {result.nodes.map((n) => (
                 <article key={n.id} className="graph-result">
                   <p className="graph-result__type">{n.type}</p>
@@ -98,6 +109,7 @@ export default async function GraafPage({
                 </article>
               ))}
             </div>
+            </>
           )}
         </section>
       )}
