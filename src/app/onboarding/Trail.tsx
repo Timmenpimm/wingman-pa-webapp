@@ -17,21 +17,26 @@ export function Trail({ steps, current }: { steps: StepState[]; current: StepId 
   const currentNumber = steps.find((s) => s.id === current)?.number ?? 1;
 
   return (
-    <ol className="trail" aria-label="Voortgang">
-      {steps.map((step) => {
-        const isCurrent = step.id === current;
-        const reachable = step.done || step.number <= currentNumber;
+    <div className="ob-progress">
+      <p className="eyebrow ob-progress__count" aria-hidden="true">
+        {currentNumber} van {steps.length}
+      </p>
+      <ol className="trail" aria-label={`Voortgang: stap ${currentNumber} van ${steps.length}`}>
+        {steps.map((step) => {
+          const isCurrent = step.id === current;
+          const reachable = step.done || step.number <= currentNumber;
 
-        return (
-          <li key={step.id} className="trail__item" data-done={step.done} data-current={isCurrent}>
-            {reachable && !isCurrent ? (
-              <Link href={stepPath(step.id)}>{step.short}</Link>
-            ) : (
-              <span aria-current={isCurrent ? "step" : undefined}>{step.short}</span>
-            )}
-          </li>
-        );
-      })}
-    </ol>
+          return (
+            <li key={step.id} className="trail__item" data-done={step.done} data-current={isCurrent}>
+              {reachable && !isCurrent ? (
+                <Link href={stepPath(step.id)}>{step.short}</Link>
+              ) : (
+                <span aria-current={isCurrent ? "step" : undefined}>{step.short}</span>
+              )}
+            </li>
+          );
+        })}
+      </ol>
+    </div>
   );
 }

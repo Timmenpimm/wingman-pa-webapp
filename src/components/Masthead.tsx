@@ -14,6 +14,9 @@ import { MagnifyingGlass } from "@phosphor-icons/react";
 export function Masthead() {
   const path = usePathname();
   if (path === "/inloggen") return null;
+  // Tijdens de onboarding (referentie 2–7): wel het wordmark, niet de loep —
+  // de graaf is nog leeg en de wizard hoort geen zijuitgangen te hebben.
+  const inOnboarding = path.startsWith("/onboarding");
 
   return (
     <header className="masthead">
@@ -21,10 +24,12 @@ export function Masthead() {
         <Link href="/" className="wordmark">
           wingman
         </Link>
-        <Link href="/inzicht" className="masthead__search" aria-label="Vraag je verbindingen">
-          <MagnifyingGlass weight="regular" aria-hidden="true" />
-          <span className="sr-only">Vraag je verbindingen</span>
-        </Link>
+        {!inOnboarding && (
+          <Link href="/inzicht" className="masthead__search" aria-label="Vraag je verbindingen">
+            <MagnifyingGlass weight="regular" aria-hidden="true" />
+            <span className="sr-only">Vraag je verbindingen</span>
+          </Link>
+        )}
       </div>
     </header>
   );

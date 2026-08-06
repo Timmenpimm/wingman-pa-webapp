@@ -79,8 +79,9 @@ export default async function OnboardingKlaarPage() {
         </section>
       )}
 
-      <form action={finishOnboarding} className="btn-row" style={{ marginTop: "var(--s-6)" }}>
-        <button className="btn btn--primary" type="submit">
+      {/* Referentie 7.png: de afsluitknop is baanbreed. */}
+      <form action={finishOnboarding} style={{ marginTop: "var(--s-6)" }}>
+        <button className="btn btn--primary" type="submit" style={{ width: "100%" }}>
           Naar vandaag
         </button>
       </form>

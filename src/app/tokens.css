@@ -51,9 +51,13 @@
   --t-sm: 0.875rem; /* 14 — secundaire knoppen, subtekst */
   --t-base: 0.9375rem; /* 15 — lopende tekst */
   --t-md: 1rem; /* 16 — invoer, intro-tekst, coach */
-  --t-lg: 1.375rem; /* 22 — sectiekop */
-  --t-xl: 2.375rem; /* 38 — schermtitels en frog mobiel */
-  --t-2xl: 3rem; /* 48 — frog desktop */
+  --t-lg: 1.375rem; /* 22 — sectiekop, wordmark */
+  /* Schermtitels op 28px: in de referentie is de serif-kop één regel naast
+     veel inhoud, geen poster. De frog-titel is sans en nog kleiner — die kaart
+     wint op tint, niet op corpsgrootte. */
+  --t-xl: 1.75rem; /* 28 — schermtitels (serif, 1 regel) */
+  --t-frog: 1.25rem; /* 20 — frog-titel (sans, medium) */
+  --t-2xl: 2.375rem; /* 38 — gereserveerd voor uitzonderlijk grote koppen */
 
   --lh-tight: 1.15;
   --lh-snug: 1.35;
@@ -87,6 +91,10 @@
      bronbestand: alleen het telefoonframe zelf heeft een schaduw. */
   --shadow-card: none;
   --shadow-frog: none;
+
+  /* Zachte accent-gloed — uitsluitend voor het actieve navigatie-icoon en
+     vergelijkbare "dit ben jij nu"-signalen, niet als kaartdecoratie. */
+  --glow-accent: 0 0 12px rgba(102, 185, 247, 0.45);
 
   --measure: 62ch; /* leesbreedte */
   --page-max: 40rem;

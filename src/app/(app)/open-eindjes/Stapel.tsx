@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { resolveCommitment } from "@/lib/actions";
 import type { LooseEnd } from "@/lib/commitments";
+import { durationPhrase } from "@/lib/text";
 
 const SNOOZE_DAYS = 3;
 
@@ -33,21 +34,27 @@ export function Stapel({ items }: { items: LooseEnd[] }) {
   }
 
   return (
-    <ul className="action-cards loose-cards" aria-live="polite" aria-busy={pending}>
+    <ul className="oe-list" aria-live="polite" aria-busy={pending}>
       {visible.map((item) => {
         const waiting = item.direction === "they_owe";
 
         return (
-          <li key={item.id} className="action-card loose-card">
-            <p className="loose-card__title">{item.what}</p>
-            {item.context && <p className="row__sub">{item.context}</p>}
-            <p className="loose-card__meta">
-              {waiting ? `Wacht op ${item.party}` : `${item.party} wacht op jou`} · {item.source_label}
+          <li key={item.id} className="oe-card">
+            <p className="oe-card__title">{item.what}</p>
+            {/* Referentie 12.png: één regel context onder de titel. De
+                richting ("wacht op…") blijft de fallback als er geen
+                context is — dat onderscheid is het product, de regel de vorm. */}
+            {item.context && <p className="oe-card__sub">{item.context}</p>}
+            {/* Wie, hoe lang open en bron horen altijd zichtbaar te zijn (§6.2) —
+                context is aanvulling, geen vervanging. */}
+            <p className="oe-card__meta">
+              {waiting ? `Wacht op ${item.party}` : `${item.party} wacht op jou`} ·{" "}
+              {durationPhrase(item.opened_at)} open · {item.source_label}
             </p>
-            <div className="row__actions">
+            <div className="oe-card__actions">
               <button
                 type="button"
-                className="btn btn--quiet"
+                className="btn btn--chip"
                 onClick={() => act(item.id, "done")}
                 disabled={pending}
               >
@@ -55,7 +62,7 @@ export function Stapel({ items }: { items: LooseEnd[] }) {
               </button>
               <button
                 type="button"
-                className="btn btn--quiet"
+                className="btn btn--chip"
                 onClick={() => act(item.id, "snoozed")}
                 disabled={pending}
               >
@@ -63,7 +70,7 @@ export function Stapel({ items }: { items: LooseEnd[] }) {
               </button>
               <button
                 type="button"
-                className="btn btn--quiet"
+                className="btn btn--chip"
                 onClick={() => act(item.id, "dismissed")}
                 disabled={pending}
               >

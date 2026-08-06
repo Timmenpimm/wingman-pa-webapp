@@ -1,0 +1,76 @@
+/* Stijlkaart (design-reference/screens/16.png) — per register een kaart met
+   gekleurde linkerbalk, registernaam in dezelfde tint en de voorbeeldzin
+   cursief in quote-stijl. Prefix .sk-. */
+
+.sk-registers {
+  display: grid;
+  gap: var(--s-3);
+  margin-top: var(--s-5);
+}
+
+/* Per-register tint zoals de PNG: blauw, paars, groen. Lokale waarden —
+   tokens.css kent bewust maar één accent, dus deze blijven schermgebonden. */
+.sk-register {
+  --sk-tone: var(--accent);
+  padding: var(--s-4) var(--s-5);
+  border: 1px solid var(--rule-strong);
+  border-left: 0.25rem solid var(--sk-tone);
+  border-radius: var(--r-md);
+  background: var(--paper-raised);
+}
+
+.sk-register[data-tone="1"] { --sk-tone: #a78bfa; }
+.sk-register[data-tone="2"] { --sk-tone: #7fd8a4; }
+
+.sk-register h2 {
+  font-family: var(--font-sans);
+  font-size: var(--t-md);
+  font-weight: var(--w-semi);
+  color: color-mix(in srgb, var(--sk-tone) 78%, var(--ink));
+}
+
+.sk-register__quote {
+  margin-top: var(--s-2);
+  color: var(--ink-body);
+  font-size: var(--t-base);
+  font-style: italic;
+  line-height: var(--lh-body);
+}
+
+.sk-register__edit {
+  margin-top: var(--s-3);
+}
+
+.sk-register__edit summary {
+  color: var(--accent-ink);
+  cursor: pointer;
+  font-size: var(--t-xs);
+  font-weight: var(--w-semi);
+}
+
+.sk-register__edit form {
+  margin-top: var(--s-4);
+}
+
+/* "Wat opvalt"-afsluiter — neutrale kaart zonder kleurbalk, zoals de PNG. */
+.sk-note {
+  margin-top: var(--s-4);
+  padding: var(--s-4) var(--s-5);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-md);
+  background: var(--paper-raised);
+}
+
+.sk-note h2 {
+  font-family: var(--font-sans);
+  font-size: var(--t-md);
+  font-weight: var(--w-semi);
+  color: var(--ink);
+}
+
+.sk-note p {
+  margin-top: var(--s-2);
+  color: var(--ink-muted);
+  font-size: var(--t-sm);
+  line-height: var(--lh-body);
+}

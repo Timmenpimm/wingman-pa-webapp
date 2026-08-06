@@ -1,0 +1,96 @@
+/* Week (design-reference/screens/15.png) — periode-overline, dagletters-strip
+   met accent op vandaag en een punt op dagen met een bewaarde briefing,
+   daaronder patroon-kaarten met klein icoon. Prefix .wk-. */
+
+.wk-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--s-2);
+  margin-top: var(--s-5);
+}
+
+.wk-day {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: var(--s-2);
+  min-height: 4.25rem;
+  border-radius: var(--r-sm);
+  border: 1px solid transparent;
+  background: var(--paper-raised);
+  color: var(--ink-muted);
+  font-size: var(--t-xs);
+  font-weight: var(--w-semi);
+  letter-spacing: 0.04em;
+}
+
+/* Punt onder de letter: alleen zichtbaar op dagen met een bewaarde briefing. */
+.wk-day__dot {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.wk-day[data-marked="true"] .wk-day__dot {
+  background: var(--accent);
+}
+
+/* Vandaag: gevulde accentcel, zoals de DO-cel in de PNG. */
+.wk-day[data-current="true"] {
+  background: color-mix(in srgb, var(--accent) 32%, var(--paper-raised));
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--rule-strong));
+  color: var(--ink);
+}
+
+.wk-day[data-current="true"] .wk-day__dot {
+  background: var(--accent-ink);
+}
+
+.wk-insights {
+  display: grid;
+  gap: var(--s-3);
+  margin-top: var(--s-5);
+}
+
+.wk-insight {
+  display: flex;
+  gap: var(--s-3);
+  align-items: flex-start;
+  padding: var(--s-4) var(--s-5);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-lg);
+  background: var(--paper-raised);
+}
+
+/* Klein icoon, dun lijnwerk, accentkleur — geen cirkelschijf, de PNG toont
+   de kaarttitel als drager en het icoon als steun. */
+.wk-insight__icon {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--accent);
+}
+
+.wk-insight__icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  display: block;
+}
+
+.wk-insight__body {
+  min-width: 0;
+}
+
+.wk-insight h2 {
+  font-family: var(--font-sans);
+  font-size: var(--t-md);
+  font-weight: var(--w-semi);
+  line-height: var(--lh-snug);
+}
+
+.wk-insight p {
+  margin-top: var(--s-2);
+  color: var(--ink-muted);
+  font-size: var(--t-sm);
+  line-height: var(--lh-body);
+}

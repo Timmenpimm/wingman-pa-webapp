@@ -1,0 +1,74 @@
+/* Inbox — schermopmaak bij design-reference/screens/13.png.
+ * Alleen dit scherm; klassen geprefixt met .ib- (zie SPEC.md spelregels). */
+
+/* Kopregel: overline + serif-titel links, teller "N NIEUW" rechts. */
+.ib-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+
+/* Zelfde vorm als een overline, maar rechts uitgelijnd en niet klikbaar. */
+.ib-head__count {
+  flex: none;
+  margin-top: 2px;
+  font-size: 0.6875rem;
+  font-weight: var(--w-semi);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-ink);
+  white-space: nowrap;
+}
+
+/* Stapel: compacte kaarten, dichter op elkaar dan de oude action-cards. */
+.ib-list {
+  list-style: none;
+  margin: var(--s-5) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--s-3);
+}
+
+.ib-card {
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-md);
+  padding: var(--s-4);
+}
+
+.ib-card__title {
+  margin: 0;
+  font-size: var(--t-md);
+  font-weight: var(--w-semi);
+  color: var(--ink);
+  line-height: var(--lh-snug);
+}
+
+/* Eén regel bron/context, muted ("via Siri"). */
+.ib-card__sub {
+  margin: var(--s-1) 0 0;
+  font-size: var(--t-sm);
+  color: var(--ink-muted);
+  line-height: var(--lh-snug);
+}
+
+/* Vier chipknoppen in één rij (13.png): gelijk verdeeld, en een lang label
+   als "Open eindje" wrapt bínnen de chip in plaats van naar een tweede rij. */
+.ib-card__actions {
+  display: flex;
+  gap: var(--s-2);
+  margin-top: var(--s-3);
+}
+
+.ib-card__actions form {
+  display: contents;
+}
+
+.ib-card__actions .btn--chip {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: var(--s-2);
+  text-align: center;
+  line-height: 1.25;
+}

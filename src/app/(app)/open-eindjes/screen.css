@@ -1,0 +1,85 @@
+/* Open eindjes — schermopmaak bij design-reference/screens/12.png.
+ * Alleen dit scherm; klassen geprefixt met .oe- (zie SPEC.md spelregels). */
+
+/* Kopregel: overline + serif-titel links, klein vierkant-afgerond
+   filterknopje rechts (zelfde maat en vorm als het masthead-icoon). */
+.oe-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+
+.oe-head__icon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid var(--rule);
+  background: var(--paper-raised);
+  border-radius: var(--r-sm);
+  color: var(--ink-muted);
+  transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+
+/* Phosphor tekent met fill; alleen de maat hoort hier. */
+.oe-head__icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.oe-head__icon:hover {
+  color: var(--ink);
+  border-color: var(--rule-strong);
+}
+
+/* Stapel: compacte kaarten met kleine verticale gaps. */
+.oe-list {
+  list-style: none;
+  margin: var(--s-5) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--s-3);
+}
+
+.oe-card {
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-md);
+  padding: var(--s-4);
+}
+
+/* Sans-titel ±16px — de serif is voorbehouden aan de schermkop. */
+.oe-card__title {
+  margin: 0;
+  font-size: var(--t-md);
+  font-weight: var(--w-semi);
+  color: var(--ink);
+  line-height: var(--lh-snug);
+}
+
+/* Eén regel context, muted. */
+.oe-card__sub {
+  margin: var(--s-1) 0 0;
+  font-size: var(--t-sm);
+  color: var(--ink-muted);
+  line-height: var(--lh-snug);
+}
+
+/* Wie · hoe lang open · bron — kleiner en stiller dan de contextregel. */
+.oe-card__meta {
+  margin: var(--s-1) 0 0;
+  font-size: var(--t-xs);
+  color: var(--ink-faint);
+  line-height: var(--lh-snug);
+}
+
+/* Drie chipknoppen naast elkaar; wrap alleen als de NL-labels niet passen. */
+.oe-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-top: var(--s-3);
+}

@@ -1,12 +1,17 @@
 import { currentUserId, withUser } from "@/lib/db/client";
 import { triageInbox } from "@/lib/actions";
 import { CaptureField } from "@/components/CaptureField";
+import "./screen.css";
 
 export const dynamic = "force-dynamic";
 
 /**
  * Inbox (§6.8) — één item tegelijk triëren, vier uitgangen, geen submenu's.
  * De snelste route is altijd zichtbaar: elk item is in één klik weg.
+ *
+ * Vorm volgt design-reference/screens/13.png: compacte kaarten met titel,
+ * één regel bron/context en vier chipknoppen; rechts in de kop de teller
+ * "N NIEUW" (echt aantal, geen vaste "6").
  */
 export default async function InboxPage() {
   const userId = await currentUserId();
@@ -26,8 +31,13 @@ export default async function InboxPage() {
 
   return (
     <>
-      <p className="eyebrow">Eerst even kijken</p>
-      <h1 className="screen-title">Inbox</h1>
+      <header className="ib-head">
+        <div>
+          <p className="eyebrow">Eerst even kijken</p>
+          <h1 className="screen-title">Inbox</h1>
+        </div>
+        {items.length > 0 && <span className="ib-head__count">{items.length} nieuw</span>}
+      </header>
       <p className="lede screen-lede">Geef ieder signaal een rustige volgende stap.</p>
 
       {items.length === 0 ? (
@@ -36,52 +46,50 @@ export default async function InboxPage() {
           Wat je onderweg vastlegt — via de app, Siri of een doorgestuurde mail — landt hier.
         </div>
       ) : (
-        <ul className="action-cards">
+        <ul className="ib-list">
           {items.map((item) => (
-            <li key={item.id}>
-              <div className="action-card">
-                <div className="row__body">
-                  <span className="row__title">{item.text}</span>
-                  <span className="row__sub">via {SOURCE_LABEL[item.source] ?? item.source}</span>
-                  <div className="row__actions">
-                    <form action={triageInbox.bind(null, item.id, "frog")}>
-                      <button
-                        className="btn btn--quiet"
-                        type="submit"
-                        aria-label={`Maak frog van: ${item.text}`}
-                      >
-                        Frog
-                      </button>
-                    </form>
-                    <form action={triageInbox.bind(null, item.id, "priority")}>
-                      <button
-                        className="btn btn--quiet"
-                        type="submit"
-                        aria-label={`Maak prioriteit van: ${item.text}`}
-                      >
-                        Prioriteit
-                      </button>
-                    </form>
-                    <form action={triageInbox.bind(null, item.id, "commitment")}>
-                      <button
-                        className="btn btn--quiet"
-                        type="submit"
-                        aria-label={`Maak open eindje van: ${item.text}`}
-                      >
-                        Open eindje
-                      </button>
-                    </form>
-                    <form action={triageInbox.bind(null, item.id, "dropped")}>
-                      <button
-                        className="btn btn--text"
-                        type="submit"
-                        aria-label={`Weg: ${item.text}`}
-                      >
-                        Verwijder
-                      </button>
-                    </form>
-                  </div>
-                </div>
+            <li key={item.id} className="ib-card">
+              <p className="ib-card__title">{item.text}</p>
+              <p className="ib-card__sub">via {SOURCE_LABEL[item.source] ?? item.source}</p>
+              <div className="ib-card__actions">
+                <form action={triageInbox.bind(null, item.id, "frog")}>
+                  <button
+                    className="btn btn--chip"
+                    type="submit"
+                    aria-label={`Maak frog van: ${item.text}`}
+                  >
+                    Frog
+                  </button>
+                </form>
+                <form action={triageInbox.bind(null, item.id, "priority")}>
+                  <button
+                    className="btn btn--chip"
+                    type="submit"
+                    aria-label={`Maak prioriteit van: ${item.text}`}
+                  >
+                    Prioriteit
+                  </button>
+                </form>
+                <form action={triageInbox.bind(null, item.id, "commitment")}>
+                  <button
+                    className="btn btn--chip"
+                    type="submit"
+                    aria-label={`Maak open eindje van: ${item.text}`}
+                  >
+                    Open eindje
+                  </button>
+                </form>
+                {/* Chip, geen verstopte tekstknop: "laat vallen" hoort even
+                    makkelijk te zijn als de andere drie uitgangen. */}
+                <form action={triageInbox.bind(null, item.id, "dropped")}>
+                  <button
+                    className="btn btn--chip"
+                    type="submit"
+                    aria-label={`Weg: ${item.text}`}
+                  >
+                    Verwijder
+                  </button>
+                </form>
               </div>
             </li>
           ))}

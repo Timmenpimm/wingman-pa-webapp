@@ -188,7 +188,7 @@ export default async function ProjectDetail({ params }: { params: { id: string }
 
       <p className="meta" style={{ marginTop: "var(--s-6)" }}>
         <Link href={`/inzicht?q=${encodeURIComponent(project.name)}`}>
-          Bekijk {project.name} in de graaf
+          Bekijk waar {project.name} mee samenhangt
         </Link>
       </p>
     </>
