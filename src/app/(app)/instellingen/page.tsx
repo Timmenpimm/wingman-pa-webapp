@@ -69,10 +69,9 @@ export default async function InstellingenPage() {
       <p className="eyebrow">Zeggenschap</p>
       <h1 className="screen-title">Instellingen</h1>
 
-      <section className="section">
+      <section className="section settings-section settings-section--sources">
         <div className="section__head">
-          <h2>Bronnen</h2>
-          <span className="section__note">status en wat ik ermee mag</span>
+          <h2>Bronnen &amp; permissies</h2>
         </div>
 
         <ul className="list settings-sources">
@@ -120,6 +119,7 @@ export default async function InstellingenPage() {
       </section>
 
       <section className="connector-summary" data-ok={allConnected}>
+        <p className="eyebrow">Connectorstatus</p>
         <strong>{allConnected ? "Alles verbonden" : "Aandacht nodig"}</strong>
         <span>
           {allConnected
@@ -219,10 +219,9 @@ export default async function InstellingenPage() {
         </div>
       </section>
 
-      <section className="section">
+      <section className="section settings-section settings-section--rules">
         <div className="section__head">
-          <h2>Momenten</h2>
-          <span className="section__note">drie vaste, tijdstip mag je verzetten</span>
+          <h2>Jouw regels</h2>
         </div>
         <p className="row__sub" style={{ maxWidth: "var(--measure)" }}>
           Het middagmoment zwijgt op een dag zonder afwijking. Dat is geen storing: een
