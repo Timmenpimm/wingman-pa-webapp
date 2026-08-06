@@ -62,11 +62,12 @@ export default async function InstellingenPage() {
   ]);
 
   const setting = (key: string) => settings.find((s) => s.key === key)?.value;
+  const allConnected = connectors.length > 0 && connectors.every((connector) => connector.status === "active");
 
   return (
     <>
       <p className="eyebrow">Wat mag ik, en werkt het nog</p>
-      <h1 style={{ fontSize: "var(--t-xl)" }}>Instellingen</h1>
+      <h1 className="screen-title">Instellingen</h1>
 
       <section className="section">
         <div className="section__head">
@@ -74,7 +75,7 @@ export default async function InstellingenPage() {
           <span className="section__note">status en wat ik ermee mag</span>
         </div>
 
-        <ul className="list">
+        <ul className="list settings-sources">
           {connectors.map((c) => (
             <li key={c.id} className="conn">
             <div className="conn__name">
@@ -116,6 +117,15 @@ export default async function InstellingenPage() {
             </li>
           ))}
         </ul>
+      </section>
+
+      <section className="connector-summary" data-ok={allConnected}>
+        <strong>{allConnected ? "Alles verbonden" : "Aandacht nodig"}</strong>
+        <span>
+          {allConnected
+            ? "Je bronnen zijn beschikbaar voor je volgende briefing."
+            : "Een of meer bronnen hebben opnieuw aandacht nodig."}
+        </span>
       </section>
 
       {pending.length > 0 && (
@@ -353,4 +363,3 @@ async function logout() {
   "use server";
   await signOut({ redirectTo: "/inloggen" });
 }
-
