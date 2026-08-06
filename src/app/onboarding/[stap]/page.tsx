@@ -69,15 +69,13 @@ export default async function OnboardingStepPage({ params }: { params: { stap: s
 
   return (
     <>
-      <p className="eyebrow">
-        Stap {state.number} van {steps.length}
-      </p>
-      <h1 style={{ fontSize: "var(--t-xl)" }}>{definition.title}</h1>
-      <p className="lede" style={{ marginTop: "var(--s-3)" }}>
-        {LEDE[step]}
-      </p>
-
       <Trail steps={steps} current={step} />
+
+      <p className="eyebrow wizard__eyebrow">
+        {definition.short}
+      </p>
+      <h1 className="screen-title">{definition.title}</h1>
+      <p className="lede screen-lede">{LEDE[step]}</p>
 
       {state.status === "connected" ? (
         <>

@@ -34,19 +34,19 @@ export default async function ProjectenPage() {
   return (
     <>
       <p className="eyebrow">Wat er loopt</p>
-      <h1 style={{ fontSize: "var(--t-xl)" }}>Projecten</h1>
+      <h1 className="screen-title">Projecten</h1>
 
-      <div className="cards cards--2" style={{ marginTop: "var(--s-5)" }}>
-        {projects.map((p) => (
-          <article key={p.id} className="card">
-            <h2 className="card__title">
-              <Link href={`/projecten/${p.id}`}>{p.name}</Link>
-            </h2>
-            <p className="card__line">{p.status_line ?? STATUS[p.status]}</p>
-            <div className="chips">
-              <span className="chip">{STATUS[p.status] ?? p.status}</span>
+      <div className="project-panel">
+        {projects.map((p, index) => (
+          <article key={p.id} className="project-row">
+            <span className="project-row__dot" data-tone={index % 4} aria-hidden="true" />
+            <div className="project-row__body">
+              <h2>
+                <Link href={`/projecten/${p.id}`}>{p.name}</Link>
+              </h2>
+              <p>{p.status_line ?? STATUS[p.status]}</p>
               {openPer.get(p.name) ? (
-                <span className="chip chip--accent">{openPer.get(p.name)} open eindje(s)</span>
+                <span className="project-row__meta">{openPer.get(p.name)} open eindje(s)</span>
               ) : null}
             </div>
           </article>

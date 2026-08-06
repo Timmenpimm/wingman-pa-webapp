@@ -27,7 +27,8 @@ export default async function InboxPage() {
   return (
     <>
       <p className="eyebrow">Ongesorteerd</p>
-      <h1 style={{ fontSize: "var(--t-xl)" }}>Inbox</h1>
+      <h1 className="screen-title">Inbox</h1>
+      <p className="lede screen-lede">Geef ieder signaal een rustige volgende stap.</p>
 
       {items.length === 0 ? (
         <div className="empty" style={{ marginTop: "var(--s-5)" }}>
@@ -35,23 +36,21 @@ export default async function InboxPage() {
           Wat je onderweg vastlegt — via de app, Siri of een doorgestuurde mail — landt hier.
         </div>
       ) : (
-        <ul className="list" style={{ marginTop: "var(--s-5)" }}>
+        <ul className="action-cards">
           {items.map((item) => (
             <li key={item.id}>
-              <div className="row">
+              <div className="action-card">
                 <div className="row__body">
                   <span className="row__title">{item.text}</span>
                   <span className="row__sub">via {SOURCE_LABEL[item.source] ?? item.source}</span>
                   <div className="row__actions">
-                    {/* Vier keer dezelfde knoptekst per item: zonder aria-label
-                        hoort een schermlezer alleen "Maak frog, Maak frog, …" */}
                     <form action={triageInbox.bind(null, item.id, "frog")}>
                       <button
                         className="btn btn--quiet"
                         type="submit"
                         aria-label={`Maak frog van: ${item.text}`}
                       >
-                        Maak frog
+                        Frog
                       </button>
                     </form>
                     <form action={triageInbox.bind(null, item.id, "priority")}>
@@ -78,7 +77,7 @@ export default async function InboxPage() {
                         type="submit"
                         aria-label={`Weg: ${item.text}`}
                       >
-                        Weg
+                        Verwijder
                       </button>
                     </form>
                   </div>
