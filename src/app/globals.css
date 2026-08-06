@@ -874,6 +874,41 @@ button {
   margin-top: var(--s-5);
 }
 
+.settings-sources .conn {
+  align-items: center;
+  padding: var(--s-4);
+}
+
+.settings-sources .conn form {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.connector-summary {
+  display: grid;
+  gap: var(--s-2);
+  margin-top: var(--s-5);
+  padding: var(--s-5);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-lg);
+  background: var(--paper-sunk);
+}
+
+.connector-summary strong {
+  color: var(--accent-ink);
+  font-size: var(--t-md);
+}
+
+.connector-summary:not([data-ok="true"]) strong {
+  color: var(--signal);
+}
+
+.connector-summary span {
+  color: var(--ink-muted);
+  font-size: var(--t-sm);
+}
+
 @media (min-width: 700px) {
   .cards--2 {
     grid-template-columns: 1fr 1fr;
