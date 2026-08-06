@@ -36,7 +36,6 @@ export function Stapel({ items }: { items: LooseEnd[] }) {
     <ul className="action-cards loose-cards" aria-live="polite" aria-busy={pending}>
       {visible.map((item) => {
         const waiting = item.direction === "they_owe";
-        const primary = waiting ? "Herinner me" : "Afhandelen";
 
         return (
           <li key={item.id} className="action-card loose-card">
@@ -52,7 +51,7 @@ export function Stapel({ items }: { items: LooseEnd[] }) {
                 onClick={() => act(item.id, "done")}
                 disabled={pending}
               >
-                {primary}
+                Afhandelen
               </button>
               <button
                 type="button"

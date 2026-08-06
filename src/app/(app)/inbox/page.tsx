@@ -26,7 +26,7 @@ export default async function InboxPage() {
 
   return (
     <>
-      <p className="eyebrow">Ongesorteerd</p>
+      <p className="eyebrow">Eerst even kijken</p>
       <h1 className="screen-title">Inbox</h1>
       <p className="lede screen-lede">Geef ieder signaal een rustige volgende stap.</p>
 
