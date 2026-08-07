@@ -22,6 +22,42 @@
   color: var(--accent-ink);
 }
 
+/* Profielrij (referentiebeeld: initialen-avatar + naam + e-mail bovenaan). */
+.st-profile {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  margin-top: var(--s-4);
+}
+
+.st-profile__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex-shrink: 0;
+  border-radius: var(--r-pill);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  font-family: var(--font-serif);
+  font-size: var(--t-lg);
+}
+
+.st-profile__name {
+  display: block;
+  color: var(--ink);
+  font-weight: var(--w-semi);
+  line-height: var(--lh-snug);
+}
+
+.st-profile__email {
+  display: block;
+  color: var(--ink-muted);
+  font-size: var(--t-sm);
+  line-height: var(--lh-snug);
+}
+
 /* Sectie met overline-kop, dichtheid van de referentie. */
 .st-sec {
   margin-top: var(--s-6);

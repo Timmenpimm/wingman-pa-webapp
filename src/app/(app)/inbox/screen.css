@@ -37,6 +37,13 @@
   padding: var(--s-4);
 }
 
+.ib-card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-2);
+  margin-bottom: var(--s-3);
+}
+
 .ib-card__title {
   margin: 0;
   font-size: var(--t-md);

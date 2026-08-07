@@ -1,6 +1,7 @@
 import { currentUserId, withUser } from "@/lib/db/client";
 import { triageInbox } from "@/lib/actions";
 import { CaptureField } from "@/components/CaptureField";
+import { SourceIcon } from "@/components/SourceIcon";
 import "./screen.css";
 
 export const dynamic = "force-dynamic";
@@ -49,8 +50,13 @@ export default async function InboxPage() {
         <ul className="ib-list">
           {items.map((item) => (
             <li key={item.id} className="ib-card">
-              <p className="ib-card__title">{item.text}</p>
-              <p className="ib-card__sub">via {SOURCE_LABEL[item.source] ?? item.source}</p>
+              <div className="ib-card__head">
+                <SourceIcon kind={item.source} size="sm" />
+                <div>
+                  <p className="ib-card__title">{item.text}</p>
+                  <p className="ib-card__sub">via {SOURCE_LABEL[item.source] ?? item.source}</p>
+                </div>
+              </div>
               <div className="ib-card__actions">
                 <form action={triageInbox.bind(null, item.id, "frog")}>
                   <button
