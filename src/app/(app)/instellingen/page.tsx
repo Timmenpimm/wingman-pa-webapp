@@ -1,8 +1,11 @@
 import { EmailForm } from "./EmailForm";
 import { RUN_KINDS, RUN_LABELS } from "@/lib/runs/schedule";
 import { currentUserId, withUser } from "@/lib/db/client";
-import { decideTool, setConnectorPermission, updateRun } from "@/lib/actions";
+import { connectGoogle, decideTool, setConnectorPermission, updateRun } from "@/lib/actions";
 import { PERMISSION_LABELS } from "@/lib/types";
+import { addableRows, catalogRows } from "@/connectors/catalog";
+import { authUrlFor } from "@/connectors";
+import { marksFromSettings } from "@/lib/onboarding/steps";
 import Link from "next/link";
 import { CaretRight } from "@phosphor-icons/react/dist/ssr";
 import { SourceIcon } from "@/components/SourceIcon";
@@ -65,8 +68,24 @@ export default async function InstellingenPage() {
   ]);
 
   const setting = (key: string) => settings.find((s) => s.key === key)?.value;
-  const allConnected = connectors.length > 0 && connectors.every((connector) => connector.status === "active");
-  const lastSync = connectors.reduce<Date | null>((acc, c) => {
+
+  // Een rij in `not_connected` is geen bron die je hébt: een permissiekeuze
+  // voor een bron die niets doet is een knop zonder gevolg. Die hoort hieronder
+  // bij "Bron toevoegen" thuis, en daar staat hij nu ook — anders twee keer.
+  const gekoppeld = connectors.filter((c) => c.status !== "not_connected");
+
+  // Wat er nog bij kan. Zonder dit blok is de onboarding de enige plek waar je
+  // een bron toevoegt, en wie de bank daar oversloeg kwam er nooit meer langs.
+  const teKoppelen = addableRows(
+    catalogRows({
+      connected: gekoppeld.map((c) => c.provider),
+      marks: marksFromSettings(settings),
+      googleConfigured: Boolean(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET),
+      pontoUrl: authUrlFor("ponto"),
+    }),
+  );
+  const allConnected = gekoppeld.length > 0 && gekoppeld.every((connector) => connector.status === "active");
+  const lastSync = gekoppeld.reduce<Date | null>((acc, c) => {
     if (!c.last_sync_at) return acc;
     const d = new Date(c.last_sync_at);
     return !acc || d > acc ? d : acc;
@@ -96,7 +115,7 @@ export default async function InstellingenPage() {
         </div>
 
         <ul className="st-rows">
-          {connectors.map((c) => (
+          {gekoppeld.map((c) => (
             <li key={c.id}>
               <div className="st-row">
                 <SourceIcon kind={c.provider} size="sm" />
@@ -142,6 +161,48 @@ export default async function InstellingenPage() {
           ))}
         </ul>
       </section>
+
+      {teKoppelen.length > 0 && (
+        <section className="st-sec">
+          <div className="st-sec__head">
+            <h2>Bron toevoegen</h2>
+            <span className="st-sec__note">wat er nog bij kan</span>
+          </div>
+
+          <ul className="st-rows">
+            {teKoppelen.map((bron) => (
+              <li key={bron.provider}>
+                <div className="st-row">
+                  <SourceIcon kind={bron.provider} size="sm" />
+                  <div className="st-row__body">
+                    <span className="st-row__title">{bron.label}</span>
+                    <span className="st-row__sub">
+                      {bron.skipped ? "je sloeg deze over · " : ""}
+                      {bron.note}
+                    </span>
+                  </div>
+
+                  {/* Geen knop zonder weg naar buiten: een "Koppelen" die
+                      achter de schermen 501 teruggeeft is erger dan geen knop. */}
+                  {bron.connect?.kind === "google" ? (
+                    <form action={connectGoogleFromSettings}>
+                      <button className="btn btn--text" type="submit">
+                        Koppelen
+                      </button>
+                    </form>
+                  ) : bron.connect ? (
+                    <Link className="btn btn--text" href={bron.connect.href}>
+                      Koppelen
+                    </Link>
+                  ) : (
+                    <span className="st-row__sub">kan nog niet</span>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="st-sec">
         <div className="st-sec__head">
@@ -390,6 +451,12 @@ export default async function InstellingenPage() {
 async function setPermissionFromForm(id: string, data: FormData) {
   "use server";
   await setConnectorPermission(id, String(data.get("permission") ?? "propose"));
+}
+
+/** Koppelen vanaf Instellingen komt ook op Instellingen terug, niet in de wizard. */
+async function connectGoogleFromSettings() {
+  "use server";
+  await connectGoogle("instellingen");
 }
 
 async function decideFromForm(id: string, decision: "approve" | "reject") {

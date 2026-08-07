@@ -252,8 +252,21 @@ export async function setConnectorPermission(id: string, permission: string) {
  * komt in dat andere account terecht. Dat is bestaand gedrag van de
  * signIn-callback (koppelen op e-mailadres), niet iets dat hier ontstaat.
  */
-export async function connectGoogle(step: string) {
-  await signIn("google", { redirectTo: isStepId(step) ? stepPath(step) : "/onboarding" });
+export async function connectGoogle(vanaf: string) {
+  await signIn("google", { redirectTo: terugPad(vanaf) });
+}
+
+/**
+ * Waar de gebruiker na het consentscherm terugkomt: de stap waar hij stond, of
+ * Instellingen — sinds "Bron toevoegen" kun je daar ook koppelen, en dan in de
+ * wizard belanden is een verdwaling.
+ *
+ * Alleen bekende namen worden een pad. Een pad dat van buiten komt zou hier
+ * anders een open redirect zijn.
+ */
+function terugPad(vanaf: string): string {
+  if (isStepId(vanaf)) return stepPath(vanaf);
+  return vanaf === "instellingen" ? "/instellingen" : "/onboarding";
 }
 
 /**
