@@ -16,9 +16,16 @@ export function GET() {
     background_color: "#f4f5f7",
     theme_color: "#f4f5f7",
     lang: "nl",
+    // SVG alleen laten voor "any" negeert iOS: die snapt geen SVG voor het
+    // home-scherm en valt terug op een schermafdruk-bookmark. PNG's op vaste
+    // afmetingen dekken favicon (192) en manifest (192/512); de maskable
+    // variant is een los bestand met een kleiner, ruimer gecentreerd
+    // merkteken — dezelfde afbeelding op "any" en "maskable" zetten zou de
+    // W onder Android's cirkel-uitsnede laten wegvallen.
     icons: [
-      { src: "/icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any" },
-      { src: "/icon.svg", sizes: "any", type: "image/svg+xml", purpose: "maskable" },
+      { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+      { src: "/icon-512-maskable.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
   });
 }

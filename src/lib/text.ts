@@ -15,6 +15,10 @@ export const BUDGET = {
   frogImplement: 200,
   coach: 250,
   priority: 80,
+  // De subregel onder een prioriteit wordt niet door de LLM geschreven maar
+  // samengesteld uit party + opened_at. Toch een budget: hij komt van dezelfde
+  // kant als frogSub en een lange partijnaam laat de regel anders omslaan.
+  prioritySub: 120,
   looseEndTitle: 100,
   looseEndDescription: 200,
   transaction: 120,

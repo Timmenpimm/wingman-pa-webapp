@@ -75,7 +75,11 @@ export async function getBriefingToday(
 
     const priorities = (JSON.parse(briefing.priorities) as Priority[])
       .slice(0, MAX_PRIORITIES)
-      .map((p) => ({ ...p, text: clamp(p.text, "priority") }));
+      .map((p) => ({
+        ...p,
+        text: clamp(p.text, "priority"),
+        sub: p.sub ? clamp(p.sub, "prioritySub") : undefined,
+      }));
 
     const confirmations = (JSON.parse(briefing.confirmations) as Confirmation[]).map((c) => ({
       ...c,
@@ -160,7 +164,7 @@ export function toDateKey(d: Date): string {
   ).padStart(2, "0")}`;
 }
 
-type Priority = { id: string; text: string; done: boolean };
+type Priority = BriefingToday["priorities"][number];
 type Confirmation = { id: string; text: string; answered: boolean };
 type EventRow = {
   id: string;

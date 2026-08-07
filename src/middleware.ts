@@ -6,7 +6,8 @@ import { authConfig } from "../auth.config";
  * Toegangsslot — nu sessiecontrole in plaats van één gedeeld wachtwoord.
  *
  * Dit is de enige toegangspoort tot productie (zie het `matcher` hieronder:
- * alles behalve statische build-assets en het PWA-icoon loopt hierdoorheen).
+ * alles behalve de statische build-assets, het manifest en de icoonbestanden
+ * loopt hierdoorheen).
  * Een gat hier betekent dat de hele app open staat, inclusief /api/v1/* dat
  * agenda-, mail- en bankgegevens teruggeeft — dus strikt, niet slim:
  *
@@ -70,7 +71,22 @@ export default auth((req) => {
 });
 
 export const config = {
-  // Alles achter het slot, ook de API. Alleen de statische build-assets en het
-  // PWA-icoon blijven vrij, anders laadt het inlogscherm zichzelf niet.
-  matcher: ["/((?!_next/static|_next/image|icon.svg|favicon.ico).*)"],
+  // Alles achter het slot, ook de API. Vrij blijven: de statische build-assets,
+  // het manifest en alle icoonbestanden.
+  //
+  // Het manifest en de iconen moeten uitgezonderd worden omdat de browser ze
+  // ophaalt op /inloggen — dus juist zonder sessie. Stonden ze achter het slot,
+  // dan kreeg de installatieprompt een redirect naar HTML in plaats van JSON en
+  // viel iOS terug op een schermafdruk-bookmark. Ze bevatten geen
+  // gebruikersgegevens: alleen de app-naam, de kleuren en de icoonpaden.
+  //
+  // De icoonregels staan bewust op bestandsnaam en niet op voorvoegsel: het
+  // patroon eist een extensie én het einde van het pad ($). "icon" als kaal
+  // voorvoegsel zou elke toekomstige route die met die letters begint
+  // (/icons-beheer, /apple-icon-instellingen) buiten het slot zetten — een gat
+  // dat niemand opmerkt tot hij er is. Zo gedekt: icon.svg, icon-maskable.svg,
+  // icon.png, icon-192.png, icon-512.png, icon-512-maskable.png, apple-icon.png.
+  matcher: [
+    "/((?!_next/static|_next/image|favicon\\.ico$|manifest\\.webmanifest$|icon[\\w-]*\\.svg$|icon[\\w-]*\\.png$|apple-icon\\.png$).*)",
+  ],
 };

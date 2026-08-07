@@ -1,4 +1,8 @@
+<!-- Grond: accent-strong-token uit tokens.css (diep marineblauw, de enige
+     accent in het lichte thema). Merkteken: wit — DESIGN.md verbiedt
+     rood/oranje expliciet, dus geen kleur op het merkteken zelf. Vorm
+     ongewijzigd. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Wingman">
-  <rect width="512" height="512" rx="112" fill="#201e1d"/>
-  <path d="M128 176l56 176 44-124 44 124 56-176" fill="none" stroke="#ff563c" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect width="512" height="512" rx="112" fill="#16233a"/>
+  <path d="M128 176l56 176 44-124 44 124 56-176" fill="none" stroke="#ffffff" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
