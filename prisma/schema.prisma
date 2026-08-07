@@ -30,23 +30,25 @@ model User {
   password_hash String?
   created_at    DateTime @default(now())
 
-  connectors   Connector[]
-  events       Event[]
-  emails       Email[]
-  transactions Transaction[]
-  commitments  Commitment[]
-  people       Person[]
-  projects     Project[]
-  briefings    DailyBriefing[]
-  runs         ScheduledRun[]
-  runLogs      RunLog[]
-  inbox        InboxItem[]
-  styleCards   StyleCard[]
-  settings     UserSetting[]
-  toolCalls    ToolCall[]
-  graphNodes   GraphNode[]
-  graphEdges   GraphEdge[]
-  mandates     Mandate[]
+  connectors        Connector[]
+  events            Event[]
+  emails            Email[]
+  transactions      Transaction[]
+  commitments       Commitment[]
+  people            Person[]
+  projects          Project[]
+  briefings         DailyBriefing[]
+  runs              ScheduledRun[]
+  runLogs           RunLog[]
+  inbox             InboxItem[]
+  styleCards        StyleCard[]
+  settings          UserSetting[]
+  toolCalls         ToolCall[]
+  graphNodes        GraphNode[]
+  graphEdges        GraphEdge[]
+  mandates          Mandate[]
+  pushSubscriptions PushSubscription[]
+  escalationEvents  EscalationEvent[]
 }
 
 model Connector {
@@ -380,4 +382,39 @@ model RunLog {
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([user_id, ran_at])
+}
+
+/// Eén browserabonnement voor web-push (src/lib/push/webpush.ts,
+/// src/lib/runs/notify.ts). Eén gebruiker kan er meerdere hebben — elk
+/// toestel/browser dat "Pushmeldingen inschakelen" aanzet levert er één.
+/// `endpoint` komt van de browser en is over alle gebruikers heen uniek (geen
+/// twee toestellen delen er een), dus de subscribe-route kan er veilig op
+/// upserten in plaats van dubbele rijen te riskeren bij een herregistratie.
+model PushSubscription {
+  id           String    @id @default(cuid())
+  user_id      String
+  endpoint     String    @unique
+  p256dh       String
+  auth         String
+  created_at   DateTime  @default(now())
+  last_used_at DateTime?
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+/// Logboek + dedupe-sleutel van de escalatielaag (src/lib/escalation/).
+/// (user_id, trigger, ref_id) mag maar één keer voorkomen: zonder die
+/// beperking zou dezelfde openstaande deadline of transactie bij elke tick
+/// opnieuw escaleren in plaats van precies één keer.
+model EscalationEvent {
+  id         String   @id @default(cuid())
+  user_id    String
+  trigger    String // deadline_24h | money_unexpected | ... (zie src/lib/escalation/triggers.ts)
+  ref_id     String // id van het bronrecord (Commitment, Transaction, ...)
+  message    String // NL, kort en discreet — nooit bedragen of schuldeisernamen (zie notify.ts)
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, trigger, ref_id])
 }

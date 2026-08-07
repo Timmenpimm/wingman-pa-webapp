@@ -8,6 +8,7 @@ import { onboardingStatus, type Payoff } from "@/lib/onboarding/status";
 import { isStepId, stepDefinition, type StepId } from "@/lib/onboarding/steps";
 import { formatAmount, formatDayLong, formatTime } from "@/lib/text";
 import { DOMAIN_REGISTRY, LEVEL_LABELS, LEVELS, type Domain, type MandateLevel } from "@/lib/mandates/domains";
+import { PushOptIn } from "@/components/PushOptIn";
 import { Trail } from "../Trail";
 import "../onboarding.css";
 
@@ -235,12 +236,15 @@ function ConnectBlock({
 }) {
   if (step === "meldingen") {
     return (
-      <div className="empty" style={{ marginTop: "var(--s-5)" }}>
-        <strong>Zo zet je hem op je beginscherm</strong>
-        Op de iPhone: deel-knop onderin, dan &ldquo;Zet op beginscherm&rdquo;. Op Android: menu
-        rechtsboven, dan &ldquo;App installeren&rdquo;. Daarna komt het ochtendmoment als melding
-        binnen in plaats van per mail.
-      </div>
+      <>
+        <div className="empty" style={{ marginTop: "var(--s-5)" }}>
+          <strong>Zo zet je hem op je beginscherm</strong>
+          Op de iPhone: deel-knop onderin, dan &ldquo;Zet op beginscherm&rdquo;. Op Android: menu
+          rechtsboven, dan &ldquo;App installeren&rdquo;. Daarna komt het ochtendmoment als melding
+          binnen in plaats van per mail.
+        </div>
+        <PushOptIn publicKey={process.env.VAPID_PUBLIC_KEY ?? null} />
+      </>
     );
   }
 

@@ -11,6 +11,7 @@ import Link from "next/link";
 import type { Provider } from "@/lib/types";
 import { CaretRight } from "@phosphor-icons/react/dist/ssr";
 import { SourceIcon, type SourceKind } from "@/components/SourceIcon";
+import { PushOptIn } from "@/components/PushOptIn";
 import { durationPhrase, formatDayShort, formatTime } from "@/lib/text";
 import { pendingToolCalls, recentToolCalls } from "@/lib/tools/execute";
 import { SUGGESTED_QUERIES } from "@/lib/graphify/query";
@@ -432,6 +433,8 @@ export default async function InstellingenPage() {
         {/* Het adres staat hier en niet onder "je gegevens": het bepaalt waar
             de briefing van 08:00 heen gaat, en dat is wat je hier komt doen. */}
         <EmailForm huidig={gebruiker?.email ?? ""} />
+
+        <PushOptIn publicKey={process.env.VAPID_PUBLIC_KEY ?? null} />
 
         <ul className="st-rows" style={{ marginTop: "var(--s-2)" }}>
           <li>

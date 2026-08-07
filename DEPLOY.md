@@ -49,6 +49,9 @@ Zie `.env.example` voor de volledige lijst met uitleg per regel. Overzicht:
 | `AUTH_GOOGLE_ID` | Optioneel | "Inloggen met Google" staat niet in de providerlijst; wachtwoord/inloglink blijven werken |
 | `AUTH_GOOGLE_SECRET` | Optioneel | Zelfde als hierboven |
 | `ANTHROPIC_API_KEY` | Optioneel | Commitment-extractie en de coachregel draaien op heuristiek i.p.v. het model (`src/brain/llm.ts`); mails blijven op `processed_at NULL` staan tot de key er is |
+| `VAPID_PUBLIC_KEY` | Optioneel | Web-push staat overal uit: de opt-in-knop (onboarding "meldingen", /instellingen) laat zichzelf weg, geplande runs en escalaties vallen terug op mail (`src/lib/push/webpush.ts`, `src/lib/runs/notify.ts`) |
+| `VAPID_PRIVATE_KEY` | Optioneel | Zelfde als hierboven |
+| `VAPID_SUBJECT` | Optioneel | Zelfde als hierboven |
 
 Alleen `DATABASE_URL` is dus een harde eis. De rest is functionaliteit die de
 app zelf gracefully uitschakelt zonder key (geen crash, zie ook README §"Van
