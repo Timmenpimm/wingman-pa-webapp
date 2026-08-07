@@ -9,8 +9,12 @@ export function GET() {
     description: "Plant je dag en vangt losse eindjes.",
     start_url: "/",
     display: "standalone",
-    background_color: "#201e1d",
-    theme_color: "#201e1d",
+    // Gelijk aan --paper in tokens.css. Loopt dit uiteen, dan start de
+    // geïnstalleerde app met een splash in de ene kleur en klapt hij bij de
+    // eerste render naar de andere; Android toont dezelfde waarde bovendien
+    // in de task-switcher.
+    background_color: "#f4f5f7",
+    theme_color: "#f4f5f7",
     lang: "nl",
     icons: [
       { src: "/icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any" },

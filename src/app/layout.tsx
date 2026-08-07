@@ -26,11 +26,15 @@ export const metadata: Metadata = {
   title: "Wingman",
   description: "Persoonlijke assistent die je dag plant en losse eindjes vangt.",
   manifest: "/manifest.webmanifest",
+  // "black-translucent" tekent de statusbalktekst wit en laat de app eronder
+  // doorlopen. Dat werkte toen de app donker was; op de lichte grond is wit
+  // op wit onleesbaar. "default" houdt de balk buiten de app en zwart.
   appleWebApp: { capable: true, title: "Wingman", statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#071321",
+  // Gelijk aan --paper in tokens.css en aan theme_color in het manifest.
+  themeColor: "#f4f5f7",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
