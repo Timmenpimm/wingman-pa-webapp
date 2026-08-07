@@ -48,6 +48,7 @@ Zie `.env.example` voor de volledige lijst met uitleg per regel. Overzicht:
 | `PONTO_WEBHOOK_SECRET` | Optioneel | Ponto-transactie-webhook antwoordt 501 |
 | `AUTH_GOOGLE_ID` | Optioneel | "Inloggen met Google" staat niet in de providerlijst; wachtwoord/inloglink blijven werken |
 | `AUTH_GOOGLE_SECRET` | Optioneel | Zelfde als hierboven |
+| `ANTHROPIC_API_KEY` | Optioneel | Commitment-extractie en de coachregel draaien op heuristiek i.p.v. het model (`src/brain/llm.ts`); mails blijven op `processed_at NULL` staan tot de key er is |
 
 Alleen `DATABASE_URL` is dus een harde eis. De rest is functionaliteit die de
 app zelf gracefully uitschakelt zonder key (geen crash, zie ook README §"Van
@@ -55,10 +56,11 @@ dev naar productie" voor de volgorde waarin je die later aanzet: Nango eerst,
 dan de webhooks).
 
 Vars die in eerdere versies van `.env.example` stonden maar door geen code
-worden gelezen (`NEXT_PUBLIC_APP_URL`, `ANTHROPIC_API_KEY`, `GRAPHIFY_API_KEY`,
-`NEXTAUTH_SECRET`, `NEXTAUTH_URL`) zijn eruit gehaald — ze deden niets. Ze
-horen bij functionaliteit die er nog niet is (zie §4 en README): pas
-toevoegen zodra de bijbehorende code er ook is, anders staat er ruis in de
+worden gelezen (`NEXT_PUBLIC_APP_URL`, `GRAPHIFY_API_KEY`, `NEXTAUTH_SECRET`,
+`NEXTAUTH_URL`) zijn eruit gehaald — ze deden niets. `ANTHROPIC_API_KEY` stond
+in diezelfde lijst tot Fase 0 het brein aansloot (extractie + coachregel,
+`src/brain/llm.ts`) en is er weer bij. Voor de rest: pas een var toevoegen
+zodra de bijbehorende code er ook is, anders staat er ruis in de
 Vercel-project-settings.
 
 ## 2b. Google OAuth ("Inloggen met Google" + connectors)
