@@ -48,12 +48,13 @@ export default async function VandaagPage({
     select: { name: true },
   });
   const voornaam = user?.name?.trim().split(/\s+/)[0];
+  const isDev = process.env.NODE_ENV !== "production";
 
   if (briefing.state === "clear") {
     return (
       <>
         <EveningDone briefing={briefing} />
-        <StateSwitch current={briefing.state} />
+        {isDev && <StateSwitch current={briefing.state} />}
       </>
     );
   }
@@ -63,7 +64,7 @@ export default async function VandaagPage({
       <>
         {openStap && <OnboardingNotice stap={openStap} />}
         <FirstMorning />
-        <StateSwitch current={briefing.state} />
+        {isDev && <StateSwitch current={briefing.state} />}
       </>
     );
   }
@@ -109,7 +110,7 @@ export default async function VandaagPage({
           Opnieuw verbinden
         </Link>
 
-        <StateSwitch current={briefing.state} />
+        {isDev && <StateSwitch current={briefing.state} />}
       </>
     );
   }
@@ -273,7 +274,7 @@ export default async function VandaagPage({
         <CaptureField variant="bare" />
       </section>
 
-      <StateSwitch current={briefing.state} />
+      {isDev && <StateSwitch current={briefing.state} />}
     </>
   );
 }
@@ -448,8 +449,14 @@ function duur(start: string, end: string): string {
 /**
  * Alleen voor de vier-staten-demo: dit verzint geen data, het toont dezelfde
  * briefing zoals hij eruitziet als een bron wegvalt of als alles af is.
+ * Alleen beschikbaar in dev; in productie wordt de preview genegeerd.
  */
 function applyPreview(b: BriefingToday, state?: string): BriefingToday {
+  // In productie: negeer de ?state= parameter
+  if (process.env.NODE_ENV === "production") {
+    return b;
+  }
+
   if (state === "empty") return { ...b, state: "empty" };
   if (state === "normal") return { ...b, degraded: [], state: "normal" };
   if (state === "clear") {
