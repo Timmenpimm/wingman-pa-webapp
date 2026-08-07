@@ -8,6 +8,15 @@ import type { Recipe, RunResult } from "@/brain/runs/types";
 import { adapterFor } from "@/connectors";
 import type { Provider } from "@/lib/types";
 import { SYNCABLE_PROVIDERS, syncConnector, type SyncOutcome, type SyncTx } from "@/lib/sync/engine";
+import { callAnthropic, isAnthropicConfigured } from "@/brain/llm";
+import {
+  applyExtractionPlan,
+  planExtractions,
+  MAX_EMAILS_PER_USER_PER_TICK,
+  type ApplyOutcome,
+  type EmailToExtract,
+  type ExtractTx,
+} from "@/brain/extract-commitments";
 import { isDue, isRunKind, parseDays, type RunKind } from "./schedule";
 import { stuurRunBericht, type Meldresultaat } from "./notify";
 
@@ -38,10 +47,15 @@ export interface TickUitslag {
   bekeken: number;
   uitgevoerd: Array<{ userId: string; kind: string; status: string; summary?: string }>;
   sync: { bekeken: number; uitgevoerd: SyncOutcome[] };
+  extractie: { gebruikers: number; gescand: number; aangemaakt: number; overgeslagen: number };
 }
 
 export async function tick(now: Date = new Date()): Promise<TickUitslag> {
   const sync = await syncActiveConnectors(now);
+  // Ná de sync, vóór de recepten: een mail die deze tick net binnenkwam mag
+  // dezelfde tick nog worden geëxtraheerd, zodat de ochtendbriefing 'm al
+  // ziet als open belofte.
+  const extractie = await extractCommitmentsForAllUsers(now);
 
   // Over alle gebruikers heen kijken kan niet achter RLS langs — dit is
   // systeemwerk, geen gebruikersverzoek. Vandaar de eigenaarsrol, en meteen
@@ -51,7 +65,7 @@ export async function tick(now: Date = new Date()): Promise<TickUitslag> {
     include: { user: { select: { id: true, timezone: true } } },
   });
 
-  const uitslag: TickUitslag = { bekeken: runs.length, uitgevoerd: [], sync };
+  const uitslag: TickUitslag = { bekeken: runs.length, uitgevoerd: [], sync, extractie };
 
   for (const run of runs) {
     if (!isRunKind(run.kind)) continue;
@@ -198,4 +212,66 @@ async function syncActiveConnectors(
   }
 
   return { bekeken: connectors.length, uitgevoerd };
+}
+
+/**
+ * Commitment-extractie voor alle gebruikers met ongeziene mail (Fase 0,
+ * laatste stap). Zonder ANTHROPIC_API_KEY wordt er niets bevraagd en niets
+ * gemarkeerd — extractie gebeurt gewoon later alsnog, zodra de key er is
+ * (zie src/brain/llm.ts en CLAUDE.md-regel 3).
+ *
+ * Per gebruiker: eerst lezen (eigen withUser-tx, RLS), dan het netwerkwerk
+ * (planExtractions — geen tx), dan schrijven (tweede, korte withUser-tx) —
+ * dezelfde volgorde als syncActiveConnectors/syncConnector hierboven. Een
+ * gebruiker met een kapotte batch mag een andere gebruiker niet raken.
+ */
+async function extractCommitmentsForAllUsers(
+  now: Date,
+): Promise<{ gebruikers: number; gescand: number; aangemaakt: number; overgeslagen: number }> {
+  if (!isAnthropicConfigured()) {
+    return { gebruikers: 0, gescand: 0, aangemaakt: 0, overgeslagen: 0 };
+  }
+
+  // Systeemwerk over alle gebruikers heen — zelfde reden als bij
+  // syncActiveConnectors om hier de eigenaarsrol te gebruiken: dit is geen
+  // verzoek namens één ingelogde gebruiker.
+  const rijenMetOngezieneMail = await ownerPrisma.email.findMany({
+    where: { processed_at: null },
+    select: { user_id: true },
+    distinct: ["user_id"],
+  });
+
+  let gescand = 0;
+  let aangemaakt = 0;
+  let overgeslagen = 0;
+
+  for (const { user_id: userId } of rijenMetOngezieneMail) {
+    try {
+      const emails: EmailToExtract[] = await withUser(userId, (tx) =>
+        tx.email.findMany({
+          where: { processed_at: null },
+          orderBy: { sent_at: "asc" },
+          take: MAX_EMAILS_PER_USER_PER_TICK,
+          select: { id: true, subject: true, from_addr: true, is_sent: true, body_text: true, sent_at: true },
+        }),
+      );
+      if (emails.length === 0) continue;
+
+      const plan = await planExtractions(emails, callAnthropic);
+
+      const outcome: ApplyOutcome = await withUser(userId, (tx) =>
+        applyExtractionPlan(tx as unknown as ExtractTx, userId, plan, now),
+      );
+
+      gescand += emails.length;
+      aangemaakt += outcome.created;
+      overgeslagen += outcome.skipped;
+    } catch {
+      // Eén gebruiker met een kapotte batch (bv. een db-hik bij het lezen)
+      // mag de rest van de tick niet blokkeren — volgende tick opnieuw.
+      continue;
+    }
+  }
+
+  return { gebruikers: rijenMetOngezieneMail.length, gescand, aangemaakt, overgeslagen };
 }
