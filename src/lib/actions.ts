@@ -20,7 +20,7 @@ import {
   stepPath,
   type StepId,
 } from "@/lib/onboarding/steps";
-import { PERMISSION_LABELS } from "@/lib/types";
+import { asLevel, isDomain, type Domain } from "@/lib/mandates/domains";
 import { signIn } from "../../auth";
 
 /**
@@ -223,12 +223,25 @@ export async function triageInbox(
   revalidatePath("/");
 }
 
-export async function setConnectorPermission(id: string, permission: string) {
+/**
+ * Het mandaat van één domein zetten (§6.7 fase 1 — vervangt
+ * setConnectorPermission, dat per connector was in plaats van per domein).
+ *
+ * `rawDomain` en `rawLevel` komen uit een formulierveld en zijn dus vrije
+ * tekst; `isDomain`/`asLevel` zijn de enige plek waar dat een geldige waarde
+ * wordt. Een onherkenbare waarde wordt niet geweigerd maar valt terug op de
+ * voorzichtigste stand — zelfde afweging als `asPermission` vroeger voor de
+ * connectorkolom.
+ */
+export async function setMandate(rawDomain: string, rawLevel: string) {
+  if (!isDomain(rawDomain)) return;
   const userId = await currentUserId();
+  const level = asLevel(rawLevel);
   await withUser(userId, (tx) =>
-    tx.connector.updateMany({
-      where: { id, user_id: userId },
-      data: { permission },
+    tx.mandate.upsert({
+      where: { user_id_domain: { user_id: userId, domain: rawDomain } },
+      create: { user_id: userId, domain: rawDomain, level },
+      update: { level },
     }),
   );
   revalidatePath("/instellingen");
@@ -278,15 +291,16 @@ function terugPad(vanaf: string): string {
  * ze verschillen alleen in het verborgen veld `markeer`. Dat scheelt drie
  * bijna-identieke server actions die uit elkaar kunnen gaan lopen.
  *
- * De permissie gaat naar álle connectors van deze stap tegelijk. Een inlog met
- * Google levert twee rijen op (agenda + gmail) en die vallen in verschillende
- * stappen; binnen één stap is het altijd dezelfde bron, dus dezelfde vraag.
+ * Het mandaat gaat naar álle domeinen van deze stap tegelijk — vandaag nog
+ * steeds precies één (agenda → calendar, mail → email_send), maar een stap
+ * met meer dan één domein stelt hier ook maar één vraag: binnen één stap is
+ * het altijd dezelfde bron, dus dezelfde vraag.
  */
 export async function continueOnboarding(step: StepId, data: FormData) {
   const userId = await currentUserId();
   const mark = String(data.get("markeer") ?? "");
-  const permission = String(data.get("permission") ?? "");
-  const providers = stepDefinition(step).providers;
+  const rawLevel = String(data.get("level") ?? "");
+  const domains: Domain[] = stepDefinition(step).domains;
 
   await withUser(userId, async (tx) => {
     if (mark === "skipped" || mark === "done") {
@@ -298,11 +312,15 @@ export async function continueOnboarding(step: StepId, data: FormData) {
       });
     }
 
-    if (permission in PERMISSION_LABELS && providers.length > 0) {
-      await tx.connector.updateMany({
-        where: { user_id: userId, provider: { in: providers } },
-        data: { permission },
-      });
+    if (rawLevel !== "" && domains.length > 0) {
+      const level = asLevel(rawLevel);
+      for (const domain of domains) {
+        await tx.mandate.upsert({
+          where: { user_id_domain: { user_id: userId, domain } },
+          create: { user_id: userId, domain, level },
+          update: { level },
+        });
+      }
     }
   });
 

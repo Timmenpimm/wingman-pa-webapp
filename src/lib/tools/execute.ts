@@ -3,7 +3,8 @@ import type { Connector, ToolCall } from "@prisma/client";
 import { withUser, type Tx } from "@/lib/db/with-user";
 import { clamp } from "@/lib/text";
 import type { AdapterContext, ConnectorHealth } from "@/lib/types";
-import { asPermission, gate } from "./permission";
+import { mandateFor } from "@/lib/mandates/lookup";
+import { gate } from "./permission";
 import { adapterFor } from "@/connectors";
 import { findTool } from "./registry";
 import { toolErrors, ToolError, type ResolvedTool } from "./types";
@@ -87,10 +88,12 @@ export async function requestTool(
 
   const prepared = await withUser(userId, async (tx) => {
     const connector = await pickConnector(tx, userId, resolved);
+    const mandate = await mandateFor(tx, userId, resolved.tool.domain);
     const verdict = gate({
       connectorLabel: connector.label,
       connectorStatus: connector.status as ConnectorHealth["status"],
-      permission: asPermission(connector.permission),
+      level: mandate.level,
+      notifyPreference: mandate.notifyPreference,
       effect: resolved.tool.effect,
     });
     if (!verdict.allow) throw verdict.error;

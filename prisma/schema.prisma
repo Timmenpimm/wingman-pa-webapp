@@ -46,6 +46,7 @@ model User {
   toolCalls    ToolCall[]
   graphNodes   GraphNode[]
   graphEdges   GraphEdge[]
+  mandates     Mandate[]
 }
 
 model Connector {
@@ -102,6 +103,34 @@ model ToolCall {
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([user_id, status, created_at])
+}
+
+/// Fase 1 van het mandaatmodel (src/lib/mandates/domains.ts): drie niveaus per
+/// domein, in plaats van de vier standen per connector die nog op
+/// Connector.permission staan (die kolom blijft, verwijderen komt later — niets
+/// leest hem nog voor een gate-beslissing).
+///
+/// `domain` is een vrije string, net als Connector.provider/type hierboven:
+/// het register met geldige waarden staat in code
+/// (src/lib/mandates/domains.ts), niet in een databaseconstraint — een nieuw
+/// domein toevoegen (finance, messages) raakt dan geen migratie.
+///
+/// `rules` is JSON en bevat vooralsnog alleen `{"notify": "melden"|"stil"}`:
+/// de voorkeur voor achteraf melden bij niveau 3. Eén kolom in plaats van een
+/// eigen tabel, omdat dit de eerste van waarschijnlijk een paar losse
+/// per-domein voorkeuren is — een tweede kolom per voorkeur zou een migratie
+/// per voorkeur betekenen.
+model Mandate {
+  id         String   @id @default(cuid())
+  user_id    String
+  domain     String // calendar | email_send | ... (src/lib/mandates/domains.ts)
+  level      Int // 1 signaleren | 2 klaarzetten | 3 doen
+  rules      String   @default("{}") // JSON, nu alleen {"notify": "melden"|"stil"}
+  updated_at DateTime @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, domain])
 }
 
 model Event {

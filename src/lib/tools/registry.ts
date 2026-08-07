@@ -1,5 +1,6 @@
 import { ADAPTERS } from "@/connectors";
 import type { Provider } from "@/lib/types";
+import type { Domain } from "@/lib/mandates/domains";
 import { toolErrors, type ConnectorTool, type ResolvedTool } from "./types";
 
 /**
@@ -33,6 +34,16 @@ export function findTool(name: string): ResolvedTool {
   const found = allTools().find((t) => t.tool.name === name);
   if (!found) throw toolErrors.notFound(name);
   return found;
+}
+
+/**
+ * Welke domeinen (src/lib/mandates/domains.ts) een bron aanraakt — afgeleid
+ * uit de tools van die bron, net als de rest van dit bestand. Een provider
+ * zonder tools (de bank, CalDAV, IMAP) levert een lege lijst: geen domein
+ * betekent geen mandaatvraag, niet "alles mag".
+ */
+export function domainsFor(provider: Provider): Domain[] {
+  return Array.from(new Set(toolsFor(provider).map((t) => t.tool.domain)));
 }
 
 /**

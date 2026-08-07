@@ -1,14 +1,16 @@
 import { EmailForm } from "./EmailForm";
 import { RUN_KINDS, RUN_LABELS } from "@/lib/runs/schedule";
 import { currentUserId, withUser } from "@/lib/db/client";
-import { connectGoogle, decideTool, deleteAccount, setConnectorPermission, updateRun } from "@/lib/actions";
-import { PERMISSION_LABELS } from "@/lib/types";
+import { connectGoogle, decideTool, deleteAccount, setMandate, updateRun } from "@/lib/actions";
 import { addableRows, catalogRows } from "@/connectors/catalog";
 import { authUrlFor } from "@/connectors";
+import { domainsFor } from "@/lib/tools/registry";
+import { asLevel, DOMAIN_REGISTRY, LEVELS, LEVEL_LABELS, type Domain, type MandateLevel } from "@/lib/mandates/domains";
 import { marksFromSettings } from "@/lib/onboarding/steps";
 import Link from "next/link";
+import type { Provider } from "@/lib/types";
 import { CaretRight } from "@phosphor-icons/react/dist/ssr";
-import { SourceIcon } from "@/components/SourceIcon";
+import { SourceIcon, type SourceKind } from "@/components/SourceIcon";
 import { durationPhrase, formatDayShort, formatTime } from "@/lib/text";
 import { pendingToolCalls, recentToolCalls } from "@/lib/tools/execute";
 import { SUGGESTED_QUERIES } from "@/lib/graphify/query";
@@ -43,6 +45,12 @@ const OUTCOME_TEXT: Record<string, string> = {
   rejected: "liet je vallen",
 };
 
+/** SourceIcon kent geen domeinen, alleen bronsoorten — dit is de vertaling. */
+const DOMAIN_ICON: Record<Domain, SourceKind> = {
+  calendar: "calendar",
+  email_send: "email",
+};
+
 /**
  * Instellingen (§6.7) — permissies en connector-gezondheid zijn hier geen
  * bijzaak.
@@ -53,13 +61,14 @@ const OUTCOME_TEXT: Record<string, string> = {
  */
 export default async function InstellingenPage() {
   const userId = await currentUserId();
-  const [connectors, settings, runs, laatsteLogs, gebruiker] = await withUser(userId, (tx) =>
+  const [connectors, settings, runs, laatsteLogs, gebruiker, mandates] = await withUser(userId, (tx) =>
     Promise.all([
       tx.connector.findMany({ where: { user_id: userId }, orderBy: { type: "asc" } }),
       tx.userSetting.findMany({ where: { user_id: userId } }),
       tx.scheduledRun.findMany({ where: { user_id: userId } }),
       tx.runLog.findMany({ where: { user_id: userId }, orderBy: { ran_at: "desc" }, take: 6 }),
           tx.user.findUnique({ where: { id: userId }, select: { email: true, name: true } }),
+      tx.mandate.findMany({ where: { user_id: userId } }),
     ]),
   );
   const [pending, recent] = await Promise.all([
@@ -73,6 +82,21 @@ export default async function InstellingenPage() {
   // voor een bron die niets doet is een knop zonder gevolg. Die hoort hieronder
   // bij "Bron toevoegen" thuis, en daar staat hij nu ook — anders twee keer.
   const gekoppeld = connectors.filter((c) => c.status !== "not_connected");
+
+  // "Wat mag Wingman" per domein, niet meer per connector. Een domein zonder
+  // gekoppelde bron heeft niets om op te handelen en hoort dus niet in dit
+  // rijtje — zelfde regel als hierboven bij `not_connected`.
+  const mandateByDomain = new Map(mandates.map((m) => [m.domain, asLevel(m.level)]));
+  const domainRows = Array.from(new Set(gekoppeld.flatMap((c) => domainsFor(c.provider as Provider)))).map(
+    (domain) => ({
+      domain,
+      level: mandateByDomain.get(domain) ?? (1 as MandateLevel),
+      // Voor het icoon en "geldt voor": de gekoppelde bronnen die dit domein
+      // aandrijven. Vandaag altijd precies één; meerdere komt met een tweede
+      // agendabron.
+      providers: gekoppeld.filter((c) => domainsFor(c.provider as Provider).includes(domain)),
+    }),
+  );
 
   // Wat er nog bij kan. Zonder dit blok is de onboarding de enige plek waar je
   // een bron toevoegt, en wie de bank daar oversloeg kwam er nooit meer langs.
@@ -111,7 +135,7 @@ export default async function InstellingenPage() {
 
       <section className="st-sec">
         <div className="st-sec__head">
-          <h2>Bronnen &amp; permissies</h2>
+          <h2>Bronnen</h2>
         </div>
 
         <ul className="st-rows">
@@ -130,28 +154,51 @@ export default async function InstellingenPage() {
                   </span>
                   {c.error_message && <span className="st-row__sub">{c.error_message}</span>}
                 </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
 
-                {/* De permissiegradiënt heeft vier standen (§6.7) — dat is een
-                    productregel, dus een select en geen aan/uit-schakelaar. */}
-                <form action={setPermissionFromForm.bind(null, c.id)} className="st-perm">
-                  <label className="sr-only" htmlFor={`perm-${c.id}`}>
-                    Permissie voor {c.label}
+      <section className="st-sec">
+        <div className="st-sec__head">
+          <h2>Wat mag Wingman</h2>
+        </div>
+
+        {/* Het mandaat heeft drie niveaus (§6.7 fase 1) — dat is een
+            productregel, dus een select en geen aan/uit-schakelaar. Eén rij
+            per domein, niet meer per connector: een tweede agendabron deelt
+            hetzelfde mandaat, geen tweede vraag. */}
+        <ul className="st-rows">
+          {domainRows.map(({ domain, level, providers }) => (
+            <li key={domain}>
+              <div className="st-row">
+                <SourceIcon kind={DOMAIN_ICON[domain]} size="sm" />
+                <div className="st-row__body">
+                  <span className="st-row__title">{DOMAIN_REGISTRY[domain].label}</span>
+                  <span className="st-row__sub">
+                    {DOMAIN_REGISTRY[domain].description}
+                    {providers.length > 1
+                      ? ` · geldt voor ${providers.map((p) => p.label).join(" en ")}`
+                      : ""}
+                  </span>
+                </div>
+
+                <form action={setMandateFromForm.bind(null, domain)} className="st-perm">
+                  <label className="sr-only" htmlFor={`mandate-${domain}`}>
+                    Mandaat voor {DOMAIN_REGISTRY[domain].label}
                   </label>
-                  <select
-                    id={`perm-${c.id}`}
-                    name="permission"
-                    defaultValue={c.permission}
-                  >
-                    {Object.entries(PERMISSION_LABELS).map(([value, label]) => (
+                  <select id={`mandate-${domain}`} name="level" defaultValue={level}>
+                    {LEVELS.map((value) => (
                       <option key={value} value={value}>
-                        {label}
+                        {LEVEL_LABELS[value]}
                       </option>
                     ))}
                   </select>
                   <button
                     className="btn btn--text"
                     type="submit"
-                    aria-label={`Permissie opslaan voor ${c.label}`}
+                    aria-label={`Mandaat opslaan voor ${DOMAIN_REGISTRY[domain].label}`}
                   >
                     Opslaan
                   </button>
@@ -466,9 +513,9 @@ export default async function InstellingenPage() {
   );
 }
 
-async function setPermissionFromForm(id: string, data: FormData) {
+async function setMandateFromForm(domain: Domain, data: FormData) {
   "use server";
-  await setConnectorPermission(id, String(data.get("permission") ?? "propose"));
+  await setMandate(domain, String(data.get("level") ?? "1"));
 }
 
 /** Koppelen vanaf Instellingen komt ook op Instellingen terug, niet in de wizard. */

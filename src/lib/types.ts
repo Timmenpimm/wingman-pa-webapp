@@ -20,7 +20,14 @@ export type Provider =
 
 export type ConnectorType = "calendar" | "mail" | "bank" | "chat" | "push";
 
-/** Permissiegradiënt per connector (§6.7). */
+/**
+ * De oude permissiegradiënt per connector (§6.7, vier standen). Fase 1 van het
+ * mandaatmodel (src/lib/mandates/domains.ts) vervangt dit voor gate-
+ * beslissingen door drie niveaus per domein — `gate()` in
+ * src/lib/tools/permission.ts leest dit veld niet meer. De kolom
+ * `Connector.permission` blijft nog staan (verwijderen komt later), dus dit
+ * type en `asPermission` blijven bestaan om die kolom geldig te houden.
+ */
 export type Permission = "propose" | "draft" | "act_and_report" | "silent";
 
 export const PERMISSION_LABELS: Record<Permission, string> = {
@@ -29,6 +36,11 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   act_and_report: "doen en melden",
   silent: "stil doen",
 };
+
+/** Alleen deze vier zijn geldig; de database bewaart een vrije string. */
+export function asPermission(value: string): Permission {
+  return value === "draft" || value === "act_and_report" || value === "silent" ? value : "propose";
+}
 
 export interface NormalizedEvent {
   id: string;
