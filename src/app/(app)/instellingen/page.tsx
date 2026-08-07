@@ -1,11 +1,19 @@
 import { EmailForm } from "./EmailForm";
 import { RUN_KINDS, RUN_LABELS } from "@/lib/runs/schedule";
 import { currentUserId, withUser } from "@/lib/db/client";
-import { connectGoogle, decideTool, deleteAccount, setMandate, updateRun } from "@/lib/actions";
+import {
+  connectGoogle,
+  decideMandateSuggestion,
+  decideTool,
+  deleteAccount,
+  setMandate,
+  updateRun,
+} from "@/lib/actions";
 import { addableRows, catalogRows } from "@/connectors/catalog";
 import { authUrlFor } from "@/connectors";
 import { domainsFor } from "@/lib/tools/registry";
 import { asLevel, DOMAIN_REGISTRY, LEVELS, LEVEL_LABELS, type Domain, type MandateLevel } from "@/lib/mandates/domains";
+import type { SuggestionEvidence } from "@/lib/mandates/suggest";
 import { marksFromSettings } from "@/lib/onboarding/steps";
 import Link from "next/link";
 import type { Provider } from "@/lib/types";
@@ -53,6 +61,19 @@ const DOMAIN_ICON: Record<Domain, SourceKind> = {
 };
 
 /**
+ * De zin bij een promotievoorstel (vertrouwensloop, fase 1): "Agenda draait
+ * 4 weken zonder correcties (12 acties). Naar Doen tillen?" — het bewijs uit
+ * `evidence` (dagen/calls/rejected, altijd 0 rejected want anders bestond het
+ * voorstel niet) in gewone taal, geen tabel met cijfers.
+ */
+function suggestionText(domain: Domain, evidence: SuggestionEvidence, toLevel: MandateLevel): string {
+  const weken = Math.max(1, Math.round(evidence.dagen / 7));
+  const weekWoord = weken === 1 ? "week" : "weken";
+  const actieWoord = evidence.calls === 1 ? "actie" : "acties";
+  return `${DOMAIN_REGISTRY[domain].label} draait ${weken} ${weekWoord} zonder correcties (${evidence.calls} ${actieWoord}). Naar ${LEVEL_LABELS[toLevel]} tillen?`;
+}
+
+/**
  * Instellingen (§6.7) — permissies en connector-gezondheid zijn hier geen
  * bijzaak.
  *
@@ -62,16 +83,25 @@ const DOMAIN_ICON: Record<Domain, SourceKind> = {
  */
 export default async function InstellingenPage() {
   const userId = await currentUserId();
-  const [connectors, settings, runs, laatsteLogs, gebruiker, mandates] = await withUser(userId, (tx) =>
-    Promise.all([
-      tx.connector.findMany({ where: { user_id: userId }, orderBy: { type: "asc" } }),
-      tx.userSetting.findMany({ where: { user_id: userId } }),
-      tx.scheduledRun.findMany({ where: { user_id: userId } }),
-      tx.runLog.findMany({ where: { user_id: userId }, orderBy: { ran_at: "desc" }, take: 6 }),
-          tx.user.findUnique({ where: { id: userId }, select: { email: true, name: true } }),
-      tx.mandate.findMany({ where: { user_id: userId } }),
-    ]),
-  );
+  const [connectors, settings, runs, laatsteLogs, gebruiker, mandates, mandateSuggestion] =
+    await withUser(userId, (tx) =>
+      Promise.all([
+        tx.connector.findMany({ where: { user_id: userId }, orderBy: { type: "asc" } }),
+        tx.userSetting.findMany({ where: { user_id: userId } }),
+        tx.scheduledRun.findMany({ where: { user_id: userId } }),
+        tx.runLog.findMany({ where: { user_id: userId }, orderBy: { ran_at: "desc" }, take: 6 }),
+        tx.user.findUnique({ where: { id: userId }, select: { email: true, name: true } }),
+        tx.mandate.findMany({ where: { user_id: userId } }),
+        // Eén tegelijk, oudste eerst (§4 van de opdracht) — een tweede open
+        // voorstel kan vandaag niet bestaan (de weekboekhouding maakt er
+        // hoogstens één per domein), maar mocht dat ooit veranderen dan is
+        // "oudste eerst" de veiligste volgorde om te tonen.
+        tx.mandateSuggestion.findFirst({
+          where: { user_id: userId, status: "open" },
+          orderBy: { created_at: "asc" },
+        }),
+      ]),
+    );
   const [pending, recent] = await Promise.all([
     pendingToolCalls(userId),
     recentToolCalls(userId),
@@ -98,6 +128,25 @@ export default async function InstellingenPage() {
       providers: gekoppeld.filter((c) => domainsFor(c.provider as Provider).includes(domain)),
     }),
   );
+
+  // Het openstaande promotievoorstel, als er een is. `evidence` is JSON dat
+  // hier zelf is weggeschreven (computeMandateSuggestionsForUser) — een
+  // parsefout betekent corrupte data, geen reden om de hele pagina te laten
+  // knappen; dan toont Wingman de rij simpelweg niet.
+  const suggestion = (() => {
+    if (!mandateSuggestion) return null;
+    try {
+      const evidence = JSON.parse(mandateSuggestion.evidence) as SuggestionEvidence;
+      return {
+        id: mandateSuggestion.id,
+        domain: mandateSuggestion.domain as Domain,
+        toLevel: asLevel(mandateSuggestion.to_level),
+        evidence,
+      };
+    } catch {
+      return null;
+    }
+  })();
 
   // Wat er nog bij kan. Zonder dit blok is de onboarding de enige plek waar je
   // een bron toevoegt, en wie de bank daar oversloeg kwam er nooit meer langs.
@@ -165,6 +214,33 @@ export default async function InstellingenPage() {
         <div className="st-sec__head">
           <h2>Wat mag Wingman</h2>
         </div>
+
+        {/* Het promotievoorstel (vertrouwensloop, fase 1): boven de
+            domein-selects, want dit ís een vraag om er een van te wijzigen —
+            "Doen" zet 'm zelf op niveau 3. Geen aparte sectie: het hoort bij
+            dezelfde beslissing als de selects eronder. */}
+        {suggestion && (
+          <div className="st-row">
+            <SourceIcon kind={DOMAIN_ICON[suggestion.domain]} size="sm" />
+            <div className="st-row__body">
+              <span className="st-row__title">
+                {suggestionText(suggestion.domain, suggestion.evidence, suggestion.toLevel)}
+              </span>
+            </div>
+            <div className="btn-row">
+              <form action={decideSuggestionFromForm.bind(null, suggestion.id, "accept")}>
+                <button className="btn btn--text" type="submit">
+                  Doen
+                </button>
+              </form>
+              <form action={decideSuggestionFromForm.bind(null, suggestion.id, "dismiss")}>
+                <button className="btn btn--text" type="submit">
+                  Zo laten
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
 
         {/* Het mandaat heeft drie niveaus (§6.7 fase 1) — dat is een
             productregel, dus een select en geen aan/uit-schakelaar. Eén rij
@@ -519,6 +595,11 @@ export default async function InstellingenPage() {
 async function setMandateFromForm(domain: Domain, data: FormData) {
   "use server";
   await setMandate(domain, String(data.get("level") ?? "1"));
+}
+
+async function decideSuggestionFromForm(id: string, decision: "accept" | "dismiss") {
+  "use server";
+  await decideMandateSuggestion(id, decision);
 }
 
 /** Koppelen vanaf Instellingen komt ook op Instellingen terug, niet in de wizard. */

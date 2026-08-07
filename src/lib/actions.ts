@@ -248,6 +248,42 @@ export async function setMandate(rawDomain: string, rawLevel: string) {
 }
 
 /**
+ * De vertrouwensloop, het antwoord op een promotievoorstel
+ * (src/lib/mandates/suggest.ts): "Doen" tilt het mandaat naar `to_level` en
+ * markeert de suggestie `accepted`; "Zo laten" verandert het mandaat niet en
+ * markeert 'm `dismissed`. Geen derde uitkomst — een voorstel dat je negeert
+ * blijft gewoon open tot je een van beide kiest (zelfde "geen prullenbak,
+ * geen aparte route"-afweging als bij captureInbox/triageInbox hierboven).
+ *
+ * `findFirst` met `status: "open"` in de where-clausule in plaats van een
+ * kale `findUnique` op id: een suggestie die net op een ander tabblad al
+ * besloten is, mag hier niet een tweede keer besloten worden.
+ */
+export async function decideMandateSuggestion(id: string, decision: "accept" | "dismiss") {
+  const userId = await currentUserId();
+  await withUser(userId, async (tx) => {
+    const suggestion = await tx.mandateSuggestion.findFirst({
+      where: { id, user_id: userId, status: "open" },
+    });
+    if (!suggestion) return;
+
+    if (decision === "accept") {
+      await tx.mandate.upsert({
+        where: { user_id_domain: { user_id: userId, domain: suggestion.domain } },
+        create: { user_id: userId, domain: suggestion.domain, level: suggestion.to_level },
+        update: { level: suggestion.to_level },
+      });
+    }
+
+    await tx.mandateSuggestion.update({
+      where: { id: suggestion.id },
+      data: { status: decision === "accept" ? "accepted" : "dismissed", decided_at: new Date() },
+    });
+  });
+  revalidatePath("/instellingen");
+}
+
+/**
  * Google koppelen vanuit de onboarding.
  *
  * Niet via /api/v1/connect/google: die route gaat over Nango, en agenda + mail

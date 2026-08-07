@@ -20,6 +20,7 @@ import {
 import { isDue, isRunKind, parseDays, type RunKind } from "./schedule";
 import { stuurEscalatieBericht, stuurRunBericht, type Meldresultaat } from "./notify";
 import { processUserEscalations, type EscalationTx } from "@/lib/escalation/engine";
+import { computeMandateSuggestionsForUser } from "@/lib/mandates/suggest";
 
 /**
  * Voert geplande momenten uit.
@@ -45,6 +46,11 @@ import { processUserEscalations, type EscalationTx } from "@/lib/escalation/engi
  * Die staat los van ScheduledRun — hij draait voor élke gebruiker, elke tick,
  * ongeacht of er om dit moment een briefing gepland staat. Dat is het hele
  * punt: escalatie is precies de laag die niet op het vaste ritme wacht.
+ *
+ * Ná de escalatielaag: het weekmoment van de vertrouwensloop
+ * (src/lib/mandates/suggest.ts) — draait ook los van ScheduledRun, maar
+ * hoogstens één keer per lokale ISO-week per gebruiker (eigen boekhouding,
+ * zie computeMandateSuggestionsForUser).
  */
 
 const RECEPTEN: Record<RunKind, Recipe> = { morning, midday, evening };
@@ -55,6 +61,7 @@ export interface TickUitslag {
   sync: { bekeken: number; uitgevoerd: SyncOutcome[] };
   extractie: { gebruikers: number; gescand: number; aangemaakt: number; overgeslagen: number };
   escalatie: { gebruikers: number; geescaleerd: number };
+  vertrouwen: { gebruikers: number; voorgesteld: number };
 }
 
 export async function tick(now: Date = new Date()): Promise<TickUitslag> {
@@ -64,6 +71,7 @@ export async function tick(now: Date = new Date()): Promise<TickUitslag> {
   // ziet als open belofte.
   const extractie = await extractCommitmentsForAllUsers(now);
   const escalatie = await escaleerVoorAlleGebruikers(now);
+  const vertrouwen = await berekenPromotievoorstellenVoorAlleGebruikers(now);
 
   // Over alle gebruikers heen kijken kan niet achter RLS langs — dit is
   // systeemwerk, geen gebruikersverzoek. Vandaar de eigenaarsrol, en meteen
@@ -73,7 +81,14 @@ export async function tick(now: Date = new Date()): Promise<TickUitslag> {
     include: { user: { select: { id: true, timezone: true } } },
   });
 
-  const uitslag: TickUitslag = { bekeken: runs.length, uitgevoerd: [], sync, extractie, escalatie };
+  const uitslag: TickUitslag = {
+    bekeken: runs.length,
+    uitgevoerd: [],
+    sync,
+    extractie,
+    escalatie,
+    vertrouwen,
+  };
 
   for (const run of runs) {
     if (!isRunKind(run.kind)) continue;
@@ -322,4 +337,38 @@ async function escaleerVoorAlleGebruikers(
   }
 
   return { gebruikers: gebruikers.length, geescaleerd };
+}
+
+/**
+ * Het weekmoment van de vertrouwensloop (src/lib/mandates/suggest.ts), voor
+ * alle gebruikers. Zelfde vorm als escaleerVoorAlleGebruikers hierboven:
+ * eigenaarsrol om over gebruikers heen te kijken, per gebruiker terug naar
+ * withUser() voor het echte werk, eigen foutisolatie. Het weekmoment zelf
+ * bepaalt of er deze tick iets te doen valt — dat is geen aparte cronregel
+ * (zie CLAUDE.md-regel over ScheduledRun), maar boekhouding binnen
+ * computeMandateSuggestionsForUser.
+ */
+async function berekenPromotievoorstellenVoorAlleGebruikers(
+  now: Date,
+): Promise<{ gebruikers: number; voorgesteld: number }> {
+  const gebruikers = await ownerPrisma.user.findMany({ select: { id: true, timezone: true } });
+
+  let voorgesteld = 0;
+
+  for (const gebruiker of gebruikers) {
+    try {
+      const domains = await withUser(gebruiker.id, (tx) =>
+        computeMandateSuggestionsForUser(tx, gebruiker.id, gebruiker.timezone, now),
+      );
+      voorgesteld += domains.length;
+    } catch {
+      // Eén gebruiker met een kapotte batch mag de rest van de tick niet
+      // blokkeren — volgende tick opnieuw (de weekboekhouding wordt pas aan
+      // het eind van computeMandateSuggestionsForUser bijgewerkt, dus een
+      // crash halverwege probeert dezelfde week gewoon opnieuw).
+      continue;
+    }
+  }
+
+  return { gebruikers: gebruikers.length, voorgesteld };
 }
