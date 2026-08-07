@@ -1,9 +1,13 @@
 /* Wingman — design tokens
  *
- * Bron: DESIGN_REFERENCE.md. Donker marineblauw is het enige thema:
- * grond #071321, tekst #e9f3fc, één hemelblauw accent (#66b9f7),
- * amber als enige tweede signaalkleur — nooit rood-alarm over de UI.
- * Newsreader (serif, koppen) + Archivo (sans, interface), basis 15px/1.55.
+ * Bron: de schermverkenning van 7 augustus 2026 (licht). Licht is nu het
+ * hoofdthema: lichtgrijze grond, witte kaarten, diep marineblauw als enige
+ * accent — op de primaire knop, de actieve navigatie en de zijbalk.
+ * Amber blijft de enige tweede signaalkleur; rood komt er niet in.
+ *
+ * De tokennamen zijn bewust ongewijzigd gebleven ten opzichte van het donkere
+ * thema. Het klassecontract in globals.css hangt eraan, dus een themawissel is
+ * een waardewissel hier en raakt geen enkele .tsx.
  *
  * --font-serif en --font-sans komen van next/font/google (zie layout.tsx) —
  * hier bewust niet opnieuw gedeclareerd, anders wint de volgorde in de
@@ -12,35 +16,51 @@
 
 :root {
   /* Native formulierelementen (tijdveld, vinkvakje, keuzelijst) tekenen zichzelf
-     volgens dit signaal. Zonder deze regel blijft een <input type="time"> in het
-     donkere thema zwarte tekst op een zwart vlak — onleesbaar, terwijl de
-     waarde er wel degelijk staat. */
-  color-scheme: dark;
+     volgens dit signaal. Stond op dark toen het thema donker was; nu light,
+     anders houdt de browser witte tekst op een wit vlak aan. */
+  color-scheme: light;
 
-  /* --- Kleur: grond & inkt (donker, hoofdthema) ------------------------ */
-  --paper: #071321; /* grond */
-  --paper-raised: #0b1b30; /* kaarten, rijen, velden */
-  --paper-sunk: #102b48; /* coach, nadrukkaart */
-  --ink: #e9f3fc;
-  --ink-body: #a8bdd0;
-  --ink-muted: #6e849b;
-  --ink-faint: #506982;
-  --rule: rgba(104, 157, 201, 0.2);
-  --rule-strong: #244765;
+  /* --- Kleur: grond & inkt (licht, hoofdthema) ------------------------- */
+  --paper: #f4f5f7; /* grond */
+  --paper-raised: #ffffff; /* kaarten, rijen, velden */
+  --paper-sunk: #eef0f4; /* coach, nadrukkaart, notice */
+  --ink: #101828;
+  --ink-body: #475467;
+  --ink-muted: #667085;
+  --ink-faint: #98a2b3;
+  --rule: rgba(16, 24, 40, 0.08);
+  --rule-strong: #e4e7ec;
 
-  /* Eén accent. Blauw alleen op primaire actie, selectie en bevestiging. */
-  --accent: #66b9f7;
-  --accent-hover: #8dceff;
-  --accent-ink: #bce3ff;
-  --accent-strong: #66b9f7;
-  --accent-strong-hover: #8dceff;
-  --accent-strong-active: #4aa5e9;
-  --accent-on-strong: #062039;
-  --accent-soft: rgba(102, 185, 247, 0.14);
+  /* Eén accent. Diep marineblauw op primaire actie, selectie en bevestiging.
+     In het donkere thema was dit hemelblauw; op een lichte grond draagt dat
+     te weinig contrast voor een knop met tekst erin. */
+  --accent: #1b2a44;
+  --accent-hover: #2a3c5c;
+  --accent-ink: #1b2a44;
+  --accent-strong: #16233a;
+  --accent-strong-hover: #22334f;
+  --accent-strong-active: #0f1a2c;
+  --accent-on-strong: #ffffff;
+  --accent-soft: rgba(27, 42, 68, 0.06);
 
-  /* Signaal — amber, bewust niet rood. "Dit vraagt aandacht", nooit alarm. */
-  --signal: #d7a850;
-  --signal-soft: rgba(215, 168, 80, 0.12);
+  /* Signaal — amber, bewust niet rood. "Dit vraagt aandacht", nooit alarm.
+     Donkerder dan de donkere-thema-variant, anders zakt het weg op wit. */
+  --signal: #a15c07;
+  --signal-soft: rgba(161, 92, 7, 0.1);
+
+  /* De zijbalk (desktop) is een donker vlak binnen een lichte app. Eigen
+     tokens, want hier gelden de inkt-tokens hierboven niet. */
+  --rail: #16233a;
+  --rail-raised: #24344f; /* actieve rij */
+  --rail-ink: #ffffff;
+  --rail-ink-muted: #93a2b8;
+  --rail-rule: rgba(255, 255, 255, 0.08);
+
+  /* De hoofdtaakkaart is het enige warme vlak in de app — een crème verloop
+     dat hem uit de rij witte kaarten tilt zonder een tweede accentkleur. */
+  --hero-paper: #efeadc;
+  --hero-paper-2: #f8f5ee;
+  --hero-rule: rgba(120, 100, 60, 0.16);
 
   /* --- Typografie ------------------------------------------------------ */
   --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
@@ -52,11 +72,11 @@
   --t-base: 0.9375rem; /* 15 — lopende tekst */
   --t-md: 1rem; /* 16 — invoer, intro-tekst, coach */
   --t-lg: 1.375rem; /* 22 — sectiekop, wordmark */
-  /* Schermtitels op 28px: in de referentie is de serif-kop één regel naast
-     veel inhoud, geen poster. De frog-titel is sans en nog kleiner — die kaart
-     wint op tint, niet op corpsgrootte. */
   --t-xl: 1.75rem; /* 28 — schermtitels (serif, 1 regel) */
-  --t-frog: 1.25rem; /* 20 — frog-titel (sans, medium) */
+  /* De hoofdtaak is in de nieuwe verkenning de grootste tekst op het scherm,
+     serif en tot twee regels — niet meer het kleine sans-kopje van het
+     donkere thema. */
+  --t-frog: 1.75rem; /* 28 — hoofdtaaktitel (serif) */
   --t-2xl: 2.375rem; /* 38 — gereserveerd voor uitzonderlijk grote koppen */
 
   --lh-tight: 1.15;
@@ -87,14 +107,18 @@
   --r-lg: 20px;
   --r-pill: 999px;
 
-  /* Kaarten op donker zijn vlak (rand, geen glow) — zo staat het ook in het
-     bronbestand: alleen het telefoonframe zelf heeft een schaduw. */
-  --shadow-card: none;
-  --shadow-frog: none;
+  /* Op donker deden randen al het scheidingswerk en waren kaarten vlak. Op een
+     lichte grond leest een witte kaart zonder lift als een gat, dus hier een
+     lichte slagschaduw — geen glow, geen glas. */
+  --shadow-card:
+    0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
+  --shadow-frog:
+    0 1px 2px rgba(16, 24, 40, 0.05), 0 8px 24px rgba(16, 24, 40, 0.06);
 
-  /* Zachte accent-gloed — uitsluitend voor het actieve navigatie-icoon en
-     vergelijkbare "dit ben jij nu"-signalen, niet als kaartdecoratie. */
-  --glow-accent: 0 0 12px rgba(102, 185, 247, 0.45);
+  /* Gloed werkt alleen op een donkere grond. Op licht draagt kleur het
+     "dit ben jij nu"-signaal; de waarde blijft bestaan zodat het
+     klassecontract in globals.css er zonder aanpassing tegenaan kan. */
+  --glow-accent: none;
 
   --measure: 62ch; /* leesbreedte */
   --page-max: 40rem;
