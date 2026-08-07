@@ -18,7 +18,8 @@ import {
   type ExtractTx,
 } from "@/brain/extract-commitments";
 import { isDue, isRunKind, parseDays, type RunKind } from "./schedule";
-import { stuurRunBericht, type Meldresultaat } from "./notify";
+import { stuurEscalatieBericht, stuurRunBericht, type Meldresultaat } from "./notify";
+import { processUserEscalations, type EscalationTx } from "@/lib/escalation/engine";
 
 /**
  * Voert geplande momenten uit.
@@ -39,6 +40,11 @@ import { stuurRunBericht, type Meldresultaat } from "./notify";
  * fetchDelta aanroept. Geen aparte cron — dezelfde 15-minuten-tik die de
  * briefings uitvoert, doet ook de sync, en wel eerst: een briefing die ná een
  * sync gebouwd wordt ziet de nieuwste data.
+ *
+ * Ná sync en extractie, vóór de geplande momenten: de escalatielaag (Fase 1).
+ * Die staat los van ScheduledRun — hij draait voor élke gebruiker, elke tick,
+ * ongeacht of er om dit moment een briefing gepland staat. Dat is het hele
+ * punt: escalatie is precies de laag die niet op het vaste ritme wacht.
  */
 
 const RECEPTEN: Record<RunKind, Recipe> = { morning, midday, evening };
@@ -48,6 +54,7 @@ export interface TickUitslag {
   uitgevoerd: Array<{ userId: string; kind: string; status: string; summary?: string }>;
   sync: { bekeken: number; uitgevoerd: SyncOutcome[] };
   extractie: { gebruikers: number; gescand: number; aangemaakt: number; overgeslagen: number };
+  escalatie: { gebruikers: number; geescaleerd: number };
 }
 
 export async function tick(now: Date = new Date()): Promise<TickUitslag> {
@@ -56,6 +63,7 @@ export async function tick(now: Date = new Date()): Promise<TickUitslag> {
   // dezelfde tick nog worden geëxtraheerd, zodat de ochtendbriefing 'm al
   // ziet als open belofte.
   const extractie = await extractCommitmentsForAllUsers(now);
+  const escalatie = await escaleerVoorAlleGebruikers(now);
 
   // Over alle gebruikers heen kijken kan niet achter RLS langs — dit is
   // systeemwerk, geen gebruikersverzoek. Vandaar de eigenaarsrol, en meteen
@@ -65,7 +73,7 @@ export async function tick(now: Date = new Date()): Promise<TickUitslag> {
     include: { user: { select: { id: true, timezone: true } } },
   });
 
-  const uitslag: TickUitslag = { bekeken: runs.length, uitgevoerd: [], sync, extractie };
+  const uitslag: TickUitslag = { bekeken: runs.length, uitgevoerd: [], sync, extractie, escalatie };
 
   for (const run of runs) {
     if (!isRunKind(run.kind)) continue;
@@ -274,4 +282,44 @@ async function extractCommitmentsForAllUsers(
   }
 
   return { gebruikers: rijenMetOngezieneMail.length, gescand, aangemaakt, overgeslagen };
+}
+
+/**
+ * Escalatie (Fase 1, src/lib/escalation/) voor alle gebruikers. Zelfde vorm
+ * als syncActiveConnectors/extractCommitmentsForAllUsers hierboven:
+ * eigenaarsrol om over gebruikers heen te kijken, dan per gebruiker terug
+ * naar withUser() voor het echte lees- en schrijfwerk, met een eigen
+ * foutisolatie zodat één kapotte gebruiker de rest van de tick niet blokkeert.
+ *
+ * Het versturen (stuurEscalatieBericht — push indien mogelijk, anders mail)
+ * gebeurt bewust buiten de tx van processUserEscalations: dat schrijfblok
+ * moet kort blijven, en een mail- of pushaanroep die vastloopt mag de
+ * EscalationEvent-rij niet blokkeren die net is aangemaakt (die staat er dan
+ * al, en voorkomt dat dezelfde deadline een tick later opnieuw "nieuw" is).
+ */
+async function escaleerVoorAlleGebruikers(
+  now: Date,
+): Promise<{ gebruikers: number; geescaleerd: number }> {
+  const gebruikers = await ownerPrisma.user.findMany({ select: { id: true, timezone: true } });
+
+  let geescaleerd = 0;
+
+  for (const gebruiker of gebruikers) {
+    try {
+      const events = await withUser(gebruiker.id, (tx) =>
+        processUserEscalations(tx as unknown as EscalationTx, gebruiker.id, gebruiker.timezone, now),
+      );
+
+      for (const event of events) {
+        await stuurEscalatieBericht(gebruiker.id, event.message).catch(() => undefined);
+        geescaleerd += 1;
+      }
+    } catch {
+      // Eén gebruiker met een kapotte batch (db-hik, kapotte instelling) mag
+      // de rest van de tick niet blokkeren — volgende tick opnieuw.
+      continue;
+    }
+  }
+
+  return { gebruikers: gebruikers.length, geescaleerd };
 }
