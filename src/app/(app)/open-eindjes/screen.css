@@ -51,6 +51,12 @@
   padding: var(--s-4);
 }
 
+.oe-card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-2);
+}
+
 /* Sans-titel ±16px — de serif is voorbehouden aan de schermkop. */
 .oe-card__title {
   margin: 0;
@@ -58,6 +64,33 @@
   font-weight: var(--w-semi);
   color: var(--ink);
   line-height: var(--lh-snug);
+}
+
+/* Chips boven de stapel — alleen zichtbaar zodra er écht meer dan één
+   brontype in de lijst voorkomt (zie Filters.tsx). */
+.oe-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin: var(--s-5) 0 var(--s-3);
+}
+
+.oe-filter {
+  border: 1px solid var(--rule);
+  background: transparent;
+  color: var(--ink-muted);
+  font-size: var(--t-xs);
+  font-weight: var(--w-medium);
+  padding: var(--s-1) var(--s-3);
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+
+.oe-filter.is-active {
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  background: var(--accent-soft);
 }
 
 /* Eén regel context, muted. */

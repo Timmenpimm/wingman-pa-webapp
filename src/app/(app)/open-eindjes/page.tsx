@@ -5,7 +5,7 @@ import { withUser } from "@/lib/db/with-user";
 import { getOpenCommitments, type LooseEnd } from "@/lib/commitments";
 import { resolveCommitment } from "@/lib/actions";
 import { durationPhrase } from "@/lib/text";
-import { Stapel } from "./Stapel";
+import { FilterableStapel } from "./Filters";
 import "./screen.css";
 
 export const dynamic = "force-dynamic";
@@ -102,7 +102,7 @@ export default async function OpenEindjesPage() {
         <>
           {/* Werkt alleen met JS: de client-stapel gebruikt useTransition om
               resolveCommitment aan te roepen en animeert per kaart. */}
-          <Stapel items={items} />
+          <FilterableStapel items={items} />
 
           {/* Zonder JS bestaat de client-stapel wel als HTML, maar de knoppen
               hebben geen werkende handler. <noscript> wordt door de browser

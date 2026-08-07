@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { resolveCommitment } from "@/lib/actions";
 import type { LooseEnd } from "@/lib/commitments";
 import { durationPhrase } from "@/lib/text";
+import { SourceIcon } from "@/components/SourceIcon";
 
 const SNOOZE_DAYS = 3;
 
@@ -40,7 +41,10 @@ export function Stapel({ items }: { items: LooseEnd[] }) {
 
         return (
           <li key={item.id} className="oe-card">
-            <p className="oe-card__title">{item.what}</p>
+            <div className="oe-card__head">
+              <SourceIcon kind={item.source} />
+              <p className="oe-card__title">{item.what}</p>
+            </div>
             {/* Referentie 12.png: één regel context onder de titel. De
                 richting ("wacht op…") blijft de fallback als er geen
                 context is — dat onderscheid is het product, de regel de vorm. */}

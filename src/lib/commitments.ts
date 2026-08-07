@@ -19,6 +19,7 @@ export interface LooseEnd {
   what: string;
   context?: string;
   party: string;
+  source: string;
   source_label: string;
   opened_at: string;
   due_date?: string;
@@ -54,6 +55,7 @@ export async function getOpenCommitments(userId: string): Promise<LooseEnds> {
       what: clamp(r.what, "looseEndTitle"),
       context: r.context ? clamp(r.context, "looseEndDescription") : undefined,
       party: r.party,
+      source: r.source,
       source_label: r.source_label ?? r.source,
       opened_at: r.opened_at.toISOString(),
       due_date: r.due_date?.toISOString(),
