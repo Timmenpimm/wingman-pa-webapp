@@ -1,4 +1,5 @@
 import { withUser } from "@/lib/db/with-user";
+import { asLevel, mostRestrictiveLevel, type MandateLevel } from "@/lib/mandates/domains";
 import {
   deriveSteps,
   FINISHED_KEY,
@@ -27,7 +28,6 @@ export interface ConnectorSummary {
   provider: string;
   label: string;
   status: string;
-  permission: string;
 }
 
 export interface OnboardingStatus {
@@ -35,6 +35,13 @@ export interface OnboardingStatus {
   finishedAt: Date | null;
   /** Alleen de connectors die bij de gevraagde stap horen. */
   connectors: ConnectorSummary[];
+  /**
+   * Het huidige mandaatniveau voor de domeinen van deze stap — de
+   * voorzichtigste van de twee als een stap ooit meer dan één domein krijgt,
+   * of niveau 1 als er nog geen Mandate-rij bestaat. Zie mostRestrictiveLevel
+   * in src/lib/mandates/domains.ts.
+   */
+  mandateLevel: MandateLevel;
 }
 
 export type Payoff =
@@ -55,9 +62,10 @@ export async function onboardingStatus(
   step?: StepId,
 ): Promise<OnboardingStatus & { payoff: Payoff }> {
   const providers = step ? stepDefinition(step).providers : [];
+  const domains = step ? stepDefinition(step).domains : [];
 
   return withUser(userId, async (tx) => {
-    const [connectors, settings] = await Promise.all([
+    const [connectors, settings, mandates] = await Promise.all([
       tx.connector.findMany({
         where: { user_id: userId },
         select: { id: true, provider: true, label: true, status: true, permission: true },
@@ -67,10 +75,17 @@ export async function onboardingStatus(
         where: { user_id: userId },
         select: { key: true, value: true },
       }),
+      domains.length > 0
+        ? tx.mandate.findMany({
+            where: { user_id: userId, domain: { in: domains } },
+            select: { domain: true, level: true },
+          })
+        : Promise.resolve([]),
     ]);
 
     const steps = deriveSteps({ connectors, marks: marksFromSettings(settings) });
     const finished = settings.find((s) => s.key === FINISHED_KEY)?.value;
+    const mandateLevel = mostRestrictiveLevel(mandates.map((m) => asLevel(m.level)));
 
     let payoff: Payoff = { kind: "none" };
     const now = new Date();
@@ -121,7 +136,10 @@ export async function onboardingStatus(
     return {
       steps,
       finishedAt: finished ? new Date(finished) : null,
-      connectors: connectors.filter((c) => (providers as string[]).includes(c.provider)),
+      connectors: connectors
+        .filter((c) => (providers as string[]).includes(c.provider))
+        .map((c) => ({ id: c.id, provider: c.provider, label: c.label, status: c.status })),
+      mandateLevel,
       payoff,
     };
   });

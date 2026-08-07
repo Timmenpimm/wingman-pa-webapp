@@ -6,6 +6,7 @@ import {
   type Permission,
   type Provider,
 } from "@/lib/types";
+import type { Domain } from "@/lib/mandates/domains";
 
 /**
  * Wat een connector kan dóén, naast lezen.
@@ -39,6 +40,12 @@ export interface ConnectorTool<P = unknown> {
   /** Eén regel NL voor de instellingen: wat kan dit ding. */
   label: string;
   effect: ToolEffect;
+  /**
+   * Welk domein (src/lib/mandates/domains.ts) deze tool onder de mandaatvraag
+   * zet. Verplicht: een tool zonder domein is een actie die gate() nergens aan
+   * kan toetsen, en dat mag niet stilzwijgend "geen mandaat nodig" betekenen.
+   */
+  domain: Domain;
   /** Parameters gaan er nooit ongecontroleerd in; een model verzint velden. */
   params: z.ZodType<P>;
   /**

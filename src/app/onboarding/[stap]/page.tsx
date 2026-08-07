@@ -5,9 +5,9 @@ import { currentUserId } from "@/lib/db/client";
 import { connectGoogle, continueOnboarding } from "@/lib/actions";
 import { authUrlFor } from "@/connectors";
 import { onboardingStatus, type Payoff } from "@/lib/onboarding/status";
-import { isStepId, mostRestrictive, stepDefinition, type StepId } from "@/lib/onboarding/steps";
+import { isStepId, stepDefinition, type StepId } from "@/lib/onboarding/steps";
 import { formatAmount, formatDayLong, formatTime } from "@/lib/text";
-import { PERMISSION_LABELS, type Permission } from "@/lib/types";
+import { DOMAIN_REGISTRY, LEVEL_LABELS, LEVELS, type Domain, type MandateLevel } from "@/lib/mandates/domains";
 import { PushOptIn } from "@/components/PushOptIn";
 import { Trail } from "../Trail";
 import "../onboarding.css";
@@ -68,22 +68,20 @@ const LEDE: Record<StepId, string> = {
 };
 
 /**
- * De permissiegradiënt (§6.7) in de taal van de bron waar hij over gaat. Vier
- * keer "voorstellen · concept maken · doen en melden · stil doen" naast elkaar
- * zegt niets; wat het per bron betékent wel.
+ * Het mandaatniveau (§6.7 fase 1) in de taal van het domein waar het over
+ * gaat. Drie keer "signaleren · klaarzetten · doen" naast elkaar zegt niets;
+ * wat het per domein betékent wel.
  */
-const PERMISSION_HELP: Partial<Record<StepId, Record<Permission, string>>> = {
-  agenda: {
-    propose: "Ik stel voor, jij klikt. Er verschuift niets zonder je ja.",
-    draft: "Ik zet een afspraak klaar als concept; jij bevestigt.",
-    act_and_report: "Ik plan zelf en vertel achteraf wat ik deed.",
-    silent: "Ik plan zelf en meld het niet apart.",
+const LEVEL_HELP: Partial<Record<Domain, Record<MandateLevel, string>>> = {
+  calendar: {
+    1: "Ik stel voor, jij klikt. Er verschuift niets zonder je ja.",
+    2: "Ik zet een afspraak klaar als voorstel; jij bevestigt.",
+    3: "Ik plan zelf en vertel achteraf wat ik deed.",
   },
-  mail: {
-    propose: "Ik stel een antwoord voor, jij beslist.",
-    draft: "Ik zet het concept klaar in Gmail. Versturen doe jij.",
-    act_and_report: "Ik zet concepten meteen klaar en meld dat.",
-    silent: "Ik zet concepten klaar zonder er iets over te zeggen.",
+  email_send: {
+    1: "Ik stel een antwoord voor, jij beslist.",
+    2: "Ik zet het concept klaar in Gmail. Versturen doe jij.",
+    3: "Ik zet concepten zelf klaar en meld dat.",
   },
 };
 
@@ -93,12 +91,14 @@ export default async function OnboardingStepPage({ params }: { params: { stap: s
   const definition = stepDefinition(step);
 
   const userId = await currentUserId();
-  const { steps, connectors, payoff } = await onboardingStatus(userId, step);
+  const { steps, connectors, payoff, mandateLevel } = await onboardingStatus(userId, step);
   const state = steps.find((s) => s.id === step)!;
 
   const googleConfigured = Boolean(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET);
   const pontoUrl = authUrlFor("ponto");
-  const permission = mostRestrictive(connectors.map((c) => c.permission));
+  // Vandaag altijd precies één domein per stap (agenda → calendar, mail →
+  // email_send); de vraag stelt zich per stap, dus het eerste domein volstaat.
+  const domain = definition.domains[0];
 
   const StepIcon = STEP_ICON[step];
 
@@ -143,33 +143,33 @@ export default async function OnboardingStepPage({ params }: { params: { stap: s
       )}
 
       <form action={continueOnboarding.bind(null, step)} className="wizard__form">
-        {definition.asksPermission && state.status === "connected" && (
+        {definition.asksPermission && domain && state.status === "connected" && (
           <fieldset className="choices">
-            <legend className="eyebrow">Wat mag ik hiermee?</legend>
-            {/* Eén antwoord voor de hele stap, dus zeg waar het over gaat. Bij
-                twee agenda's zou een naamloze vraag stilzwijgend ook de
-                privéagenda meenemen. */}
-            {connectors.length > 1 && (
-              <p className="meta" style={{ marginBottom: "var(--s-3)" }}>
-                Geldt voor {connectors.map((c) => c.label).join(" en ")}. Los instellen kan bij
-                Instellingen.
-              </p>
-            )}
-            {(Object.keys(PERMISSION_LABELS) as Permission[]).map((value) => (
+            <legend className="eyebrow">Wat mag Wingman hiermee?</legend>
+            <p className="meta" style={{ marginBottom: "var(--s-3)" }}>
+              {DOMAIN_REGISTRY[domain].description}
+              {/* Eén antwoord voor de hele stap, dus zeg waar het over gaat. Bij
+                  twee agenda's zou een naamloze vraag stilzwijgend ook de
+                  privéagenda meenemen. */}
+              {connectors.length > 1
+                ? ` Geldt voor ${connectors.map((c) => c.label).join(" en ")}. Los instellen kan bij Instellingen.`
+                : ""}
+            </p>
+            {LEVELS.map((value) => (
               <label key={value} className="choice">
                 <input
                   type="radio"
-                  name="permission"
+                  name="level"
                   value={value}
-                  defaultChecked={value === permission}
+                  defaultChecked={value === mandateLevel}
                 />
                 <span>
-                  <span className="choice__title">{PERMISSION_LABELS[value]}</span>
-                  <span className="choice__help">{PERMISSION_HELP[step]?.[value]}</span>
+                  <span className="choice__title">{LEVEL_LABELS[value]}</span>
+                  <span className="choice__help">{LEVEL_HELP[domain]?.[value]}</span>
                 </span>
               </label>
             ))}
-            {step === "mail" && (
+            {domain === "email_send" && (
               <p className="meta" style={{ marginTop: "var(--s-3)" }}>
                 Wat je hier ook kiest: Wingman verstuurt in deze versie geen mail. Concepten wel,
                 versturen nooit.

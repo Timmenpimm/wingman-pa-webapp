@@ -5,7 +5,7 @@ import {
   hasStartedOnboarding,
   marksFromSettings,
   markKey,
-  mostRestrictive,
+  mostRestrictiveLevel,
   nextStep,
 } from "@/lib/onboarding/steps";
 
@@ -122,24 +122,20 @@ describe("de poort voor de eerste keer", () => {
   });
 });
 
-describe("de voorselectie van de permissie", () => {
-  it("kiest de voorzichtigste van twee agenda's", () => {
-    // Werkagenda op "doen en melden", privéagenda op "voorstellen": wie op
-    // Volgende drukt zonder te kiezen, hoort de privéagenda niet stilzwijgend
-    // ruimer te zetten.
-    expect(mostRestrictive(["act_and_report", "propose"])).toBe("propose");
+describe("de voorselectie van het mandaatniveau", () => {
+  it("kiest de voorzichtigste van twee domeinen", () => {
+    // Eén domein op niveau 3 ("doen"), het andere nog op niveau 1
+    // ("signaleren"): wie op Volgende drukt zonder te kiezen, hoort het
+    // voorzichtigste domein niet stilzwijgend ruimer te zetten.
+    expect(mostRestrictiveLevel([3, 1])).toBe(1);
   });
 
-  it("laat een gedeelde stand staan", () => {
-    expect(mostRestrictive(["draft", "draft"])).toBe("draft");
+  it("laat een gedeeld niveau staan", () => {
+    expect(mostRestrictiveLevel([2, 2])).toBe(2);
   });
 
-  it("valt zonder connectors terug op voorstellen", () => {
-    expect(mostRestrictive([])).toBe("propose");
-  });
-
-  it("negeert een waarde die geen permissie is", () => {
-    expect(mostRestrictive(["silent", "kapot"])).toBe("silent");
+  it("valt zonder mandaten terug op niveau 1", () => {
+    expect(mostRestrictiveLevel([])).toBe(1);
   });
 });
 

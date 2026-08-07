@@ -38,6 +38,7 @@ const listDay: ConnectorTool<z.infer<typeof listDayParams>> = {
   name: "calendar.list_day",
   label: "Agenda van één dag ophalen",
   effect: "read",
+  domain: "calendar",
   params: listDayParams,
   describe: (p) => `Agenda van ${formatDayLong(`${p.date}T12:00:00`)} bekijken`,
 
@@ -77,6 +78,7 @@ const createEvent: ConnectorTool<z.infer<typeof createEventParams>> = {
   name: "calendar.create_event",
   label: "Afspraak in de agenda zetten",
   effect: "write",
+  domain: "calendar",
   params: createEventParams,
   describe: (p) =>
     `"${p.title}" op ${formatDayLong(p.start)} ${formatTime(p.start)}–${formatTime(p.end)}` +
