@@ -122,48 +122,61 @@ model Event {
 
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
+  // De sync-engine (src/lib/sync/engine.ts) upsert op deze combinatie: een
+  // adapter levert een external_id die de bron zelf al uniek maakt (met
+  // provider-prefix, "google:xyz"), dus dit is de dedupe-sleutel bij een
+  // hersync van dezelfde periode.
+  @@unique([user_id, external_id])
   @@index([user_id, start_at])
 }
 
 model Email {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   user_id      String
   connector_id String?
   external_id  String
   thread_id    String
   subject      String
   from_addr    String
-  to_addrs     String   @default("[]") // JSON
+  to_addrs     String    @default("[]") // JSON
   sent_at      DateTime
   body_text    String
-  is_sent      Boolean  @default(false)
-  is_unread    Boolean  @default(false)
-  labels       String   @default("[]") // JSON
-  processed    Boolean  @default(false)
+  is_sent      Boolean   @default(false)
+  is_unread    Boolean   @default(false)
+  labels       String    @default("[]") // JSON
+  processed    Boolean   @default(false)
+  // Nullable haakje voor de extractie-fase (LLM-extractie, latere PR): NULL =
+  // nog niet verwerkt. Losstaand van `processed` (dat blijft het bestaande
+  // boolean-veld) omdat een timestamp ook "sinds wanneer ligt dit al" beantwoordt
+  // en zich leent voor "ouder dan X uur, opnieuw proberen"-logica die een
+  // boolean niet kan.
+  processed_at DateTime?
 
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
+  // Zie de toelichting bij Event.@@unique — zelfde dedupe-sleutel, zelfde reden.
+  @@unique([user_id, external_id])
   @@index([user_id, thread_id])
 }
 
 model Transaction {
-  id                 String   @id @default(cuid())
-  user_id            String
-  connector_id       String?
-  external_id        String
-  account_iban       String
-  account_name       String
-  amount             Float // + = bij, - = af
-  currency           String   @default("EUR")
-  booked_at          DateTime
-  counterparty       String?
-  description        String?
-  category           String?
+  id                  String   @id @default(cuid())
+  user_id             String
+  connector_id        String?
+  external_id         String
+  account_iban        String
+  account_name        String
+  amount              Float // + = bij, - = af
+  currency            String   @default("EUR")
+  booked_at           DateTime
+  counterparty        String?
+  description         String?
+  category            String?
   category_confidence Float?
-  transaction_type   String   @default("transfer")
-  needs_review       Boolean  @default(false)
-  status             String   @default("booked")
-  project_id         String?
+  transaction_type    String   @default("transfer")
+  needs_review        Boolean  @default(false)
+  status              String   @default("booked")
+  project_id          String?
 
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
@@ -254,15 +267,15 @@ model InboxItem {
 }
 
 model StyleCard {
-  id          String   @id @default(cuid())
-  user_id     String
-  register    String // bekenden | zakelijk_eerste_contact | instanties
-  greeting    String
-  signoff     String
-  avg_words   Int
-  typical     String   @default("[]") // JSON: zinnen
-  edited_by_user Boolean @default(false)
-  updated_at  DateTime @default(now())
+  id             String   @id @default(cuid())
+  user_id        String
+  register       String // bekenden | zakelijk_eerste_contact | instanties
+  greeting       String
+  signoff        String
+  avg_words      Int
+  typical        String   @default("[]") // JSON: zinnen
+  edited_by_user Boolean  @default(false)
+  updated_at     DateTime @default(now())
 
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
@@ -281,7 +294,7 @@ model UserSetting {
 }
 
 model GraphNode {
-  id      String @id
+  id      String  @id
   user_id String
   type    String // Person | Project | Commitment | Transaction | Event | EmailThread | Organization | Account | Category
   label   String
@@ -290,7 +303,7 @@ model GraphNode {
 }
 
 model GraphEdge {
-  id      String @id @default(cuid())
+  id      String  @id @default(cuid())
   user_id String
   from_id String
   to_id   String
