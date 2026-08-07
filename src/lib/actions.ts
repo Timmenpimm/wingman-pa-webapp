@@ -426,3 +426,26 @@ export async function updateEmail(data: FormData): Promise<{ fout?: string }> {
   revalidatePath("/instellingen");
   return {};
 }
+
+/**
+ * Account definitief verwijderen ("Je gegevens" in Instellingen).
+ *
+ * Eén DELETE op de User-rij: elke andere tabel heeft ON DELETE CASCADE naar
+ * User.id (zie prisma/schema.prisma en de migraties eronder — GraphNode en
+ * GraphEdge kregen die pas in 20260807170000_graph_cascade_delete), dus die
+ * rijen verdwijnen in dezelfde transactie mee. Geen tabel-voor-tabel
+ * opruimlijst die uit de pas kan lopen met een nieuw model.
+ *
+ * Loopt via ownerPrisma, niet withUser(): net als het inlogpad
+ * (src/lib/db/owner-prisma.ts) is hier geen sessie/RLS-omweg nodig voor een
+ * verwijdering die toch al alleen de eigen rij raakt — de eigenaarsrol is
+ * het minimale pad voor een enkele DELETE die op databaseniveau cascadeert.
+ *
+ * Roept zelf geen signOut aan: de aanroeper in Instellingen doet dat pas na
+ * een geslaagde delete, zodat de sessie pas verdwijnt als de data er
+ * werkelijk niet meer is.
+ */
+export async function deleteAccount(): Promise<void> {
+  const userId = await currentUserId();
+  await ownerPrisma.user.delete({ where: { id: userId } });
+}

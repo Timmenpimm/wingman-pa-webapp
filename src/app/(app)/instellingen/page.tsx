@@ -1,7 +1,7 @@
 import { EmailForm } from "./EmailForm";
 import { RUN_KINDS, RUN_LABELS } from "@/lib/runs/schedule";
 import { currentUserId, withUser } from "@/lib/db/client";
-import { connectGoogle, decideTool, setConnectorPermission, updateRun } from "@/lib/actions";
+import { connectGoogle, decideTool, deleteAccount, setConnectorPermission, updateRun } from "@/lib/actions";
 import { PERMISSION_LABELS } from "@/lib/types";
 import { addableRows, catalogRows } from "@/connectors/catalog";
 import { authUrlFor } from "@/connectors";
@@ -437,12 +437,30 @@ export default async function InstellingenPage() {
             </button>
           </form>
         </div>
-        {/* Geen knop voor verwijderen zolang die niets doet: een dode knop die
-            "account verwijderen" belooft is erger dan geen knop. */}
-        <p className="meta" style={{ marginTop: "var(--s-3)" }}>
-          Verwijderen van je account kan nog niet vanuit de app — dat komt samen met
-          accounts en inloggen.
-        </p>
+        {/* <details> als bevestigingsstap: geen browser-confirm, en werkt
+            zonder client-JS (zelfde patroon als "Jouw regels" hierboven).
+            Openklappen is de eerste stap, de knop erin de tweede — dat is
+            de "expliciete bevestiging" zonder er een aparte pagina van te
+            maken. */}
+        <details className="st-rule" style={{ marginTop: "var(--s-4)" }}>
+          <summary>
+            <span className="st-row__body">
+              <span className="st-row__title">Account verwijderen</span>
+              <span className="st-row__sub">definitief, kan niet ongedaan worden gemaakt</span>
+            </span>
+            <CaretRight className="st-rule__chev" aria-hidden="true" />
+          </summary>
+          <p className="st-row__sub" style={{ maxWidth: "var(--measure)", margin: "0 0 var(--s-3)" }}>
+            Dit verwijdert je account en alles daarbinnen: gekoppelde bronnen, agenda- en
+            mailgegevens, transacties, projecten, prioriteiten en logboeken. Er is geen
+            herstelpad.
+          </p>
+          <form action={verwijderAccount} style={{ paddingBottom: "var(--s-4)" }}>
+            <button className="btn btn--quiet" type="submit">
+              Ja, mijn account definitief verwijderen
+            </button>
+          </form>
+        </details>
       </section>
     </>
   );
@@ -466,5 +484,14 @@ async function decideFromForm(id: string, decision: "approve" | "reject") {
 
 async function logout() {
   "use server";
+  await signOut({ redirectTo: "/inloggen" });
+}
+
+/** Verwijderen en meteen uitloggen: de sessie hangt aan een userId die na
+ * deleteAccount() niet meer bestaat, dus die kan hierna toch nergens meer
+ * geldig tegen aanlopen. */
+async function verwijderAccount() {
+  "use server";
+  await deleteAccount();
   await signOut({ redirectTo: "/inloggen" });
 }

@@ -44,6 +44,8 @@ model User {
   styleCards   StyleCard[]
   settings     UserSetting[]
   toolCalls    ToolCall[]
+  graphNodes   GraphNode[]
+  graphEdges   GraphEdge[]
 }
 
 model Connector {
@@ -287,6 +289,8 @@ model GraphNode {
   label   String
   summary String?
   cluster String?
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 model GraphEdge {
@@ -296,6 +300,8 @@ model GraphEdge {
   to_id   String
   type    String // OWES | PART_OF | COMMUNICATES_WITH | HAS_TRANSACTION | ATTENDS | CATEGORIZED_AS | MENTIONS | NEXT_ACTION
   label   String?
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([user_id, from_id])
 }
