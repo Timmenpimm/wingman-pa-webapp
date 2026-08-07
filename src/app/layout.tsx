@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   title: "Wingman",
   description: "Persoonlijke assistent die je dag plant en losse eindjes vangt.",
   manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, title: "Wingman", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: "Wingman", statusBarStyle: "black-translucent" },
 };
 
 export const viewport: Viewport = {

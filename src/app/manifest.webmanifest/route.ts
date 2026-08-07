@@ -9,8 +9,8 @@ export function GET() {
     description: "Plant je dag en vangt losse eindjes.",
     start_url: "/",
     display: "standalone",
-    background_color: "#201e1d",
-    theme_color: "#201e1d",
+    background_color: "#071321",
+    theme_color: "#071321",
     lang: "nl",
     icons: [
       { src: "/icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any" },
