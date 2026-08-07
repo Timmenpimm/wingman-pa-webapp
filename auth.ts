@@ -53,6 +53,12 @@ const credentialsProvider = Credentials({
  * mailserver wordt er nooit een token verstuurd, dus zou hij toch nooit
  * geldig aangeroepen worden. Hem dan weglaten voorkomt een aanvalsoppervlak
  * dat niets toevoegt.
+ *
+ * findOrCreateUserByEmail() (in plaats van findUnique) maakt dit meteen ook
+ * het registratiepad voor de inloglink: /api/auth/magic-link stuurt de link
+ * naar elk adres, bestaand of niet (zie de toelichting daar), dus de User
+ * ontstaat pas hier, bij het verzilveren — met een geldig, ondertekend token
+ * als bewijs dat het adres van de aanvrager is.
  */
 const magicLinkProvider = Credentials({
   id: "magic-link",
@@ -67,9 +73,7 @@ const magicLinkProvider = Credentials({
     const email = await verifyMagicLinkToken(token);
     if (!email) return null;
 
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) return null;
-
+    const user = await findOrCreateUserByEmail(email);
     return { id: user.id, email: user.email, name: user.name ?? undefined };
   },
 });

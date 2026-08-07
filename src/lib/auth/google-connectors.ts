@@ -24,20 +24,26 @@ export interface GoogleAccountTokens {
 
 /**
  * Vindt de User bij dit e-mailadres, of maakt er één aan. Bestaat er al een
- * User met hetzelfde adres (aangemaakt via wachtwoord of inloglink), dan
- * koppelt Google daaraan — er komt nooit een tweede User voor hetzelfde
- * e-mailadres bij.
+ * User met hetzelfde adres (aangemaakt via wachtwoord, inloglink of Google),
+ * dan koppelt deze login daaraan — er komt nooit een tweede User voor hetzelfde
+ * e-mailadres bij. `timezone`/`locale` komen niet expliciet mee: het schema
+ * zet daar zelf "Europe/Amsterdam" / "nl" als default op `create`.
+ *
+ * Ook het inloglink-pad gebruikt deze functie (zie auth.ts,
+ * magicLinkProvider): een inloglink naar een onbekend adres registreert dus
+ * net als Google — de User ontstaat pas bij het verzilveren van de link, niet
+ * bij het versturen ervan.
  */
 export async function findOrCreateUserByEmail(
   email: string,
   name?: string | null,
-): Promise<{ id: string }> {
+): Promise<{ id: string; email: string; name: string | null }> {
   const normalized = email.trim().toLowerCase();
   return ownerPrisma.user.upsert({
     where: { email: normalized },
     update: {},
     create: { email: normalized, name: name ?? undefined },
-    select: { id: true },
+    select: { id: true, email: true, name: true },
   });
 }
 
