@@ -4,6 +4,9 @@ import { withUser, type Tx } from "@/lib/db/with-user";
 import { clamp } from "@/lib/text";
 import type { AdapterContext, ConnectorHealth } from "@/lib/types";
 import { mandateFor } from "@/lib/mandates/lookup";
+import { DOMAIN_REGISTRY, type Domain } from "@/lib/mandates/domains";
+import { shouldDegradeOnFailure } from "@/lib/mandates/degrade";
+import { stuurEscalatieBericht } from "@/lib/runs/notify";
 import { gate } from "./permission";
 import { adapterFor } from "@/connectors";
 import { findTool } from "./registry";
@@ -117,7 +120,10 @@ export async function requestTool(
   if (prepared.requiresApproval) {
     return { call: view(prepared.call), status: "pending" };
   }
-  return perform(userId, prepared.call.id, resolved, prepared.connector, params);
+  // Geen goedkeuring nodig = het mandaat liet dit zelfstandig lopen (niveau 3
+  // voor een write — zie gate() in ./permission). Dat onderscheid heeft
+  // perform() nodig voor de degradatieregel hieronder.
+  return perform(userId, prepared.call.id, resolved, prepared.connector, params, true);
 }
 
 type Prepared =
@@ -167,7 +173,10 @@ export async function decideToolCall(
 
   const resolved = findTool(prepared.call.tool);
   const params = parseParams(resolved, JSON.parse(prepared.call.params));
-  return perform(userId, prepared.call.id, resolved, prepared.connector, params);
+  // Dit pad bestaat alleen omdat er een "ja" nodig was (de call stond
+  // pending); de gebruiker keurde 'm per actie goed. Dat is geen zelfstandig
+  // handelen, ook al staat het mandaat intussen misschien op niveau 3.
+  return perform(userId, prepared.call.id, resolved, prepared.connector, params, false);
 }
 
 /* ---------- Lezen -------------------------------------------------------- */
@@ -225,13 +234,20 @@ function labelFor(resolved: ResolvedTool): string {
   return resolved.provider.charAt(0).toUpperCase() + resolved.provider.slice(1);
 }
 
-/** Voert uit, klokt, en schrijft de afloop weg. Gooit nooit stilletjes weg. */
+/**
+ * Voert uit, klokt, en schrijft de afloop weg. Gooit nooit stilletjes weg.
+ *
+ * `ranAutonomously` zegt of dit zonder per-actie-goedkeuring liep (het
+ * mandaat stond op niveau 3 voor deze write — zie gate()) en is alleen van
+ * belang voor de degradatieregel hieronder bij een mislukking.
+ */
 async function perform(
   userId: string,
   callId: string,
   resolved: ResolvedTool,
   connector: Connector,
   params: unknown,
+  ranAutonomously: boolean,
 ): Promise<ToolRequest> {
   const started = Date.now();
   try {
@@ -287,8 +303,46 @@ async function perform(
         },
       });
     });
+
+    // Degradatieregel (vertrouwensloop, fase 1): alleen ná de ToolCall-rij
+    // hierboven, en alleen best effort — een mislukte melding of een
+    // wegvallende db-update mag de faalstatus die net is weggeschreven niet
+    // alsnog laten crashen.
+    if (shouldDegradeOnFailure(resolved.tool.effect, ranAutonomously)) {
+      await degradeMandateAfterFailure(userId, resolved.tool.domain).catch(() => undefined);
+    }
+
     return { call: view(call), status: "failed" };
   }
+}
+
+/**
+ * Zet het mandaat van `domain` terug naar niveau 2 en meldt dat, via het
+ * bestaande escalatiepad (stuurEscalatieBericht — push indien mogelijk,
+ * anders mail). Geen vraag, geen EscalationEvent-rij: dit is geen kandidaat
+ * die dedupe of een dagcap nodig heeft, het is een direct gevolg van precies
+ * deze mislukte aanroep. De ToolCall zelf staat al in het logboek ("Wat ik
+ * deed") — dit voegt alleen de melding en de niveauwijziging toe.
+ *
+ * `updateMany` met `level: 3` in de where-clausule in plaats van een kale
+ * update: als het mandaat tussen het starten van deze aanroep en nu al
+ * ergens anders veranderd is (de gebruiker zette het bijvoorbeeld net zelf
+ * terug), is er niets meer te degraderen.
+ */
+async function degradeMandateAfterFailure(userId: string, domain: Domain): Promise<void> {
+  const { count } = await withUser(userId, (tx) =>
+    tx.mandate.updateMany({
+      where: { user_id: userId, domain, level: 3 },
+      data: { level: 2 },
+    }),
+  );
+  if (count === 0) return;
+
+  const label = DOMAIN_REGISTRY[domain].label;
+  await stuurEscalatieBericht(
+    userId,
+    `Ik heb ${label} teruggezet naar Klaarzetten na een fout. Details in Instellingen.`,
+  ).catch(() => undefined);
 }
 
 /**

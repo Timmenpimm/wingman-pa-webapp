@@ -46,9 +46,10 @@ model User {
   toolCalls         ToolCall[]
   graphNodes        GraphNode[]
   graphEdges        GraphEdge[]
-  mandates          Mandate[]
-  pushSubscriptions PushSubscription[]
-  escalationEvents  EscalationEvent[]
+  mandates           Mandate[]
+  pushSubscriptions  PushSubscription[]
+  escalationEvents   EscalationEvent[]
+  mandateSuggestions MandateSuggestion[]
 }
 
 model Connector {
@@ -133,6 +134,39 @@ model Mandate {
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@unique([user_id, domain])
+}
+
+/// Fase 1: de vertrouwensloop (src/lib/mandates/suggest.ts). Draait een domein
+/// lang genoeg foutloos op niveau 2, dan stelt Wingman één keer voor om naar
+/// niveau 3 te gaan — nooit vanzelf, altijd een vraag in Instellingen
+/// (decideMandateSuggestion in src/lib/actions.ts).
+///
+/// Geen `@@unique([user_id, domain, status])`: dat zou een tweede *dismissed*
+/// voorstel voor hetzelfde domein onmogelijk maken zodra er ooit één
+/// gedismisst is, terwijl de tijd wel verder loopt (een domein kan later
+/// alsnog opnieuw kwalificeren). "Eenmalig" betekent hier iets specifieks —
+/// nooit een tweede voorstel zolang er al één bestaat met `to_level` 3, ongeacht
+/// status — en dat is een regel die in code zit (evaluateMandateSuggestion),
+/// niet iets dat een databaseconstraint kan uitdrukken.
+///
+/// `evidence` is het "log als bewijs" uit de opdracht: JSON
+/// `{dagen, calls, rejected}` — hoeveel dagen het domein al op dit niveau
+/// draait, hoeveel toolcalls daarin zijn uitgevoerd, en hoeveel daarvan
+/// afgewezen zijn (altijd 0, anders was er geen voorstel).
+model MandateSuggestion {
+  id         String    @id @default(cuid())
+  user_id    String
+  domain     String // calendar | email_send | ... (src/lib/mandates/domains.ts)
+  from_level Int
+  to_level   Int
+  evidence   String // JSON: {"dagen": 28, "calls": 6, "rejected": 0}
+  status     String    @default("open") // open | accepted | dismissed
+  created_at DateTime  @default(now())
+  decided_at DateTime?
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, domain, status])
 }
 
 model Event {

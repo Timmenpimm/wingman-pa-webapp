@@ -15,6 +15,7 @@ import {
   type MandateLevel,
 } from "@/lib/mandates/domains";
 import { combineMandates, deriveMandateFromPermission } from "@/lib/mandates/derive";
+import { shouldDegradeOnFailure } from "@/lib/mandates/degrade";
 
 const base = {
   connectorLabel: "Gmail",
@@ -123,6 +124,34 @@ describe("permissiepoort (gate v2 — mandaatniveau per domein)", () => {
     expect(asPermission("act_and_report")).toBe("act_and_report");
     expect(asPermission("")).toBe("propose");
     expect(asPermission("admin")).toBe("propose");
+  });
+});
+
+describe("degradatieregel (vertrouwensloop, fase 1 — shouldDegradeOnFailure)", () => {
+  it("degradeert een write die zelfstandig liep (niveau 3, geen goedkeuring vooraf)", () => {
+    expect(shouldDegradeOnFailure("write", true)).toBe(true);
+  });
+
+  it("degradeert niet als er wél per-actie-goedkeuring was, ook al is het effect write", () => {
+    // Niveau 1/2: de gebruiker zei al "ja" tegen precies déze actie — dat is
+    // geen zelfstandig handelen, dus geen reden om het mandaat te verlagen.
+    expect(shouldDegradeOnFailure("write", false)).toBe(false);
+  });
+
+  it("degradeert nooit bij read of draft, autonoom of niet", () => {
+    for (const ranAutonomously of [true, false]) {
+      expect(shouldDegradeOnFailure("read", ranAutonomously)).toBe(false);
+      expect(shouldDegradeOnFailure("draft", ranAutonomously)).toBe(false);
+    }
+  });
+
+  it("read en draft draaien altijd autonoom volgens gate() vanaf niveau 2 — ook dan geen degradatie", () => {
+    // Sanity check op de aanname in degrade.ts: alleen write+autonoom komt uit
+    // gate() overeen met "mandaat stond op niveau 3". Draft is al autonoom
+    // vanaf niveau 2 en degradeert hier bewust niet mee.
+    const verdict = gate({ ...base, level: 2, effect: "draft" });
+    expect(verdict.allow && !verdict.requiresApproval).toBe(true);
+    expect(shouldDegradeOnFailure("draft", true)).toBe(false);
   });
 });
 

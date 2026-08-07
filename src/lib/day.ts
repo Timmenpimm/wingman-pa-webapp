@@ -34,6 +34,35 @@ export function localDayStart(timezone: string, at: Date = new Date()): Date {
 }
 
 /**
+ * "2026-W32" — de ISO-weeksleutel van de lokale kalenderdag, voor dingen die
+ * precies één keer per lokale week mogen gebeuren (src/lib/mandates/suggest.ts,
+ * zelfde soort dedupe als `localDateKey` voor RunLog, maar dan per week in
+ * plaats van per dag).
+ *
+ * Een ISO-week heeft geen tijdzone-ambiguïteit meer zodra je de kalenderdag
+ * te pakken hebt (`localDateKey` regelt dat al) — vandaar dat de rest van deze
+ * functie op de datum zelf rekent (as-if UTC), niet nog een keer op `at`.
+ */
+export function localIsoWeekKey(timezone: string, at: Date = new Date()): string {
+  const day = dateKeyToUtc(localDateKey(timezone, at));
+
+  // Maandag=0 .. zondag=6, dan naar de donderdag van diezelfde week: het
+  // ISO-jaar van een week is het jaar van zijn donderdag.
+  const isoWeekday = (day.getUTCDay() + 6) % 7;
+  const thursday = new Date(day.getTime());
+  thursday.setUTCDate(thursday.getUTCDate() - isoWeekday + 3);
+
+  const firstThursday = new Date(Date.UTC(thursday.getUTCFullYear(), 0, 4));
+  const firstIsoWeekday = (firstThursday.getUTCDay() + 6) % 7;
+  firstThursday.setUTCDate(firstThursday.getUTCDate() - firstIsoWeekday + 3);
+
+  const weekNumber =
+    1 + Math.round((thursday.getTime() - firstThursday.getTime()) / (7 * 86_400_000));
+
+  return `${thursday.getUTCFullYear()}-W${String(weekNumber).padStart(2, "0")}`;
+}
+
+/**
  * Het echte tijdvenster van de lokale dag, in UTC — voor het ophalen van
  * agendablokken. Dit is iets anders dan de datumsleutel hierboven: 5 augustus
  * in Amsterdam loopt van 4 augustus 22:00 UTC tot 5 augustus 22:00 UTC.
