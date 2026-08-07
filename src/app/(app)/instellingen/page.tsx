@@ -5,6 +5,7 @@ import { decideTool, setConnectorPermission, updateRun } from "@/lib/actions";
 import { PERMISSION_LABELS } from "@/lib/types";
 import Link from "next/link";
 import { CaretRight } from "@phosphor-icons/react/dist/ssr";
+import { SourceIcon } from "@/components/SourceIcon";
 import { durationPhrase, formatDayShort, formatTime } from "@/lib/text";
 import { pendingToolCalls, recentToolCalls } from "@/lib/tools/execute";
 import { SUGGESTED_QUERIES } from "@/lib/graphify/query";
@@ -55,7 +56,7 @@ export default async function InstellingenPage() {
       tx.userSetting.findMany({ where: { user_id: userId } }),
       tx.scheduledRun.findMany({ where: { user_id: userId } }),
       tx.runLog.findMany({ where: { user_id: userId }, orderBy: { ran_at: "desc" }, take: 6 }),
-          tx.user.findUnique({ where: { id: userId }, select: { email: true } }),
+          tx.user.findUnique({ where: { id: userId }, select: { email: true, name: true } }),
     ]),
   );
   const [pending, recent] = await Promise.all([
@@ -79,6 +80,16 @@ export default async function InstellingenPage() {
       </div>
       <h1 className="screen-title">Instellingen</h1>
 
+      <div className="st-profile">
+        <span className="st-profile__avatar" aria-hidden="true">
+          {(gebruiker?.name ?? gebruiker?.email ?? "?").trim().charAt(0).toUpperCase()}
+        </span>
+        <div>
+          <span className="st-profile__name">{gebruiker?.name ?? "Naamloos"}</span>
+          <span className="st-profile__email">{gebruiker?.email}</span>
+        </div>
+      </div>
+
       <section className="st-sec">
         <div className="st-sec__head">
           <h2>Bronnen &amp; permissies</h2>
@@ -88,6 +99,7 @@ export default async function InstellingenPage() {
           {connectors.map((c) => (
             <li key={c.id}>
               <div className="st-row">
+                <SourceIcon kind={c.provider} size="sm" />
                 <div className="st-row__body">
                   <span className="st-row__title">{c.label}</span>
                   <span className="st-row__sub" data-status={c.status}>
