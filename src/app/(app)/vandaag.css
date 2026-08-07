@@ -249,3 +249,199 @@
 .vd-capture__go:active {
   transform: scale(0.96);
 }
+
+/* ---------- Hoofdtaak, prioriteiten en stand ----------------------------
+   De verkenning van 7 augustus zet de hoofdtaak als één warm vlak boven een
+   rij witte kaarten. Dat is het enige crème in de app: hij wint op tint, niet
+   op corpsgrootte of een tweede accentkleur. */
+
+.frog {
+  background: linear-gradient(160deg, var(--hero-paper-2), var(--hero-paper));
+  border-color: var(--hero-rule);
+  box-shadow: var(--shadow-frog);
+  padding: var(--s-5);
+}
+
+.frog__label {
+  color: color-mix(in srgb, var(--ink) 55%, var(--hero-rule));
+}
+
+/* Serif, en de grootste tekst op het scherm. In het donkere thema was dit een
+   klein sans-kopje; de nieuwe verkenning geeft de hoofdtaak het gewicht dat
+   hij inhoudelijk al had. */
+.frog__title {
+  font-family: var(--font-serif);
+  font-weight: var(--w-normal);
+  font-size: var(--t-frog);
+  letter-spacing: -0.01em;
+}
+
+@media (min-width: 700px) {
+  .frog__title {
+    font-size: 2rem;
+  }
+}
+
+.frog--done {
+  background: var(--paper-sunk);
+  border-color: var(--rule-strong);
+  box-shadow: var(--shadow-card);
+}
+
+/* Twee kolommen zodra er breedte is; op een telefoon onder elkaar. */
+.vd-split {
+  display: grid;
+  gap: var(--s-4);
+}
+
+@media (min-width: 900px) {
+  .vd-split {
+    grid-template-columns: 1.6fr 1fr;
+    align-items: start;
+    gap: var(--s-5);
+  }
+}
+
+.vd-prios {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--s-2);
+}
+
+.vd-prio {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--s-3);
+  text-align: left;
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-sm);
+  box-shadow: var(--shadow-card);
+  padding: var(--s-3) var(--s-4);
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease);
+}
+
+.vd-prio:hover {
+  border-color: var(--rule-strong);
+}
+
+.vd-prio:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Het nummer is rangorde, geen versiering: de lijst is op volgorde van belang
+   en dat mag je zien zonder de regels te vergelijken. */
+.vd-prio__num {
+  width: 1.5rem;
+  height: 1.5rem;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: var(--t-xs);
+  font-weight: var(--w-semi);
+  font-variant-numeric: tabular-nums;
+}
+
+.vd-prio__body {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.vd-prio__title {
+  font-size: var(--t-base);
+  font-weight: var(--w-medium);
+  color: var(--ink);
+}
+
+.vd-prio__sub {
+  font-size: var(--t-xs);
+  color: var(--ink-muted);
+}
+
+/* Termijn, geen datum. De lezer hoeft niet te rekenen. */
+.vd-prio__when {
+  font-size: var(--t-xs);
+  color: var(--ink-body);
+  background: var(--paper-sunk);
+  border-radius: var(--r-pill);
+  padding: var(--s-1) var(--s-3);
+  white-space: nowrap;
+}
+
+.vd-prio[data-done="true"] .vd-prio__title {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  color: var(--ink-muted);
+}
+
+.vd-prio[data-done="true"] .vd-prio__num {
+  background: var(--paper-sunk);
+  color: var(--ink-faint);
+}
+
+.vd-stand {
+  list-style: none;
+  margin: 0;
+  padding: var(--s-2) var(--s-4);
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-sm);
+  box-shadow: var(--shadow-card);
+}
+
+.vd-stand li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: var(--s-3) 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.vd-stand li:last-child {
+  border-bottom: 0;
+}
+
+.vd-stand__label {
+  font-size: var(--t-sm);
+  color: var(--ink-body);
+}
+
+.vd-stand__waarde {
+  font-size: var(--t-md);
+  font-weight: var(--w-semi);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* De coachtekst is een zelfstandig leesblok, geen bijschrift bij iets anders. */
+.vd-coach {
+  margin-top: var(--s-5);
+  background: var(--paper-sunk);
+  border-radius: var(--r-md);
+  padding: var(--s-4) var(--s-5);
+}
+
+.vd-coach__label {
+  font-size: 0.6875rem;
+  font-weight: var(--w-semi);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  margin: 0 0 var(--s-2);
+}
+
+.vd-coach .coach {
+  margin: 0;
+}

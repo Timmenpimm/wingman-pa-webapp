@@ -216,7 +216,19 @@ export interface BriefingToday {
     status: "open" | "done" | "deferred";
   } | null;
   coach_text: string;
-  priorities: Array<{ id: string; text: string; done: boolean }>;
+  /**
+   * `sub` en `when` zijn afgeleid, niet door de LLM geschreven: ze komen uit
+   * party/opened_at/due_date van de onderliggende belofte. `when` is bewust een
+   * enum en geen vrije tekst — een datum die als "Deze week" leest hoort in de
+   * presentatie thuis, niet in een tekstslot.
+   */
+  priorities: Array<{
+    id: string;
+    text: string;
+    sub?: string;
+    when?: "vandaag" | "morgen" | "deze week" | "later";
+    done: boolean;
+  }>;
   timeline: Array<{
     id: string;
     start: string;

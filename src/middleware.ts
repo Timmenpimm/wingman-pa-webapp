@@ -6,7 +6,8 @@ import { authConfig } from "../auth.config";
  * Toegangsslot — nu sessiecontrole in plaats van één gedeeld wachtwoord.
  *
  * Dit is de enige toegangspoort tot productie (zie het `matcher` hieronder:
- * alles behalve statische build-assets en het PWA-icoon loopt hierdoorheen).
+ * alles behalve de statische build-assets, het manifest en de icoonbestanden
+ * loopt hierdoorheen).
  * Een gat hier betekent dat de hele app open staat, inclusief /api/v1/* dat
  * agenda-, mail- en bankgegevens teruggeeft — dus strikt, niet slim:
  *
@@ -79,9 +80,13 @@ export const config = {
   // viel iOS terug op een schermafdruk-bookmark. Ze bevatten geen
   // gebruikersgegevens: alleen de app-naam, de kleuren en de icoonpaden.
   //
-  // "icon" dekt icon.svg, icon-maskable.svg en alle icon-*.png; geen enkele
-  // route begint ermee.
+  // De icoonregels staan bewust op bestandsnaam en niet op voorvoegsel: het
+  // patroon eist een extensie én het einde van het pad ($). "icon" als kaal
+  // voorvoegsel zou elke toekomstige route die met die letters begint
+  // (/icons-beheer, /apple-icon-instellingen) buiten het slot zetten — een gat
+  // dat niemand opmerkt tot hij er is. Zo gedekt: icon.svg, icon-maskable.svg,
+  // icon.png, icon-192.png, icon-512.png, icon-512-maskable.png, apple-icon.png.
   matcher: [
-    "/((?!_next/static|_next/image|favicon\\.ico|manifest\\.webmanifest|icon|apple-icon).*)",
+    "/((?!_next/static|_next/image|favicon\\.ico$|manifest\\.webmanifest$|icon[\\w-]*\\.svg$|icon[\\w-]*\\.png$|apple-icon\\.png$).*)",
   ],
 };

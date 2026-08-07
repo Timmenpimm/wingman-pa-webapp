@@ -173,30 +173,48 @@ export default async function VandaagPage({
         </section>
       )}
 
-      {briefing.coach_text && <p className="coach">{briefing.coach_text}</p>}
-
-      <section className="vd-section">
-        <h2>Drie prioriteiten</h2>
-        <ul className="list">
-          {briefing.priorities.map((p) => (
-            <li key={p.id}>
-              {/* Eén doelwit: de hele regel is de knop. Op 390px is een los
-                  vinkvakje van 20px te klein om betrouwbaar te raken. */}
-              <form action={togglePriority.bind(null, p.id)}>
-                <button type="submit" className="row row--button">
-                  <span className="check" data-checked={p.done} aria-hidden="true" />
-                  <span className="row__body">
-                    <span className={`row__title${p.done ? " row__title--done" : ""}`}>
-                      {p.text}
+      {/* Prioriteiten en stand staan naast elkaar zodra er breedte is. Op een
+          telefoon onder elkaar, prioriteiten eerst: die vragen een handeling,
+          de stand is alleen om te weten. */}
+      <div className="vd-split">
+        <section className="vd-section">
+          <h2>Jouw 3 prioriteiten</h2>
+          <ul className="vd-prios">
+            {briefing.priorities.map((p, i) => (
+              <li key={p.id}>
+                {/* Eén doelwit: de hele regel is de knop. Op 390px is een los
+                    vinkvakje van 20px te klein om betrouwbaar te raken. */}
+                <form action={togglePriority.bind(null, p.id)}>
+                  <button type="submit" className="vd-prio" data-done={p.done}>
+                    <span className="vd-prio__num" aria-hidden="true">
+                      {i + 1}
                     </span>
-                  </span>
-                  <span className="sr-only">{p.done ? "Terugzetten" : "Afvinken"}</span>
-                </button>
-              </form>
-            </li>
-          ))}
-        </ul>
-      </section>
+                    <span className="vd-prio__body">
+                      <span className="vd-prio__title">{p.text}</span>
+                      {p.sub && <span className="vd-prio__sub">{p.sub}</span>}
+                    </span>
+                    {p.when && <span className="vd-prio__when">{p.when}</span>}
+                    <span className="sr-only">{p.done ? "Terugzetten" : "Afvinken"}</span>
+                  </button>
+                </form>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <Stand
+          afspraken={briefing.timeline.length}
+          openEindjes={looseEnds.total}
+          teBevestigen={briefing.confirmations.filter((c) => !c.answered).length}
+        />
+      </div>
+
+      {briefing.coach_text && (
+        <section className="vd-coach">
+          <p className="vd-coach__label">Wingman ziet</p>
+          <p className="coach">{briefing.coach_text}</p>
+        </section>
+      )}
 
       <Agenda timeline={briefing.timeline} />
 
@@ -257,6 +275,46 @@ export default async function VandaagPage({
 
       <StateSwitch current={briefing.state} />
     </>
+  );
+}
+
+/**
+ * "Zo sta je ervoor" — drie tellingen, verder niets.
+ *
+ * De verkenning tekent hier gekleurde stippen en "Agenda 58% gevuld". Geen van
+ * beide gaat erin: DESIGN.md verbiedt rood en kleurcodering over de UI, en een
+ * vullingspercentage is een score — precies wat de anti-slop-lijst uitsluit.
+ * Een getal naast een label zegt hetzelfde zonder te oordelen.
+ *
+ * Alleen tellingen die de briefing echt heeft. Mail en bank staan in de
+ * verkenning maar zitten niet in BriefingToday; die verzinnen we niet.
+ */
+function Stand({
+  afspraken,
+  openEindjes,
+  teBevestigen,
+}: {
+  afspraken: number;
+  openEindjes: number;
+  teBevestigen: number;
+}) {
+  const regels: Array<[string, number]> = [
+    ["Afspraken vandaag", afspraken],
+    ["Open eindjes", openEindjes],
+    ["Nog te bevestigen", teBevestigen],
+  ];
+  return (
+    <section className="vd-section">
+      <h2>Zo sta je ervoor</h2>
+      <ul className="vd-stand">
+        {regels.map(([label, waarde]) => (
+          <li key={label}>
+            <span className="vd-stand__label">{label}</span>
+            <span className="vd-stand__waarde">{waarde}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

@@ -63,7 +63,15 @@ export const morning: Recipe = async (tx, userId, localDate, now) => {
         "coach",
       ),
       priorities: JSON.stringify(
-        rest.map((c) => ({ id: c.id, text: clamp(c.what, "priority"), done: false })),
+        rest.map((c) => ({
+          id: c.id,
+          text: clamp(c.what, "priority"),
+          // Wie wacht en hoe lang al. Dezelfde samenstelling als frog_sub —
+          // feitelijk, uit de data, niet door een model verzonnen.
+          sub: clamp(`${c.party} wacht ${durationPhrase(c.opened_at, now)}`, "prioritySub"),
+          when: termijn(c.due_date, dag.start),
+          done: false,
+        })),
       ),
       confirmations: "[]",
       degraded: "[]",
@@ -81,3 +89,20 @@ export const morning: Recipe = async (tx, userId, localDate, now) => {
       .join("\n"),
   };
 };
+
+/**
+ * Wanneer iets moet, als termijn in plaats van als datum. "Woensdag" dwingt
+ * de lezer tot rekenen; "morgen" niet. Zonder einddatum blijft het leeg — dan
+ * is er niets te zeggen en is een verzonnen termijn erger dan geen.
+ */
+function termijn(
+  due: Date | null,
+  dagStart: Date,
+): "vandaag" | "morgen" | "deze week" | "later" | undefined {
+  if (!due) return undefined;
+  const dagen = Math.floor((+due - +dagStart) / 86_400_000);
+  if (dagen <= 0) return "vandaag";
+  if (dagen === 1) return "morgen";
+  if (dagen <= 7) return "deze week";
+  return "later";
+}
