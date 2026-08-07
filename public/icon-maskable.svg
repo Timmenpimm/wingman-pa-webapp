@@ -1,0 +1,8 @@
+<!-- Maskable-variant: Android knipt dit vlak uit tot een cirkel of squircle,
+     dus het merkteken staat hier kleiner en steviger gecentreerd binnen de
+     veilige zone (het middelste ~80%) dan in icon.svg — anders verdwijnen de
+     punten van de W onder de uitsnede. Zelfde grond en witte streek. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Wingman">
+  <rect width="512" height="512" rx="112" fill="#16233a"/>
+  <path d="M174 184l46 144 36-102 36 102 46-144" fill="none" stroke="#ffffff" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

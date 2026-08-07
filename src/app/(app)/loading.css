@@ -1,0 +1,47 @@
+/* Wingman — skeletonstijlen voor loading.tsx in de route-groep (app).
+ *
+ * De vorm van elk scherm komt uit de bestaande layoutklassen in globals.css
+ * (.card, .list, .row, .frog, .chips, .field, .section, .project-panel, …).
+ * Dit bestand levert alleen de gevulde balk die in die dozen komt te staan,
+ * plus de puls erop — dezelfde afmetingen, andere vulling. Zo springt er
+ * niets zodra de echte inhoud landt.
+ *
+ * Geen eigen kleur: --paper-sunk is in tokens.css al het vlak dat "iets
+ * minder dan de kaart" betekent, precies wat een placeholder nodig heeft.
+ */
+
+@keyframes ld-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.ld-bone {
+  display: block;
+  background: var(--paper-sunk);
+  border-radius: var(--r-2xs);
+  animation: ld-pulse 1.6s var(--ease) infinite;
+}
+
+.ld-bone--pill {
+  border-radius: var(--r-pill);
+}
+
+.ld-bone--circle {
+  flex: 0 0 auto;
+  border-radius: 50%;
+}
+
+/* Puur functionele beweging (§7 toon): op verzoek van het systeem stopt de
+ * puls volledig in plaats van te vertragen. --dur uit tokens.css regelt
+ * alleen overgangen, geen infinite animations, dus dat blok raakt dit niet. */
+@media (prefers-reduced-motion: reduce) {
+  .ld-bone {
+    animation: none;
+    opacity: 0.7;
+  }
+}

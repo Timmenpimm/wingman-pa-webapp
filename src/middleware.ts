@@ -70,7 +70,18 @@ export default auth((req) => {
 });
 
 export const config = {
-  // Alles achter het slot, ook de API. Alleen de statische build-assets en het
-  // PWA-icoon blijven vrij, anders laadt het inlogscherm zichzelf niet.
-  matcher: ["/((?!_next/static|_next/image|icon.svg|favicon.ico).*)"],
+  // Alles achter het slot, ook de API. Vrij blijven: de statische build-assets,
+  // het manifest en alle icoonbestanden.
+  //
+  // Het manifest en de iconen moeten uitgezonderd worden omdat de browser ze
+  // ophaalt op /inloggen — dus juist zonder sessie. Stonden ze achter het slot,
+  // dan kreeg de installatieprompt een redirect naar HTML in plaats van JSON en
+  // viel iOS terug op een schermafdruk-bookmark. Ze bevatten geen
+  // gebruikersgegevens: alleen de app-naam, de kleuren en de icoonpaden.
+  //
+  // "icon" dekt icon.svg, icon-maskable.svg en alle icon-*.png; geen enkele
+  // route begint ermee.
+  matcher: [
+    "/((?!_next/static|_next/image|favicon\\.ico|manifest\\.webmanifest|icon|apple-icon).*)",
+  ],
 };
