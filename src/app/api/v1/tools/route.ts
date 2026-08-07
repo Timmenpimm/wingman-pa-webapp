@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { currentUserId, withUser } from "@/lib/db/client";
 import { runTool } from "@/lib/actions";
-import { gate, asPermission } from "@/lib/tools/permission";
+import { gate } from "@/lib/tools/permission";
 import { toolCatalog } from "@/lib/tools/registry";
 import { toolErrorResponse } from "@/lib/tools/http";
+import { mandateFor } from "@/lib/mandates/lookup";
 import type { ConnectorHealth } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -18,37 +19,42 @@ export const dynamic = "force-dynamic";
  */
 export async function GET() {
   const userId = await currentUserId();
-  const connectors = await withUser(userId, (tx) =>
-    tx.connector.findMany({ where: { user_id: userId } }),
-  );
+  const tools = await withUser(userId, async (tx) => {
+    const connectors = await tx.connector.findMany({ where: { user_id: userId } });
 
-  const tools = toolCatalog().map(({ tool, provider }) => {
-    const connector = connectors.find((c) => c.provider === provider);
-    if (!connector) {
-      return {
-        name: tool.name,
-        label: tool.label,
-        effect: tool.effect,
-        available: false,
-        reason: "bron niet gekoppeld",
-      };
-    }
-    const verdict = gate({
-      connectorLabel: connector.label,
-      connectorStatus: connector.status as ConnectorHealth["status"],
-      permission: asPermission(connector.permission),
-      effect: tool.effect,
-    });
-    return {
-      name: tool.name,
-      label: tool.label,
-      effect: tool.effect,
-      connector: connector.label,
-      permission: connector.permission,
-      available: verdict.allow,
-      requires_approval: verdict.allow ? verdict.requiresApproval : undefined,
-      reason: verdict.allow ? undefined : verdict.error.message,
-    };
+    return Promise.all(
+      toolCatalog().map(async ({ tool, provider }) => {
+        const connector = connectors.find((c) => c.provider === provider);
+        if (!connector) {
+          return {
+            name: tool.name,
+            label: tool.label,
+            effect: tool.effect,
+            available: false,
+            reason: "bron niet gekoppeld",
+          };
+        }
+        const mandate = await mandateFor(tx, userId, tool.domain);
+        const verdict = gate({
+          connectorLabel: connector.label,
+          connectorStatus: connector.status as ConnectorHealth["status"],
+          level: mandate.level,
+          notifyPreference: mandate.notifyPreference,
+          effect: tool.effect,
+        });
+        return {
+          name: tool.name,
+          label: tool.label,
+          effect: tool.effect,
+          connector: connector.label,
+          domain: tool.domain,
+          level: mandate.level,
+          available: verdict.allow,
+          requires_approval: verdict.allow ? verdict.requiresApproval : undefined,
+          reason: verdict.allow ? undefined : verdict.error.message,
+        };
+      }),
+    );
   });
 
   return NextResponse.json({ tools });

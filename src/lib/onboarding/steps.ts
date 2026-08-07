@@ -1,4 +1,5 @@
-import type { Permission, Provider } from "@/lib/types";
+import type { Provider } from "@/lib/types";
+import type { Domain } from "@/lib/mandates/domains";
 
 /**
  * De staat van de onboarding (§6.3).
@@ -29,9 +30,12 @@ export interface StepDefinition {
   /** Welke connectors deze stap afronden. Leeg = geen bron (meldingen). */
   providers: Provider[];
   /**
-   * Vraagt deze stap een permissie? De bank niet: die is alleen-lezen (§6.7),
-   * en een keuzemenu dat toch niets mag doen belooft iets dat niet bestaat.
+   * Welk(e) domein(en) (src/lib/mandates/domains.ts) deze stap bevraagt. Leeg
+   * = geen mandaatvraag (bank, meldingen) — de bank is alleen-lezen (§6.7), en
+   * een keuzemenu dat toch niets mag doen belooft iets dat niet bestaat.
    */
+  domains: Domain[];
+  /** Vraagt deze stap om een mandaatniveau? Leeg `domains` betekent hier nee. */
   asksPermission: boolean;
 }
 
@@ -41,6 +45,7 @@ export const STEPS: StepDefinition[] = [
     title: "Agenda koppelen",
     short: "Agenda",
     providers: ["google", "caldav"],
+    domains: ["calendar"],
     asksPermission: true,
   },
   {
@@ -48,6 +53,7 @@ export const STEPS: StepDefinition[] = [
     title: "Mail koppelen",
     short: "Mail",
     providers: ["gmail", "imap"],
+    domains: ["email_send"],
     asksPermission: true,
   },
   {
@@ -55,6 +61,7 @@ export const STEPS: StepDefinition[] = [
     title: "Bank koppelen",
     short: "Bank",
     providers: ["ponto"],
+    domains: [],
     asksPermission: false,
   },
   {
@@ -62,6 +69,7 @@ export const STEPS: StepDefinition[] = [
     title: "App installeren en meldingen aanzetten",
     short: "Meldingen",
     providers: [],
+    domains: [],
     asksPermission: false,
   },
 ];
@@ -161,29 +169,19 @@ export function nextStep(current: StepId): StepId | null {
 }
 
 /**
- * Van "vraagt het meest" naar "doet het meest op eigen houtje". Deze volgorde
- * is de enige plek waar de gradiënt uit §6.7 een ránde krijgt, en hij bestaat
- * voor één doel: weten wat de voorzichtigste keuze is.
+ * De voorzichtigste stand van een stap: het laagste mandaatniveau dat al
+ * ingesteld is voor de domeinen van die stap, of niveau 1 als er nog geen
+ * mandaat bestaat. Vóór het mandaatmodel deed `mostRestrictive` dit over de
+ * vier oude permissienamen, voor het geval één stap meer dan één connector
+ * bevat (een werk- én een privéagenda, elk met een eigen stand). Hetzelfde
+ * principe geldt nu over domeinen in plaats van connectors: de wizard stelt de
+ * vraag één keer voor de hele stap, en de voorselectie mag nooit ruimer zijn
+ * dan wat er al stond. De implementatie zelf staat in
+ * src/lib/mandates/domains.ts — hier alleen de re-export zodat de
+ * onboarding-laag niet los van `steps.ts` naar `mandates/domains.ts` hoeft te
+ * grijpen voor iets dat conceptueel bij deze stappen hoort.
  */
-const PERMISSION_ORDER: Permission[] = ["propose", "draft", "act_and_report", "silent"];
-
-/**
- * De voorzichtigste permissie uit een rij.
- *
- * Eén stap kan meer dan één connector bevatten — "agenda" is bij een gekoppelde
- * Google-account al gauw een werk- én een privéagenda, met verschillende
- * rechten. De wizard stelt de vraag één keer voor de hele stap, en dan mag de
- * voorselectie nooit de ruimste van de twee zijn: wie op "Volgende" drukt
- * zonder te kiezen, hoort niets weg te geven dat hij nog niet had gegeven.
- */
-export function mostRestrictive(permissions: string[]): Permission {
-  let chosen = PERMISSION_ORDER.length - 1;
-  for (const p of permissions) {
-    const index = PERMISSION_ORDER.indexOf(p as Permission);
-    if (index >= 0 && index < chosen) chosen = index;
-  }
-  return PERMISSION_ORDER[permissions.length === 0 ? 0 : chosen];
-}
+export { mostRestrictiveLevel } from "@/lib/mandates/domains";
 
 /** UserSetting-sleutel voor de markering van één stap. */
 export function markKey(id: StepId): string {

@@ -36,6 +36,7 @@ const draftReply: ConnectorTool<z.infer<typeof draftReplyParams>> = {
   name: "gmail.draft_reply",
   label: "Concept-antwoord klaarzetten in Gmail",
   effect: "draft",
+  domain: "email_send",
   params: draftReplyParams,
 
   // Geen inhoud van de mail in de samenvatting: deze zin kan in een notificatie
