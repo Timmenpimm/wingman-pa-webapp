@@ -24,10 +24,13 @@ een EU-regio zijn — dat is drie stappen, in deze volgorde:
    npx prisma migrate dev --name init
    ```
    Dit schrijft `prisma/migrations/` weg (committen!) en zet het schema in de
-   nieuwe db. Bij elke volgende deploy draait `prisma migrate deploy` (niet
-   `db push`) die migraties uit — zet dat als Vercel build command of in een
-   `postinstall`/pre-deploy step, want het huidige `build`-script
-   (`prisma generate && next build`) migreert zelf niets.
+   nieuwe db. Bij elke volgende production-deploy draait `prisma migrate
+   deploy` (niet `db push`) die migraties automatisch uit: het
+   `vercel-build`-script in `package.json` roept
+   `scripts/migrate-bij-deploy.mjs` aan, dat alleen bij `VERCEL_ENV=production`
+   migreert. Preview-builds en lokale builds migreren bewust niets — een
+   schema hoort pas te veranderen als de bijbehorende code ook live gaat.
+   Vereist wel dat `DIRECT_URL` als Production-env-var in Vercel staat (§2).
 4. Zaai geen seed-data in productie — `prisma/seed.ts` is fictieve demodata
    voor dev, niet bedoeld om in een echte database te draaien.
 
