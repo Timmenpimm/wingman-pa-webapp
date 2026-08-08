@@ -8,6 +8,15 @@ import {
   mostRestrictiveLevel,
   nextStep,
 } from "@/lib/onboarding/steps";
+import {
+  escalationSentence,
+  formatQuietHours,
+  LEVEL_HELP,
+  parseQuietHours,
+  ritmeSentence,
+} from "@/lib/onboarding/copy";
+import { LEVELS } from "@/lib/mandates/domains";
+import type { TriggerDefinition } from "@/lib/escalation/triggers";
 
 /**
  * De onboarding houdt geen stapteller bij; hij leidt af waar je bent uit wat
@@ -151,5 +160,107 @@ describe("markeringen uit UserSetting", () => {
 
   it("negeert een waarde die geen markering is", () => {
     expect(marksFromSettings([{ key: markKey("bank"), value: "misschien" }])).toEqual({});
+  });
+});
+
+/**
+ * De mandaatstap moet generiek blijven werken over DOMAIN_REGISTRY heen: het
+ * domeinregister breidt uit (calendar/email_send nu, straks meer — zie
+ * src/lib/mandates/domains.ts), en de uitleg per niveau mag daar niet per
+ * domein voor hardgecodeerd hoeven worden. LEVEL_HELP is dus per niveau, niet
+ * per domein — deze test bewaakt dat elk niveau uit LEVELS ook echt een
+ * uitleg heeft, voor elk domein dat er ooit bij komt.
+ */
+describe("wat een mandaatniveau betekent", () => {
+  it("heeft voor elk niveau een uitleg, ongeacht welk domein het is", () => {
+    for (const level of LEVELS) {
+      expect(LEVEL_HELP[level]).toBeTruthy();
+    }
+  });
+});
+
+/**
+ * De meldingenstap ("wanneer stoor je me") leest het ritme en de escalaties
+ * uit de bestaande registries (src/lib/runs/schedule.ts,
+ * src/lib/escalation/triggers.ts) in plaats van er een eigen tekst voor te
+ * verzinnen. Deze zinnen zijn puur, dus test ze zonder database.
+ */
+describe("het ritme in gewone taal", () => {
+  it("noemt alle drie de momenten die aanstaan", () => {
+    const zin = ritmeSentence([
+      { kind: "morning", at: "08:00", enabled: true },
+      { kind: "midday", at: "12:00", enabled: true },
+      { kind: "evening", at: "20:00", enabled: true },
+    ]);
+    expect(zin).toContain("Ochtend om 08:00");
+    expect(zin).toContain("Middag om 12:00");
+    expect(zin).toContain("Avond om 20:00");
+  });
+
+  it("laat een uitgezet moment ongenoemd", () => {
+    const zin = ritmeSentence([
+      { kind: "morning", at: "08:00", enabled: true },
+      { kind: "midday", at: "12:00", enabled: false },
+      { kind: "evening", at: "20:00", enabled: true },
+    ]);
+    expect(zin).toContain("Ochtend om 08:00");
+    expect(zin).not.toContain("Middag");
+    expect(zin).toContain("Avond om 20:00");
+  });
+
+  it("zegt het eerlijk als alle momenten uitstaan", () => {
+    const zin = ritmeSentence([
+      { kind: "morning", at: "08:00", enabled: false },
+      { kind: "midday", at: "12:00", enabled: false },
+      { kind: "evening", at: "20:00", enabled: false },
+    ]);
+    expect(zin).toMatch(/staan nu uit/);
+  });
+});
+
+describe("de escalaties in gewone taal", () => {
+  const trigger = (overrides: Partial<TriggerDefinition>): TriggerDefinition => ({
+    id: "deadline_24h",
+    label: "Deadline binnen 24 uur",
+    description: "",
+    enabled: true,
+    ...overrides,
+  });
+
+  it("noemt alleen de triggers die echt actief zijn", () => {
+    const zin = escalationSentence([
+      trigger({ id: "deadline_24h", label: "Deadline binnen 24 uur", enabled: true }),
+      trigger({ id: "money_unexpected", label: "Onverwachte transactie", enabled: true }),
+      trigger({ id: "children", label: "Kinderen", enabled: false }),
+    ]);
+    expect(zin).toContain("deadline binnen 24 uur");
+    expect(zin).toContain("onverwachte transactie");
+    expect(zin).not.toContain("Kinderen");
+    expect(zin).not.toMatch(/kinderen/i);
+  });
+
+  it("zegt het eerlijk als er geen enkele escalatie aanstaat", () => {
+    const zin = escalationSentence([trigger({ enabled: false })]);
+    expect(zin).toMatch(/geen enkele escalatie/);
+  });
+});
+
+describe("stille uren opbouwen en uit elkaar halen", () => {
+  it("bouwt een geldig venster op uit twee tijden", () => {
+    expect(formatQuietHours("22:00", "07:00")).toBe("22:00-07:00");
+  });
+
+  it("wijst een onleesbare tijd af in plaats van iets kapots op te slaan", () => {
+    expect(formatQuietHours("25:00", "07:00")).toBeNull();
+    expect(formatQuietHours("", "07:00")).toBeNull();
+  });
+
+  it("haalt van/tot weer uit elkaar voor de defaultValue van de velden", () => {
+    expect(parseQuietHours("22:00-07:00")).toEqual({ van: "22:00", tot: "07:00" });
+  });
+
+  it("valt terug op 22:00–07:00 als er nog niets is gekozen", () => {
+    expect(parseQuietHours(null)).toEqual({ van: "22:00", tot: "07:00" });
+    expect(parseQuietHours(undefined)).toEqual({ van: "22:00", tot: "07:00" });
   });
 });

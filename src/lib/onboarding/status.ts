@@ -1,5 +1,6 @@
 import { withUser } from "@/lib/db/with-user";
-import { asLevel, mostRestrictiveLevel, type MandateLevel } from "@/lib/mandates/domains";
+import { asLevel, mostRestrictiveLevel, type Domain, type MandateLevel } from "@/lib/mandates/domains";
+import { RUN_DEFAULTS, RUN_KINDS, isRunKind, type RunKind } from "@/lib/runs/schedule";
 import {
   deriveSteps,
   FINISHED_KEY,
@@ -42,12 +43,24 @@ export interface OnboardingStatus {
    * in src/lib/mandates/domains.ts.
    */
   mandateLevel: MandateLevel;
+  /**
+   * Alle Mandate-rijen van de gebruiker, ongeacht welke stap gevraagd is —
+   * niet alleen die van de domeinen uit `step`. Het klaar-scherm vat samen wat
+   * er over de hele onboarding heen is ingesteld, en dat kan niet uit de
+   * domeinen van één stap afgeleid worden. Generiek over elk domein in
+   * DOMAIN_REGISTRY: een nieuw domein hoeft hier niets aan te passen, het
+   * verschijnt vanzelf zodra er een Mandate-rij voor bestaat.
+   */
+  mandates: Array<{ domain: Domain; level: MandateLevel }>;
+  /** "22:00-07:00", of null als er nog geen stille uren zijn gekozen. */
+  quietHours: string | null;
 }
 
 export type Payoff =
   | { kind: "agenda"; events: number; next: { title: string; start_at: Date } | null }
   | { kind: "mail"; people: number; open: number }
   | { kind: "bank"; transactions: number; needsReview: number; incoming: number }
+  | { kind: "meldingen"; runs: Array<{ kind: RunKind; at: string; enabled: boolean }> }
   | { kind: "none" };
 
 const WEEK_MS = 7 * 86_400_000;
@@ -75,17 +88,22 @@ export async function onboardingStatus(
         where: { user_id: userId },
         select: { key: true, value: true },
       }),
-      domains.length > 0
-        ? tx.mandate.findMany({
-            where: { user_id: userId, domain: { in: domains } },
-            select: { domain: true, level: true },
-          })
-        : Promise.resolve([]),
+      // Altijd alle domeinen, niet alleen die van `step`: het klaar-scherm
+      // (geen step) vat samen wat er over de hele wizard heen gekozen is, en
+      // dat weet dit bestand niet vooraf — zie `mandates` op OnboardingStatus.
+      tx.mandate.findMany({
+        where: { user_id: userId },
+        select: { domain: true, level: true },
+      }),
     ]);
 
     const steps = deriveSteps({ connectors, marks: marksFromSettings(settings) });
     const finished = settings.find((s) => s.key === FINISHED_KEY)?.value;
-    const mandateLevel = mostRestrictiveLevel(mandates.map((m) => asLevel(m.level)));
+    const mandatesTyped = mandates.map((m) => ({ domain: m.domain as Domain, level: asLevel(m.level) }));
+    const mandateLevel = mostRestrictiveLevel(
+      mandatesTyped.filter((m) => (domains as string[]).includes(m.domain)).map((m) => m.level),
+    );
+    const quietHours = settings.find((s) => s.key === "quiet_hours")?.value ?? null;
 
     let payoff: Payoff = { kind: "none" };
     const now = new Date();
@@ -133,6 +151,24 @@ export async function onboardingStatus(
       };
     }
 
+    if (step === "meldingen") {
+      // Voor een net geregistreerde gebruiker bestaat er soms nog geen
+      // ScheduledRun-rij (die worden vandaag alleen door prisma/seed.ts
+      // gezet). RUN_DEFAULTS is dan het eerlijke antwoord: dat is precies
+      // wat er komt te staan zodra de rijen er wél zijn.
+      const rows = await tx.scheduledRun.findMany({
+        where: { user_id: userId },
+        select: { kind: true, at: true, enabled: true },
+      });
+      const bijKind = new Map(rows.filter((r) => isRunKind(r.kind)).map((r) => [r.kind, r]));
+      const runs = RUN_KINDS.map((kind) => {
+        const rij = bijKind.get(kind);
+        const fallback = RUN_DEFAULTS.find((d) => d.kind === kind)!;
+        return { kind, at: rij?.at ?? fallback.at, enabled: rij?.enabled ?? true };
+      });
+      payoff = { kind: "meldingen", runs };
+    }
+
     return {
       steps,
       finishedAt: finished ? new Date(finished) : null,
@@ -140,6 +176,8 @@ export async function onboardingStatus(
         .filter((c) => (providers as string[]).includes(c.provider))
         .map((c) => ({ id: c.id, provider: c.provider, label: c.label, status: c.status })),
       mandateLevel,
+      mandates: mandatesTyped,
+      quietHours,
       payoff,
     };
   });
