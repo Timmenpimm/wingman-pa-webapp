@@ -10,12 +10,21 @@
  * `domain`, en dit bestand is de enige plek die uitlegt wat dat woord betekent.
  *
  * Uitbreiden: nieuw domein = nieuwe regel in `Domain` + `DOMAIN_REGISTRY`, en
- * het `domain`-veld op de tools die eronder vallen. `finance` (Bunq-drafts) en
- * `messages` (WhatsApp/Telegram) komen later; niets hieronder gaat daarvoor op
- * de schop.
+ * het `domain`-veld op de tools die eronder vallen. Een domein zonder tool is
+ * normaal: het register is de plek die van tevoren zegt wat er mag, vóórdat de
+ * tool er is.
  */
 
-export type Domain = "calendar" | "email_send";
+export type Domain =
+  | "calendar"
+  | "email_send"
+  | "email_triage"
+  | "payments"
+  | "finance_read"
+  | "messages"
+  | "commitments"
+  | "children"
+  | "documents";
 
 export interface DomainInfo {
   /** Kop in Instellingen en de onboarding. */
@@ -32,6 +41,34 @@ export const DOMAIN_REGISTRY: Record<Domain, DomainInfo> = {
   email_send: {
     label: "Mail",
     description: "Concept-antwoorden klaarzetten in je mailbox. Versturen doe jij altijd zelf.",
+  },
+  email_triage: {
+    label: "Mail lezen",
+    description: "Je inbox lezen, labelen en samenvatten voor de briefing.",
+  },
+  payments: {
+    label: "Betalingen",
+    description: "Bunq-betalingen als draft klaarzetten. Uitvoeren doe jij altijd zelf.",
+  },
+  finance_read: {
+    label: "Financiën lezen",
+    description: "Saldi en transacties inzien voor overzichten.",
+  },
+  messages: {
+    label: "Berichten",
+    description: "WhatsApp en andere berichten lezen en concept-antwoorden klaarzetten. Versturen alleen na jouw akkoord.",
+  },
+  commitments: {
+    label: "Toezeggingen",
+    description: "Nooit iets toezeggen namens jou; alleen voorbereiden en voorleggen.",
+  },
+  children: {
+    label: "Kinderen",
+    description: "Alles over je kinderen direct melden, nooit zelf antwoorden.",
+  },
+  documents: {
+    label: "Documenten",
+    description: "De interne PA-map bijwerken: status, prioriteiten en overzichten.",
   },
 };
 
@@ -52,6 +89,31 @@ export function isDomain(value: string): value is Domain {
 export type MandateLevel = 1 | 2 | 3;
 
 export const LEVELS: MandateLevel[] = [1, 2, 3];
+
+/**
+ * Martijns actuele instelling per domein, zoals vastgelegd in het addendum
+ * (docs/WINGMAN_ADDENDUM_mandaten.md, §2, 07-08-2026). Dit is GEEN
+ * runtime-fallback — een ontbrekende Mandate-rij blijft altijd niveau 1
+ * opleveren (zie `DEFAULT_MANDATE` hieronder; dat is de voorzichtigste stand,
+ * niet "wat Martijn meestal kiest"). Deze tabel is uitsluitend de bron voor de
+ * eenmalige backfill-migratie (prisma/migrations/*_domeinregister_uitbreiding)
+ * die bestaande gebruikers hun ontbrekende Mandate-rijen geeft op precies dit
+ * niveau — hetzelfde patroon als `deriveMandateFromPermission` in derive.ts
+ * voor de oorspronkelijke migratie: de SQL herhaalt deze logica handmatig, dus
+ * verandert dit later, dan verandert de SQL van een migratie die al gedraaid
+ * heeft niet meer mee.
+ */
+export const DEFAULT_LEVEL_BY_DOMAIN: Record<Domain, MandateLevel> = {
+  calendar: 3,
+  email_send: 2,
+  email_triage: 3,
+  payments: 2,
+  finance_read: 3,
+  messages: 2,
+  commitments: 1,
+  children: 1,
+  documents: 3,
+};
 
 export const LEVEL_LABELS: Record<MandateLevel, string> = {
   1: "Signaleren",
