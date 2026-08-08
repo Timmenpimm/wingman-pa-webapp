@@ -28,6 +28,11 @@ export const BUDGET = {
   connectorStatus: 120,
   inboxItem: 280,
   toolCallSummary: 120,
+  // De onderwerpregel van een concept-mail (src/brain/propose.ts). Wordt
+  // samengesteld uit Commitment.what, en dat veld komt uit de extractie — dus
+  // uit het model, dus met een budget (regel 3). Ruim onder de 200 die de
+  // Gmail-tool zelf toestaat, zodat "Re: " erbij past zonder te schuren.
+  draftSubject: 180,
 } as const;
 
 export type BudgetKey = keyof typeof BUDGET;

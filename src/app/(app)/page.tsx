@@ -3,7 +3,8 @@ import "./vandaag.css";
 import { currentUserId, prisma } from "@/lib/db/client";
 import { getBriefingToday } from "@/brain/briefing-engine";
 import { getOpenCommitments } from "@/lib/commitments";
-import { answerConfirmation, setFrogStatus, togglePriority } from "@/lib/actions";
+import { answerConfirmation, decideTool, setFrogStatus, togglePriority } from "@/lib/actions";
+import { pendingToolCalls, type ToolCallView } from "@/lib/tools/execute";
 import { formatDayLong, formatTime } from "@/lib/text";
 import { CaptureField } from "@/components/CaptureField";
 import {
@@ -40,6 +41,10 @@ export default async function VandaagPage({
   const userId = await currentUserId();
   const raw = await getBriefingToday(userId);
   const looseEnds = await getOpenCommitments(userId);
+  // Wat er op een ja of nee wacht, hoort op de pagina die je élke ochtend
+  // opent — niet in instellingen, waar het tot vorige week stond en dus alleen
+  // gevonden werd door wie er toevallig ging kijken.
+  const klaargezet = await pendingToolCalls(userId);
   const briefing = applyPreview(raw, searchParams.state);
   const onboarding = await onboardingStatus(userId);
   const openStap = onboarding.finishedAt ? null : firstOpenStep(onboarding.steps);
@@ -54,6 +59,9 @@ export default async function VandaagPage({
     return (
       <>
         <EveningDone briefing={briefing} />
+        {/* Ook als de dag klaar is: iets wat op jouw ja wacht mag nooit
+            verdwijnen omdat het scherm van staat wisselt. */}
+        <Klaargezet calls={klaargezet} />
         {isDev && <StateSwitch current={briefing.state} />}
       </>
     );
@@ -104,6 +112,8 @@ export default async function VandaagPage({
             {briefing.frog.sub && <p className="frog__sub">{briefing.frog.sub}</p>}
           </section>
         )}
+
+        <Klaargezet calls={klaargezet} />
 
         <Link href="/instellingen" className="btn btn--quiet vd-wide-btn">
           <ArrowsClockwise weight="bold" />
@@ -173,6 +183,10 @@ export default async function VandaagPage({
           </div>
         </section>
       )}
+
+      {/* Direct onder de frog: wat er klaarstaat en op één tik wacht. Boven de
+          prioriteiten, want dit kost vijf seconden en die drie kosten je dag. */}
+      <Klaargezet calls={klaargezet} />
 
       {/* Prioriteiten en stand staan naast elkaar zodra er breedte is. Op een
           telefoon onder elkaar, prioriteiten eerst: die vragen een handeling,
@@ -277,6 +291,82 @@ export default async function VandaagPage({
       {isDev && <StateSwitch current={briefing.state} />}
     </>
   );
+}
+
+/**
+ * "Klaargezet voor jou" — wat op een ja of nee wacht.
+ *
+ * Dit is de andere helft van het mandaatmodel. Niveau 2 betekent: Wingman
+ * bereidt volledig voor, jij geeft de laatste klik. Zolang die klik alleen in
+ * instellingen te geven was, bestond die belofte niet — je vindt hem niet als
+ * je er niet naar zoekt, en dan is "klaarzetten" hetzelfde als niets doen.
+ *
+ * Twee knoppen, even zwaar (CLAUDE.md-regel 4): "niet doen" moet net zo
+ * makkelijk zijn als "doen", anders wordt een lijst die alleen kan groeien
+ * genegeerd. Geen bevestigingsvraag achteraf, geen prullenbak.
+ *
+ * De samenvatting komt van de tool zelf (`describe`), niet van dit scherm:
+ * alleen de tool weet wat er echt gaat gebeuren, en die tekst is al gebonden
+ * en al ontdaan van gevoelige details.
+ */
+function Klaargezet({ calls }: { calls: ToolCallView[] }) {
+  if (calls.length === 0) return null;
+
+  return (
+    <section className="vd-section">
+      <h2>Klaargezet voor jou</h2>
+      <ul className="list">
+        {calls.map((call) => (
+          <li key={call.id}>
+            <div className="row" style={{ paddingInline: 0 }}>
+              <div className="row__body">
+                <span className="row__title">{call.summary}</span>
+                <span className="row__sub">{herkomst(call)}</span>
+                <div className="row__actions">
+                  <form action={decideTool.bind(null, call.id, "approve")}>
+                    <button
+                      className="btn btn--quiet"
+                      type="submit"
+                      aria-label={`Doen: ${call.summary}`}
+                    >
+                      Doen
+                    </button>
+                  </form>
+                  <form action={decideTool.bind(null, call.id, "reject")}>
+                    <button
+                      className="btn btn--quiet"
+                      type="submit"
+                      aria-label={`Niet doen: ${call.summary}`}
+                    >
+                      Niet doen
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+/**
+ * Eén regel die zegt wie dit bedacht en hoe ver het gaat.
+ *
+ * Het verschil tussen "jij vroeg dit" en "Wingman stelt dit voor" is niet
+ * cosmetisch: bij het tweede geef je toestemming voor iets dat je zelf niet
+ * had bedacht, en dat hoort te zien te zijn vóór je op Doen drukt.
+ */
+function herkomst(call: ToolCallView): string {
+  const wie = call.origin === "wingman" ? "Wingman stelt dit voor" : "Je vroeg dit";
+  const wat =
+    call.effect === "draft"
+      ? "concept, jij verstuurt zelf"
+      : call.effect === "write"
+        ? "gaat naar buiten"
+        : "alleen lezen";
+  return `${wie} · ${wat}`;
 }
 
 /**

@@ -21,6 +21,7 @@ import { isDue, isRunKind, parseDays, type RunKind } from "./schedule";
 import { stuurEscalatieBericht, stuurRunBericht, type Meldresultaat } from "./notify";
 import { processUserEscalations, type EscalationTx } from "@/lib/escalation/engine";
 import { computeMandateSuggestionsForUser } from "@/lib/mandates/suggest";
+import { voorstellenVoorAlleGebruikers, type VoorstelUitslag } from "./propose";
 
 /**
  * Voert geplande momenten uit.
@@ -62,6 +63,7 @@ export interface TickUitslag {
   extractie: { gebruikers: number; gescand: number; aangemaakt: number; overgeslagen: number };
   escalatie: { gebruikers: number; geescaleerd: number };
   vertrouwen: { gebruikers: number; voorgesteld: number };
+  voorstellen: VoorstelUitslag;
 }
 
 export async function tick(now: Date = new Date()): Promise<TickUitslag> {
@@ -72,6 +74,11 @@ export async function tick(now: Date = new Date()): Promise<TickUitslag> {
   const extractie = await extractCommitmentsForAllUsers(now);
   const escalatie = await escaleerVoorAlleGebruikers(now);
   const vertrouwen = await berekenPromotievoorstellenVoorAlleGebruikers(now);
+  // Ná de escalatielaag en vóór de recepten: de voorstelmotor (Fase 2). Staat
+  // hier om dezelfde reden als de escalatielaag los van ScheduledRun — een
+  // voorstel hoeft niet op het ritme te wachten. Vóór de recepten, zodat de
+  // ochtendbriefing van dezelfde tick al meeneemt wat er klaargezet is.
+  const voorstellen = await voorstellenVoorAlleGebruikers(now);
 
   // Over alle gebruikers heen kijken kan niet achter RLS langs — dit is
   // systeemwerk, geen gebruikersverzoek. Vandaar de eigenaarsrol, en meteen
@@ -88,6 +95,7 @@ export async function tick(now: Date = new Date()): Promise<TickUitslag> {
     extractie,
     escalatie,
     vertrouwen,
+    voorstellen,
   };
 
   for (const run of runs) {
