@@ -1,0 +1,124 @@
+/* "Wat mag Wingman" (fase 2, punt 3) — één kaart per domein, rustig en
+   feitelijk. Prefix .wm-; alleen dit scherm. Gedeelde bouwstenen (.card,
+   .chip, .btn, .eyebrow, .screen-title) komen uit globals.css — dit bestand
+   voegt alleen de lay-out toe die specifiek is voor dit scherm. */
+
+.wm-lede {
+  margin-top: var(--s-2);
+}
+
+/* Het promotievoorstel: dezelfde zachte accentkaart als .frog, want dit is
+   dezelfde soort vraag — iets dat om een ja of een "zo laten" vraagt. */
+.wm-suggestion {
+  margin-top: var(--s-4);
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, var(--rule-strong));
+  border-radius: var(--r-md);
+  padding: var(--s-4);
+}
+
+.wm-suggestion__title {
+  color: var(--ink);
+  font-size: var(--t-base);
+  line-height: var(--lh-body);
+  max-width: var(--measure);
+}
+
+.wm-suggestion .btn-row {
+  margin-top: var(--s-3);
+}
+
+.wm-domains {
+  list-style: none;
+  margin: var(--s-5) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--s-3);
+}
+
+.wm-domain__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+
+.wm-domain__head h2 {
+  font-family: var(--font-sans);
+  font-weight: var(--w-semi);
+  font-size: var(--t-md);
+  color: var(--ink);
+}
+
+/* Wat het niveau voor dit domein betekent — feitelijk, geen oordeel. */
+.wm-domain__uitleg {
+  margin-top: var(--s-2);
+  color: var(--ink-body);
+  font-size: var(--t-sm);
+  line-height: var(--lh-body);
+  max-width: var(--measure);
+}
+
+/* Vier tellingen op een rij (gedaan / klaargezet / afgewezen / mislukt) —
+   geen kleur, geen score: alleen het cijfer en het label eronder. */
+.wm-stats {
+  list-style: none;
+  margin: var(--s-4) 0 0;
+  padding: var(--s-4) 0 0;
+  border-top: 1px solid var(--rule);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--s-2);
+}
+
+.wm-stats > li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.wm-stats__n {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-lg);
+  color: var(--ink);
+}
+
+.wm-stats__label {
+  font-size: var(--t-xs);
+  color: var(--ink-muted);
+}
+
+.wm-domain__empty {
+  margin-top: var(--s-4);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--rule);
+  color: var(--ink-muted);
+  font-size: var(--t-sm);
+}
+
+.wm-domain__form {
+  margin-top: var(--s-4);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--s-2);
+}
+
+.wm-domain__form select {
+  max-width: 9.5rem;
+  padding: var(--s-2) var(--s-3);
+  font-family: inherit;
+  font-size: var(--t-xs);
+  color: var(--ink-body);
+  background: var(--paper-raised);
+  border: 1px solid var(--rule-strong);
+  border-radius: 10px;
+}
+
+@media (max-width: 420px) {
+  .wm-stats {
+    grid-template-columns: repeat(2, 1fr);
+    row-gap: var(--s-3);
+  }
+}

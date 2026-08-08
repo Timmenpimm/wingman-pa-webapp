@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FolderSimple, GearSix, Sun, Tray } from "@phosphor-icons/react";
+import { FolderSimple, GearSix, ShieldCheck, Sun, Tray } from "@phosphor-icons/react";
 
 /**
  * De Canva-richting gebruikt compacte icooningangen. De zes productroutes
@@ -13,6 +13,7 @@ const ITEMS = [
   { href: "/", label: "Vandaag", icon: Sun },
   { href: "/inbox", label: "Inbox", icon: Tray },
   { href: "/projecten", label: "Projecten en open eindjes", icon: FolderSimple },
+  { href: "/wat-mag-wingman", label: "Wat mag Wingman", icon: ShieldCheck },
   { href: "/instellingen", label: "Instellingen", icon: GearSix },
 ];
 

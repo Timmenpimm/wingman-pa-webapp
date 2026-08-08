@@ -20,6 +20,7 @@ const PAGINAS = [
   "/open-eindjes",
   "/inbox",
   "/projecten",
+  "/wat-mag-wingman",
   "/week",
   "/stijlkaart",
   "/graaf",
