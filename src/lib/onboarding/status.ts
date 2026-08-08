@@ -152,10 +152,11 @@ export async function onboardingStatus(
     }
 
     if (step === "meldingen") {
-      // Voor een net geregistreerde gebruiker bestaat er soms nog geen
-      // ScheduledRun-rij (die worden vandaag alleen door prisma/seed.ts
-      // gezet). RUN_DEFAULTS is dan het eerlijke antwoord: dat is precies
-      // wat er komt te staan zodra de rijen er wél zijn.
+      // De rijen worden bij het registreren gezet (ensureDefaultRuns in
+      // src/lib/runs/ensure-defaults.ts), dus normaal staan ze er alle drie.
+      // De terugval op RUN_DEFAULTS blijft staan voor het geval er één
+      // ontbreekt: dan liever de belofte tonen die de app waarmaakt dan een
+      // gat in het ritmescherm.
       const rows = await tx.scheduledRun.findMany({
         where: { user_id: userId },
         select: { kind: true, at: true, enabled: true },

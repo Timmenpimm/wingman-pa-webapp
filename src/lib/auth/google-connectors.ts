@@ -1,6 +1,7 @@
 import { encryptOptional, encryptSecret } from "@/lib/crypto/secrets";
 import { ownerPrisma } from "@/lib/db/owner-prisma";
 import { withUser } from "@/lib/db/with-user";
+import { ensureDefaultRuns } from "@/lib/runs/ensure-defaults";
 
 /**
  * Koppelt een geslaagde Google-login aan Connector-rijen.
@@ -33,18 +34,28 @@ export interface GoogleAccountTokens {
  * magicLinkProvider): een inloglink naar een onbekend adres registreert dus
  * net als Google — de User ontstaat pas bij het verzilveren van de link, niet
  * bij het versturen ervan.
+ *
+ * Dit is het énige punt waar een echte User ontstaat (de wachtwoordprovider
+ * in auth.ts zoekt alleen op, prisma/seed.ts is dev-fixture). Daarom staat
+ * ensureDefaultRuns() hier en niet bij de aanroepers: "er is een User"
+ * betekent daarmee altijd ook "er staan drie momenten klaar", zonder dat een
+ * derde inlogpad dat later kan vergeten.
  */
 export async function findOrCreateUserByEmail(
   email: string,
   name?: string | null,
 ): Promise<{ id: string; email: string; name: string | null }> {
   const normalized = email.trim().toLowerCase();
-  return ownerPrisma.user.upsert({
+  const user = await ownerPrisma.user.upsert({
     where: { email: normalized },
     update: {},
     create: { email: normalized, name: name ?? undefined },
     select: { id: true, email: true, name: true },
   });
+
+  await ensureDefaultRuns(user.id);
+
+  return user;
 }
 
 const GOOGLE_CONNECTOR_ROWS = [
