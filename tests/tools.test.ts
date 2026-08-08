@@ -9,9 +9,13 @@ import { asPermission } from "@/lib/types";
 import {
   asLevel,
   asNotifyPreference,
+  DEFAULT_LEVEL_BY_DOMAIN,
+  DOMAIN_REGISTRY,
   DOMAINS,
+  isDomain,
   LEVELS,
   mostRestrictiveLevel,
+  type Domain,
   type MandateLevel,
 } from "@/lib/mandates/domains";
 import { combineMandates, deriveMandateFromPermission } from "@/lib/mandates/derive";
@@ -166,6 +170,90 @@ describe("de voorzichtigste van een rij niveaus (mostRestrictiveLevel)", () => {
 
   it("valt zonder niveaus terug op 1", () => {
     expect(mostRestrictiveLevel([])).toBe(1);
+  });
+});
+
+describe("domeinregister (blokkade 4 — negen domeinen uit het addendum)", () => {
+  // docs/WINGMAN_ADDENDUM_mandaten.md, §2 — de negen domeinen in de volgorde
+  // van die tabel. Verandert deze lijst, dan hoort het addendum eerst te
+  // veranderen, niet andersom.
+  const ADDENDUM_DOMEINEN: Domain[] = [
+    "calendar",
+    "email_send",
+    "email_triage",
+    "payments",
+    "finance_read",
+    "messages",
+    "commitments",
+    "children",
+    "documents",
+  ];
+
+  it("dekt precies de negen domeinen uit het addendum, niet meer en niet minder", () => {
+    expect(new Set(DOMAINS)).toEqual(new Set(ADDENDUM_DOMEINEN));
+    expect(DOMAINS.length).toBe(9);
+  });
+
+  it("herkent elk addendum-domein via isDomain, en wijst onbekende namen af", () => {
+    for (const domain of ADDENDUM_DOMEINEN) {
+      expect(isDomain(domain), domain).toBe(true);
+    }
+    expect(isDomain("finance")).toBe(false); // oude werknaam uit het patch-schetsje
+    expect(isDomain("kapot")).toBe(false);
+  });
+
+  it("geeft elk domein een niet-lege label en omschrijving", () => {
+    for (const domain of DOMAINS) {
+      expect(DOMAIN_REGISTRY[domain].label.length, domain).toBeGreaterThan(0);
+      expect(DOMAIN_REGISTRY[domain].description.length, domain).toBeGreaterThan(0);
+    }
+  });
+
+  it("heeft voor elk domein een standaardniveau uit LEVELS", () => {
+    for (const domain of DOMAINS) {
+      expect(LEVELS, domain).toContain(DEFAULT_LEVEL_BY_DOMAIN[domain]);
+    }
+  });
+
+  // Martijns actuele instelling per domein, addendum §2 — de tabel die de
+  // backfill-migratie (prisma/migrations/20260808010000_domeinregister_uitbreiding)
+  // met de hand overneemt. Deze test bewaakt dat de SQL en de TS-tabel niet
+  // uit elkaar kunnen groeien zonder dat er iets rood kleurt.
+  it("volgt Martijns actuele instelling per domein (addendum §2)", () => {
+    expect(DEFAULT_LEVEL_BY_DOMAIN).toEqual({
+      calendar: 3, // DOEN — plannen/verzetten binnen agendaregels
+      email_send: 2, // KLAARZETTEN — altijd als Gmail-concept
+      email_triage: 3, // DOEN — lezen/labelen/samenvatten mag altijd
+      payments: 2, // KLAARZETTEN — €0 zelfstandig, alles als draft-payment
+      finance_read: 3, // DOEN — saldi/transacties inzien mag altijd
+      messages: 2, // KLAARZETTEN — concepten, versturen na akkoord
+      commitments: 1, // SIGNALEREN — nooit toezeggen namens Martijn
+      children: 1, // SIGNALEREN — altijd melden, nooit zelf beantwoorden
+      documents: 3, // DOEN — interne PA-map bijwerken
+    });
+  });
+
+  it("laat de gate() zich houden aan het standaardniveau van elk domein (write-effect)", () => {
+    // Geen enkele write mag zonder goedkeuring bij een SIGNALEREN-domein
+    // (commitments, children); elke DOEN-domein (calendar, email_triage,
+    // finance_read, documents) mag een write zelfstandig; de KLAARZETTEN-
+    // domeinen (email_send, payments, messages) vragen bij write nog een ja.
+    for (const domain of DOMAINS) {
+      const level = DEFAULT_LEVEL_BY_DOMAIN[domain];
+      const verdict = gate({ ...base, level, effect: "write" });
+      expect(verdict.allow, domain).toBe(true);
+      const vraagtGoedkeuring = level !== 3;
+      expect(verdict.allow && verdict.requiresApproval, domain).toBe(vraagtGoedkeuring);
+    }
+  });
+
+  it("laat draft altijd zelfstandig lopen vanaf niveau 2 — ook voor de nieuwe domeinen", () => {
+    for (const domain of DOMAINS) {
+      const level = DEFAULT_LEVEL_BY_DOMAIN[domain];
+      const verdict = gate({ ...base, level, effect: "draft" });
+      expect(verdict.allow, domain).toBe(true);
+      expect(verdict.allow && verdict.requiresApproval, domain).toBe(level === 1);
+    }
   });
 });
 

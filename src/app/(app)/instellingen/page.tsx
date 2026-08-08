@@ -11,8 +11,8 @@ import {
 } from "@/lib/actions";
 import { addableRows, catalogRows } from "@/connectors/catalog";
 import { authUrlFor } from "@/connectors";
-import { domainsFor } from "@/lib/tools/registry";
-import { asLevel, DOMAIN_REGISTRY, LEVELS, LEVEL_LABELS, type Domain, type MandateLevel } from "@/lib/mandates/domains";
+import { domainsFor, toolCatalog } from "@/lib/tools/registry";
+import { asLevel, DOMAINS, DOMAIN_REGISTRY, LEVELS, LEVEL_LABELS, type Domain, type MandateLevel } from "@/lib/mandates/domains";
 import type { SuggestionEvidence } from "@/lib/mandates/suggest";
 import { marksFromSettings } from "@/lib/onboarding/steps";
 import Link from "next/link";
@@ -54,10 +54,24 @@ const OUTCOME_TEXT: Record<string, string> = {
   rejected: "liet je vallen",
 };
 
-/** SourceIcon kent geen domeinen, alleen bronsoorten — dit is de vertaling. */
+/**
+ * SourceIcon kent geen domeinen, alleen bronsoorten — dit is de vertaling.
+ * Domeinen zonder eigen connector (payments, finance_read, messages,
+ * commitments, children, documents — nog geen tool onder een van deze,
+ * src/lib/mandates/domains.ts) lenen het dichtstbijzijnde bestaande icoon in
+ * plaats van dat SourceIcon.tsx er zelf een bij krijgt; dat bestand valt
+ * buiten deze wijziging.
+ */
 const DOMAIN_ICON: Record<Domain, SourceKind> = {
   calendar: "calendar",
   email_send: "email",
+  email_triage: "email",
+  payments: "ponto",
+  finance_read: "ponto",
+  messages: "chat",
+  commitments: "manual",
+  children: "capture",
+  documents: "manual",
 };
 
 /**
@@ -114,20 +128,25 @@ export default async function InstellingenPage() {
   // bij "Bron toevoegen" thuis, en daar staat hij nu ook — anders twee keer.
   const gekoppeld = connectors.filter((c) => c.status !== "not_connected");
 
-  // "Wat mag Wingman" per domein, niet meer per connector. Een domein zonder
-  // gekoppelde bron heeft niets om op te handelen en hoort dus niet in dit
-  // rijtje — zelfde regel als hierboven bij `not_connected`.
+  // "Wat mag Wingman" per domein, niet meer per connector — en sinds
+  // blokkade 4 (opdracht §3/§4) élk domein uit het register, niet alleen de
+  // domeinen met een gekoppelde bron. Een domein zonder tool (payments,
+  // finance_read, messages, commitments, children, documents — nog geen
+  // enkele adapter biedt daar een tool voor aan) hoort hier óók in te staan:
+  // het niveau is nu al instelbaar, vóórdat de tool bestaat. `heeftTool`
+  // onderscheidt dat van "wel een tool, nog niet gekoppeld" (calendar/
+  // email_send zonder Google) voor de eerlijke ondertekst hieronder.
   const mandateByDomain = new Map(mandates.map((m) => [m.domain, asLevel(m.level)]));
-  const domainRows = Array.from(new Set(gekoppeld.flatMap((c) => domainsFor(c.provider as Provider)))).map(
-    (domain) => ({
-      domain,
-      level: mandateByDomain.get(domain) ?? (1 as MandateLevel),
-      // Voor het icoon en "geldt voor": de gekoppelde bronnen die dit domein
-      // aandrijven. Vandaag altijd precies één; meerdere komt met een tweede
-      // agendabron.
-      providers: gekoppeld.filter((c) => domainsFor(c.provider as Provider).includes(domain)),
-    }),
-  );
+  const domeinenMetTool = new Set(toolCatalog().map((t) => t.tool.domain));
+  const domainRows = DOMAINS.map((domain) => ({
+    domain,
+    level: mandateByDomain.get(domain) ?? (1 as MandateLevel),
+    // Voor het icoon en "geldt voor": de gekoppelde bronnen die dit domein
+    // aandrijven. Vandaag altijd hoogstens één; meerdere komt met een tweede
+    // agendabron.
+    providers: gekoppeld.filter((c) => domainsFor(c.provider as Provider).includes(domain)),
+    heeftTool: domeinenMetTool.has(domain),
+  }));
 
   // Het openstaande promotievoorstel, als er een is. `evidence` is JSON dat
   // hier zelf is weggeschreven (computeMandateSuggestionsForUser) — een
@@ -247,7 +266,7 @@ export default async function InstellingenPage() {
             per domein, niet meer per connector: een tweede agendabron deelt
             hetzelfde mandaat, geen tweede vraag. */}
         <ul className="st-rows">
-          {domainRows.map(({ domain, level, providers }) => (
+          {domainRows.map(({ domain, level, providers, heeftTool }) => (
             <li key={domain}>
               <div className="st-row">
                 <SourceIcon kind={DOMAIN_ICON[domain]} size="sm" />
@@ -257,6 +276,13 @@ export default async function InstellingenPage() {
                     {DOMAIN_REGISTRY[domain].description}
                     {providers.length > 1
                       ? ` · geldt voor ${providers.map((p) => p.label).join(" en ")}`
+                      : ""}
+                    {/* Eerlijk over wat er nog niet is (opdracht §4): een
+                        domein zonder tool krijgt hier geen "geldt voor" — er
+                        hangt niets onder — maar het niveau blijft instelbaar,
+                        klaar voor als de tool er komt. */}
+                    {providers.length === 0 && !heeftTool
+                      ? " · nog geen actie hangt hieronder — het niveau ligt vast klaar"
                       : ""}
                   </span>
                 </div>
