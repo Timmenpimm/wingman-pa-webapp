@@ -1,10 +1,20 @@
 import { localDateKey } from "@/lib/day";
 import { inStilleUren } from "@/lib/runs/notify";
 import {
+  CHILDREN_SIGNALS_SETTING_KEY,
+  HOUSING_CRITERIA_SETTING_KEY,
+  detectChildren,
   detectDeadline24h,
+  detectHousingLongterm,
   detectMoneyUnexpected,
+  parseChildrenSignalConfig,
+  parseHousingCriteria,
+  type ChildrenSignalConfig,
   type CommitmentCandidate,
+  type EmailCandidate,
   type EscalationCandidate,
+  type EventCandidate,
+  type HousingCriteria,
   type TransactionCandidate,
   type TriggerId,
 } from "./triggers";
@@ -40,6 +50,12 @@ export interface PlanInput {
   quietHours: string | undefined;
   commitments: CommitmentCandidate[];
   transactions: TransactionCandidate[];
+  emails: EmailCandidate[];
+  events: EventCandidate[];
+  /** Configuratie voor de `children`-trigger — `null` = nog niet ingesteld, dus geen kandidaten. */
+  childrenSignals: ChildrenSignalConfig | null;
+  /** Configuratie voor de `housing_longterm`-trigger — `null` = nog niet ingesteld, dus geen kandidaten. */
+  housingCriteria: HousingCriteria | null;
   /** Ooit al geëscaleerd voor deze gebruiker — dedupe geldt voor altijd, niet per dag. */
   alreadyEscalated: Array<{ trigger: TriggerId; ref_id: string }>;
   /** Hoeveel er vandaag al lokaal geëscaleerd zijn — bepaalt wat er nog in de dagcap past. */
@@ -60,7 +76,14 @@ export function planEscalations(input: PlanInput): PlanOutput {
 
   const already = new Set(input.alreadyEscalated.map((e) => escalationKey(e.trigger, e.ref_id)));
 
+  // Kinderen en langetermijn-wonen staan vóóraan: allebei "direct melden" /
+  // "weg is weg" (WINGMAN_ADDENDUM_mandaten.md §2 noemt kinderen expliciet
+  // "hoogste prioriteit", §3 zet wonen naast schuldendeadlines). Bij een volle
+  // dagcap van 2 mogen die twee niet achter een routineuze deadline of
+  // transactie blijven wachten tot de volgende dag.
   const candidates = [
+    ...detectChildren(input.emails, input.events, input.childrenSignals),
+    ...detectHousingLongterm(input.emails, input.housingCriteria),
     ...detectDeadline24h(input.commitments, input.now),
     ...detectMoneyUnexpected(input.transactions),
   ].filter((c) => !already.has(escalationKey(c.trigger, c.ref_id)));
@@ -93,6 +116,20 @@ export interface EscalationTx {
       select: { id: true; needs_review: true };
     }): Promise<TransactionCandidate[]>;
   };
+  /** Alleen recente mail — zie EMAIL_LOOKBACK_MS hieronder voor waarom dit begrensd is. */
+  email: {
+    findMany(args: {
+      where: { user_id: string; sent_at: { gte: Date } };
+      select: { id: true; subject: true; from_addr: true; to_addrs: true; body_text: true };
+    }): Promise<EmailCandidate[]>;
+  };
+  /** Alleen events rond nu — zie EVENT_LOOKBACK_MS/EVENT_LOOKAHEAD_MS hieronder. */
+  event: {
+    findMany(args: {
+      where: { user_id: string; start_at: { gte: Date; lte: Date } };
+      select: { id: true; title: true; attendees: true };
+    }): Promise<EventCandidate[]>;
+  };
   escalationEvent: {
     findMany(args: {
       where: { user_id: string };
@@ -103,6 +140,18 @@ export interface EscalationTx {
     }): Promise<unknown>;
   };
 }
+
+// Mail en agenda-items worden — anders dan commitments (status=open) en
+// transacties (needs_review=true) — niet door een eigen statusveld begrensd:
+// er is geen "moet nog op kinderen/wonen gecheckt worden"-vlag. Dedupe in
+// planEscalations voorkomt een dubbele escalatie, maar zonder een
+// tijdvenster zou elke tick de hele mailbox/agenda opnieuw doorzoeken. Een
+// escalatie hoort per definitie bij iets recents ("net binnengekomen"), dus
+// een venster is hier geen kunstmatige beperking maar precies wat de trigger
+// betekent.
+const EMAIL_LOOKBACK_MS = 48 * 60 * 60 * 1000; // mail van de laatste 2 dagen
+const EVENT_LOOKBACK_MS = 24 * 60 * 60 * 1000; // events die net begonnen/lopend zijn tellen nog mee
+const EVENT_LOOKAHEAD_MS = 30 * 24 * 60 * 60 * 1000; // "kids-dagen" liggen meestal in de eerstvolgende weken
 
 /**
  * Leest wat de detectors nodig hebben, laat de pure kern beslissen, en
@@ -116,8 +165,23 @@ export async function processUserEscalations(
   timezone: string,
   now: Date,
 ): Promise<EscalationCandidate[]> {
-  const [quietHoursSetting, commitments, transactions, existingEvents] = await Promise.all([
+  const [
+    quietHoursSetting,
+    childrenSignalsSetting,
+    housingCriteriaSetting,
+    commitments,
+    transactions,
+    emails,
+    events,
+    existingEvents,
+  ] = await Promise.all([
     tx.userSetting.findUnique({ where: { user_id_key: { user_id: userId, key: "quiet_hours" } } }),
+    tx.userSetting.findUnique({
+      where: { user_id_key: { user_id: userId, key: CHILDREN_SIGNALS_SETTING_KEY } },
+    }),
+    tx.userSetting.findUnique({
+      where: { user_id_key: { user_id: userId, key: HOUSING_CRITERIA_SETTING_KEY } },
+    }),
     tx.commitment.findMany({
       where: { user_id: userId, status: "open" },
       select: { id: true, status: true, due_date: true },
@@ -125,6 +189,20 @@ export async function processUserEscalations(
     tx.transaction.findMany({
       where: { user_id: userId, needs_review: true },
       select: { id: true, needs_review: true },
+    }),
+    tx.email.findMany({
+      where: { user_id: userId, sent_at: { gte: new Date(now.getTime() - EMAIL_LOOKBACK_MS) } },
+      select: { id: true, subject: true, from_addr: true, to_addrs: true, body_text: true },
+    }),
+    tx.event.findMany({
+      where: {
+        user_id: userId,
+        start_at: {
+          gte: new Date(now.getTime() - EVENT_LOOKBACK_MS),
+          lte: new Date(now.getTime() + EVENT_LOOKAHEAD_MS),
+        },
+      },
+      select: { id: true, title: true, attendees: true },
     }),
     tx.escalationEvent.findMany({
       where: { user_id: userId },
@@ -143,6 +221,10 @@ export async function processUserEscalations(
     quietHours: quietHoursSetting?.value,
     commitments,
     transactions,
+    emails,
+    events,
+    childrenSignals: parseChildrenSignalConfig(childrenSignalsSetting?.value),
+    housingCriteria: parseHousingCriteria(housingCriteriaSetting?.value),
     alreadyEscalated: existingEvents.map((e) => ({ trigger: e.trigger as TriggerId, ref_id: e.ref_id })),
     escalatedTodayCount,
   });
