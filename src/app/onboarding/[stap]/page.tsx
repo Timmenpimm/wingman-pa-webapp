@@ -6,8 +6,10 @@ import { connectGoogle, continueOnboarding } from "@/lib/actions";
 import { authUrlFor } from "@/connectors";
 import { onboardingStatus, type Payoff } from "@/lib/onboarding/status";
 import { isStepId, stepDefinition, type StepId } from "@/lib/onboarding/steps";
+import { escalationSentence, LEVEL_HELP, parseQuietHours, ritmeSentence } from "@/lib/onboarding/copy";
 import { formatAmount, formatDayLong, formatTime } from "@/lib/text";
-import { DOMAIN_REGISTRY, LEVEL_LABELS, LEVELS, type Domain, type MandateLevel } from "@/lib/mandates/domains";
+import { DOMAIN_REGISTRY, LEVEL_LABELS, LEVELS } from "@/lib/mandates/domains";
+import { TRIGGERS } from "@/lib/escalation/triggers";
 import { PushOptIn } from "@/components/PushOptIn";
 import { Trail } from "../Trail";
 import "../onboarding.css";
@@ -64,25 +66,7 @@ const LEDE: Record<StepId, string> = {
   mail: "Uit je mail haal ik wie op jou wacht en waar jij op wacht. Ik lees mee, ik verstuur niets.",
   bank: "Alleen lezen. Ik categoriseer wat er binnenkomt en zie je vaste lasten — ik doe nooit iets bij je bank.",
   meldingen:
-    "Zet Wingman op je beginscherm, dan krijg je het ochtendmoment als melding. Anders komt het per mail.",
-};
-
-/**
- * Het mandaatniveau (§6.7 fase 1) in de taal van het domein waar het over
- * gaat. Drie keer "signaleren · klaarzetten · doen" naast elkaar zegt niets;
- * wat het per domein betékent wel.
- */
-const LEVEL_HELP: Partial<Record<Domain, Record<MandateLevel, string>>> = {
-  calendar: {
-    1: "Ik stel voor, jij klikt. Er verschuift niets zonder je ja.",
-    2: "Ik zet een afspraak klaar als voorstel; jij bevestigt.",
-    3: "Ik plan zelf en vertel achteraf wat ik deed.",
-  },
-  email_send: {
-    1: "Ik stel een antwoord voor, jij beslist.",
-    2: "Ik zet het concept klaar in Gmail. Versturen doe jij.",
-    3: "Ik zet concepten zelf klaar en meld dat.",
-  },
+    "Drie vaste momenten per dag, en een enkele uitzondering als het niet kan wachten. Zet Wingman op je beginscherm, dan komen ze als melding binnen — anders per mail.",
 };
 
 export default async function OnboardingStepPage({ params }: { params: { stap: string } }) {
@@ -91,7 +75,7 @@ export default async function OnboardingStepPage({ params }: { params: { stap: s
   const definition = stepDefinition(step);
 
   const userId = await currentUserId();
-  const { steps, connectors, payoff, mandateLevel } = await onboardingStatus(userId, step);
+  const { steps, connectors, payoff, mandateLevel, quietHours } = await onboardingStatus(userId, step);
   const state = steps.find((s) => s.id === step)!;
 
   const googleConfigured = Boolean(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET);
@@ -165,7 +149,7 @@ export default async function OnboardingStepPage({ params }: { params: { stap: s
                 />
                 <span>
                   <span className="choice__title">{LEVEL_LABELS[value]}</span>
-                  <span className="choice__help">{LEVEL_HELP[domain]?.[value]}</span>
+                  <span className="choice__help">{LEVEL_HELP[value]}</span>
                 </span>
               </label>
             ))}
@@ -175,6 +159,36 @@ export default async function OnboardingStepPage({ params }: { params: { stap: s
                 versturen nooit.
               </p>
             )}
+          </fieldset>
+        )}
+
+        {step === "meldingen" && (
+          <fieldset className="choices">
+            <legend className="eyebrow">Stille uren</legend>
+            <p className="meta" style={{ marginBottom: "var(--s-3)" }}>
+              In dit venster stuur ik niets — ook geen escalatie. Wat blijft liggen, komt vanzelf
+              door zodra het voorbij is.
+            </p>
+            <div className="btn-row" style={{ gap: "var(--s-4)" }}>
+              <label style={{ display: "flex", flexDirection: "column", gap: "var(--s-1)" }}>
+                <span className="meta">Van</span>
+                <input
+                  className="input input--time"
+                  type="time"
+                  name="stille_uren_van"
+                  defaultValue={parseQuietHours(quietHours).van}
+                />
+              </label>
+              <label style={{ display: "flex", flexDirection: "column", gap: "var(--s-1)" }}>
+                <span className="meta">Tot</span>
+                <input
+                  className="input input--time"
+                  type="time"
+                  name="stille_uren_tot"
+                  defaultValue={parseQuietHours(quietHours).tot}
+                />
+              </label>
+            </div>
           </fieldset>
         )}
 
@@ -235,8 +249,17 @@ function ConnectBlock({
   payoff: Payoff;
 }) {
   if (step === "meldingen") {
+    const runs = payoff.kind === "meldingen" ? payoff.runs : [];
     return (
       <>
+        <div className="empty" style={{ marginTop: "var(--s-5)" }}>
+          <strong>Het ritme</strong>
+          {ritmeSentence(runs)}
+        </div>
+        <p className="meta" style={{ marginTop: "var(--s-3)" }}>
+          {escalationSentence(TRIGGERS)}
+        </p>
+
         <div className="empty" style={{ marginTop: "var(--s-5)" }}>
           <strong>Zo zet je hem op je beginscherm</strong>
           Op de iPhone: deel-knop onderin, dan &ldquo;Zet op beginscherm&rdquo;. Op Android: menu

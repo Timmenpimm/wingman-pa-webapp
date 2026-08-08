@@ -21,6 +21,7 @@ import {
   type StepId,
 } from "@/lib/onboarding/steps";
 import { asLevel, isDomain, type Domain } from "@/lib/mandates/domains";
+import { formatQuietHours } from "@/lib/onboarding/copy";
 import { signIn } from "../../auth";
 
 /**
@@ -320,8 +321,8 @@ function terugPad(vanaf: string): string {
 
 /**
  * Eén stap van de onboarding afronden: permissie vastleggen als die gevraagd
- * is, de stap markeren als hij overgeslagen of met de hand afgevinkt wordt, en
- * doorlopen naar de volgende.
+ * is, stille uren vastleggen op de meldingenstap, de stap markeren als hij
+ * overgeslagen of met de hand afgevinkt wordt, en doorlopen naar de volgende.
  *
  * Drie knoppen ("Volgende", "Overslaan", "Staat erop") delen deze ene actie —
  * ze verschillen alleen in het verborgen veld `markeer`. Dat scheelt drie
@@ -338,6 +339,14 @@ export async function continueOnboarding(step: StepId, data: FormData) {
   const rawLevel = String(data.get("level") ?? "");
   const domains: Domain[] = stepDefinition(step).domains;
 
+  // Alleen de meldingenstap vraagt hierom (zie het stille-uren-veld in
+  // src/app/onboarding/[stap]/page.tsx); op elke andere stap zijn beide velden
+  // afwezig, dus levert formatQuietHours() null op en gebeurt er niets.
+  const quietHours = formatQuietHours(
+    String(data.get("stille_uren_van") ?? ""),
+    String(data.get("stille_uren_tot") ?? ""),
+  );
+
   await withUser(userId, async (tx) => {
     if (mark === "skipped" || mark === "done") {
       const key = markKey(step);
@@ -345,6 +354,14 @@ export async function continueOnboarding(step: StepId, data: FormData) {
         where: { user_id_key: { user_id: userId, key } },
         create: { user_id: userId, key, value: mark },
         update: { value: mark },
+      });
+    }
+
+    if (quietHours) {
+      await tx.userSetting.upsert({
+        where: { user_id_key: { user_id: userId, key: "quiet_hours" } },
+        create: { user_id: userId, key: "quiet_hours", value: quietHours },
+        update: { value: quietHours },
       });
     }
 
