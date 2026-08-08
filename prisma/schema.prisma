@@ -95,6 +95,16 @@ model ToolCall {
   summary       String // NL, max 120 tekens (zie src/lib/text.ts)
   status        String    @default("pending") // pending | done | failed | rejected
   notify        Boolean   @default(false) // "doen en melden" wel, "stil doen" niet
+  /// Wie het vroeg: "user" (een knop of een REST-aanroep) of "wingman" (de
+  /// voorstelmotor, src/brain/propose.ts). Het verschil is zichtbaar in de UI —
+  /// "je vroeg dit" leest anders dan "Wingman stelt dit voor" — en de dagcap op
+  /// voorstellen telt alleen de eigen.
+  origin        String    @default("user")
+  /// Alleen voor voorstellen: de sleutel die zegt "dit heb ik al eens
+  /// voorgesteld". Zonder dit stelt een tick die elke 15 minuten draait
+  /// hetzelfde agendablok 96 keer per dag voor. NULL voor alles wat de
+  /// gebruiker zelf vraagt — die mag dezelfde tool twee keer aanroepen.
+  dedupe_key    String?
   result        String? // JSON, zonder tokens
   error_code    String? // ConnectorOffline | Authentication | Permission | ...
   error_message String?
@@ -105,7 +115,9 @@ model ToolCall {
 
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
+  @@unique([user_id, dedupe_key])
   @@index([user_id, status, created_at])
+  @@index([user_id, origin, created_at])
 }
 
 /// Fase 1 van het mandaatmodel (src/lib/mandates/domains.ts): drie niveaus per

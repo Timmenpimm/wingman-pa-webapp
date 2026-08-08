@@ -84,10 +84,27 @@ export function localDayRange(
  * er vanzelf goed uit — geen hardgecodeerde +1 of +2.
  */
 function zonedMidnightToUtc(dateKey: string, timezone: string): Date {
-  const naive = dateKeyToUtc(dateKey);
+  return zonedTimeToUtc(dateKey, timezone, 0, 0);
+}
+
+/**
+ * Een kloktijd op een kalenderdag ín een tijdzone, uitgedrukt in UTC —
+ * "9 uur 's ochtends bij de gebruiker" als moment.
+ *
+ * De voorstelmotor (src/brain/propose.ts) heeft dit nodig: een agendablok
+ * zetten betekent een tijd kiezen binnen werkuren, en werkuren zijn lokale
+ * uren. Zelfde correctieronde als hierboven, om dezelfde reden: op de dag dat
+ * de klok verzet wordt, is de offset van middernacht niet die van 09:00.
+ */
+export function zonedTimeToUtc(
+  dateKey: string,
+  timezone: string,
+  hour: number,
+  minute = 0,
+): Date {
+  const naive = new Date(dateKeyToUtc(dateKey).getTime() + (hour * 60 + minute) * 60_000);
   const offset = zoneOffsetMs(naive, timezone);
   const guess = new Date(naive.getTime() - offset);
-  // Eén correctieronde vangt de dag waarop de klok verzet wordt.
   return new Date(naive.getTime() - zoneOffsetMs(guess, timezone));
 }
 

@@ -17,6 +17,11 @@ const STATUS: Record<ToolError["code"], number> = {
   // hier zou de client naar het inlogscherm sturen voor het verkeerde probleem.
   Authentication: 409,
   ConnectorOffline: 409,
+  // Dit voorstel stond er al. 409 en niet 400: de aanvraag klopt, de toestand
+  // maakt hem overbodig. In de praktijk komt deze fout alleen bij de
+  // voorstelmotor langs (die 'm stil opslokt), maar de REST-laag mag hem
+  // aanroepen en hoort dan iets zinnigs terug te krijgen.
+  AlreadyProposed: 409,
   RateLimit: 429,
   Timeout: 504,
   ToolFailed: 502,

@@ -41,6 +41,8 @@ export interface ToolCallView {
   effect: string;
   summary: string;
   status: string;
+  /** "user" of "wingman" — de UI zegt bij het laatste dat Wingman het bedacht. */
+  origin: string;
   created_at: Date;
   finished_at: Date | null;
   error_code: string | null;
@@ -53,6 +55,7 @@ const view = (c: {
   effect: string;
   summary: string;
   status: string;
+  origin: string;
   created_at: Date;
   finished_at: Date | null;
   error_code: string | null;
@@ -63,6 +66,7 @@ const view = (c: {
   effect: c.effect,
   summary: c.summary,
   status: c.status,
+  origin: c.origin,
   created_at: c.created_at,
   finished_at: c.finished_at,
   error_code: c.error_code,
@@ -77,6 +81,19 @@ export interface ToolRequest {
   result?: unknown;
 }
 
+/** Waar een aanroep vandaan komt. "wingman" = de voorstelmotor, zie src/brain/propose.ts. */
+export type ToolOrigin = "user" | "wingman";
+
+export interface RequestToolOptions {
+  origin?: ToolOrigin;
+  /**
+   * Alleen voor voorstellen: uniek per gebruiker. Bestaat de sleutel al, dan
+   * is dit voorstel er al eens geweest en gebeurt er niets — de planner draait
+   * elke vijftien minuten en mag niet elke keer opnieuw hetzelfde vragen.
+   */
+  dedupeKey?: string;
+}
+
 /**
  * Vraag een tool aan. Geeft `pending` terug als de permissiegradiënt een "ja"
  * van de gebruiker verlangt — dan gebeurt er nog niets bij de bron.
@@ -85,6 +102,7 @@ export async function requestTool(
   userId: string,
   toolName: string,
   rawParams: unknown,
+  options: RequestToolOptions = {},
 ): Promise<ToolRequest> {
   const resolved = findTool(toolName);
   const params = parseParams(resolved, rawParams);
@@ -101,6 +119,18 @@ export async function requestTool(
     });
     if (!verdict.allow) throw verdict.error;
 
+    // De unique index op (user_id, dedupe_key) is het echte slot; deze controle
+    // scheelt alleen een mislukte insert per tick. Twee ticks tegelijk laten
+    // hier allebei door en de database wijst er dan één af — dat is de
+    // bedoeling, niet een fout die we hier moeten voorkomen.
+    if (options.dedupeKey) {
+      const bestaat = await tx.toolCall.findFirst({
+        where: { user_id: userId, dedupe_key: options.dedupeKey },
+        select: { id: true },
+      });
+      if (bestaat) throw toolErrors.alreadyProposed(options.dedupeKey);
+    }
+
     const call = await tx.toolCall.create({
       data: {
         user_id: userId,
@@ -110,6 +140,8 @@ export async function requestTool(
         params: JSON.stringify(params),
         summary: clamp(resolved.tool.describe(params), "toolCallSummary"),
         notify: verdict.notify,
+        origin: options.origin ?? "user",
+        dedupe_key: options.dedupeKey ?? null,
         status: verdict.requiresApproval ? "pending" : "running",
         decided_at: verdict.requiresApproval ? null : new Date(),
       },

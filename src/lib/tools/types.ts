@@ -93,6 +93,7 @@ export type ToolErrorCode =
   | "InvalidParams"
   | "RateLimit"
   | "Timeout"
+  | "AlreadyProposed"
   | "ToolFailed";
 
 export class ToolError extends Error {
@@ -142,6 +143,15 @@ export const toolErrors = {
 
   timeout: (label: string, ms: number) =>
     new ToolError("Timeout", `${label} reageerde niet binnen ${ms / 1000} seconden.`),
+
+  /**
+   * Geen storing maar een uitkomst: dit voorstel is er al. Wordt door de
+   * voorstelmotor (src/lib/runs/propose.ts) stil opgeslokt en belandt dus
+   * nooit in het gezicht van de gebruiker — hij hoort niet te zien dat de
+   * planner elk kwartier langskomt.
+   */
+  alreadyProposed: (key: string) =>
+    new ToolError("AlreadyProposed", `Dit voorstel staat al klaar (${key}).`),
 
   failed: (label: string, detail: string) =>
     new ToolError("ToolFailed", `${label}: ${detail}`),
