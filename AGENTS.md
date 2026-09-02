@@ -30,3 +30,10 @@ meegeladen.
 - Geen brede codebase-samenvatting en geen herhaling van deze regels.
 - Laad geen hele pagina's of alle componenten wanneer één route voldoende is.
 - Stel alleen een vraag als de keuze de productscope daadwerkelijk verandert.
+
+## Werkingskaart: `docs/SYSTEM.md`
+
+1. Lees `docs/SYSTEM.md` als eerste bij elke taak, vóór PROGRESS.md en vóór je code opent. Verkennen van de codebase alleen als SYSTEM.md de vraag niet beantwoordt; dat is dan een signaal dat SYSTEM.md moet worden aangevuld.
+2. Elke PR die een onderdeel, datastroom, sleutelbestand, omgeving, cron of valkuil toevoegt, wijzigt of verwijdert, werkt `docs/SYSTEM.md` in dezelfde PR bij. Niet bijgewerkt = PR niet af (zelfde regel als PROGRESS.md).
+3. Max ±120 regels: verwijs naar detaildocs, kopieer ze niet. Datum en commit bovenaan bijwerken.
+4. Poort: `scripts/check-system-md.sh` (elk `pad` in SYSTEM.md moet bestaan) draait mee in de verificatiepoort.
